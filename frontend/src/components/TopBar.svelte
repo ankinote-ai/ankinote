@@ -36,7 +36,7 @@
 <svelte:window onkeydown={onKey} />
 
 <header class="bar">
-  <span class="brand">ankinote</span>
+  <span class="brand">AnkiNote</span>
   <nav class="ws">
     {#each workspaces as ws (ws.path)}
       <a
