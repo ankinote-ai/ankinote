@@ -305,9 +305,18 @@ class StemCollection:
 
     # -- Drafts: generate, edit or rewrite, preview, then save -----------------
 
-    async def generate_cards(self, topic: str) -> list[StemCardData]:
-        """One card for ``topic``, with its diagram when it wants one."""
-        model = await self.generate_model(topic)
+    async def generate_cards(
+        self,
+        topic: str,
+        reference_image: bytes | None = None,
+        reference_image_mime: str = "image/png",
+    ) -> list[StemCardData]:
+        """One card for ``topic`` and its picture, with a diagram if it wants one."""
+        model = await self.generate_model(
+            topic,
+            reference_image=reference_image,
+            reference_image_mime=reference_image_mime,
+        )
         return [StemCardData(model=model, media=await self._diagram(model))]
 
     async def rewrite_card(
@@ -317,6 +326,8 @@ class StemCollection:
         instruction: str,
         *,
         card_type: CardType | None = None,
+        reference_image: bytes | None = None,
+        reference_image_mime: str = "image/png",
     ) -> StemCardData:
         """``card`` rewritten by the model as ``instruction`` asks.
 
@@ -328,15 +339,28 @@ class StemCollection:
             instruction,
             card_type=card_type,
             reasoning_effort=self._reasoning_effort,
+            reference_image=reference_image,
+            reference_image_mime=reference_image_mime,
         )
         return StemCardData(model=model, media=await self._diagram(model, card))
 
     async def fix_latex(
-        self, card: StemCardData, topic: str, problems: Sequence[LatexProblem]
+        self,
+        card: StemCardData,
+        topic: str,
+        problems: Sequence[LatexProblem],
+        *,
+        reference_image: bytes | None = None,
+        reference_image_mime: str = "image/png",
     ) -> StemCardData:
         """``card`` with the formulas the preview couldn't show fixed by the model."""
         model = await self._generator.fix_latex(
-            topic, card.model, problems, reasoning_effort=self._reasoning_effort
+            topic,
+            card.model,
+            problems,
+            reasoning_effort=self._reasoning_effort,
+            reference_image=reference_image,
+            reference_image_mime=reference_image_mime,
         )
         return StemCardData(model=model, media=card.media)
 

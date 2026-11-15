@@ -120,7 +120,9 @@ def _build_user_message(
     rewrite: str = "",
 ) -> TextMessage:
     """Build the user message, attaching a reference image when supplied."""
-    text = f"STEM flashcard request:\n\nTopic: {topic}"
+    # A picture alone is a request: its problem or topic is what to make a card of.
+    shown = topic or "(see the attached picture)"
+    text = f"STEM flashcard request:\n\nTopic: {shown}"
     if rewrite:
         text = f"{text}\n\n{rewrite}"
     if reference_image is None:
@@ -275,11 +277,14 @@ class StemGenerator:
         card_type: CardType | None = None,
         temperature: float = 0.3,
         reasoning_effort: str | None = None,
+        reference_image: bytes | None = None,
+        reference_image_mime: str = "image/png",
     ) -> StemCard:
         """``current`` rewritten as ``instruction`` asks, as ``card_type``.
 
-        ``topic`` is what the card was generated from. The type stays unless
-        ``card_type`` names another; the new type's prompt and schema apply.
+        ``topic`` is what the card was generated from, and ``reference_image``
+        the picture that came with it. The type stays unless ``card_type``
+        names another; the new type's prompt and schema apply.
         """
         card_type = card_type or current.card_type
         return await generate_stem_data(
@@ -288,6 +293,8 @@ class StemGenerator:
             model=self._text_model,
             temperature=temperature,
             reasoning_effort=reasoning_effort,
+            reference_image=reference_image,
+            reference_image_mime=reference_image_mime,
             card_type=card_type,
             rewrite=_rewrite_request(current, instruction.strip(), card_type),
         )
@@ -300,6 +307,8 @@ class StemGenerator:
         *,
         temperature: float = 0.3,
         reasoning_effort: str | None = None,
+        reference_image: bytes | None = None,
+        reference_image_mime: str = "image/png",
     ) -> StemCard:
         """``current`` with the formulas in ``problems`` fixed, nothing else.
 
@@ -311,6 +320,8 @@ class StemGenerator:
             model=self._text_model,
             temperature=temperature,
             reasoning_effort=reasoning_effort,
+            reference_image=reference_image,
+            reference_image_mime=reference_image_mime,
             card_type=current.card_type,
             rewrite=_latex_fix_request(current, problems),
         )

@@ -12,6 +12,7 @@
  * The session lives at module level, so switching workspaces keeps it; a
  * reload starts a new one (drafts are in the server's memory anyway).
  */
+import type { Picture } from "./picture";
 import { randomId } from "./randomId";
 import {
   api,
@@ -146,6 +147,8 @@ export class Row {
     readonly text: string,
     /** STEM: the type asked for; undefined lets the model choose. */
     readonly cardType?: StemType,
+    /** STEM: a picture of the question, read by the model. */
+    readonly picture?: Picture,
   ) {}
 
   get note(): DraftNote | null {
@@ -186,9 +189,14 @@ class Session {
   image = $state(stored().image ?? true);
   audio = $state(stored().audio ?? true);
   /** STEM: the type new rows ask for; "auto" lets the model choose. */
-  stemType = $state<StemType | "auto">(stored().stemType ?? "auto");
+  // Procedure isn't offered as a chip; a choice saved before that falls back to Auto.
+  stemType = $state<StemType | "auto">(
+    stored().stemType === "procedure" ? "auto" : (stored().stemType ?? "auto"),
+  );
   /** False when no image model is set up: the switch is off and disabled. */
   imageAvailable = $state(true);
+  /** Whether the main model can read a picture; "unknown" may be tried. */
+  vision = $state<"yes" | "no" | "unknown">("unknown");
   /** Ticks every second while something generates, for elapsed times. */
   now = $state(Date.now());
 
@@ -225,6 +233,7 @@ class Session {
     try {
       const settings = await api.settings();
       this.imageAvailable = settings.models.image !== null;
+      this.vision = settings.models.text?.vision || "unknown";
       if (!this.#settingsLoaded && stored().image === undefined) {
         this.image = settings.defaults.generate_image;
       }
@@ -249,6 +258,19 @@ class Session {
     if (!this.selected || !this.selected.saveable) this.selectedId = rows[0]!.id;
     this.#pump();
     return rows.length;
+  }
+
+  /** Queue one STEM card: the whole text is one question, with its picture if any. */
+  addStem(input: string, picture?: Picture): boolean {
+    const text = input.trim();
+    if (!text && !picture) return false;
+    const type = this.stemType !== "auto" ? this.stemType : undefined;
+    const row = new Row("stem", text, type, picture);
+    this.rows.push(row);
+    // Follow the new input unless the user is looking at a finished card.
+    if (!this.selected || !this.selected.saveable) this.selectedId = row.id;
+    this.#pump();
+    return true;
   }
 
   select(row: Row) {
@@ -428,6 +450,7 @@ class Session {
       image: pictures && this.image && this.imageAvailable,
       audio: this.audio,
       card_type: row.cardType,
+      reference_image: row.picture && { data: row.picture.data, mime: row.picture.mime },
     };
     try {
       row.notes = (await api.generate(row.kind, row.text, options)).notes;

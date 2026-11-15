@@ -146,9 +146,18 @@ On a phone the input pane is hidden while editing, to give the form room.
 edit (or rewrite, below); the server keeps the last 20 versions of a draft.
 
 STEM, built 2026-11-13: the fourth kind. Under the input, type chips (Auto,
-Concept, Formula, Procedure, Worked example; Auto lets the model choose) and
-a Diagrams switch ("Drawn only when a diagram helps"); there is no audio.
-A question may be up to 1000 characters (words, phrases and sentences 300).
+Concept, Formula, Problem; Auto lets the model choose, and picks Procedure
+too, which has no chip of its own) and a Diagrams switch ("Drawn only when a
+diagram helps"); there is no audio. Unlike the other kinds the input is one
+large box and one request makes one card, not one per line; a question may
+be up to 4000 characters (words, phrases and sentences 300). A picture of the
+question can go with it or replace the text: paste with Ctrl+V, drop it on
+the box, or "Add a picture" (one picture; PNG, JPEG or WebP, shrunk in the
+browser to 2000 px and at most 5 MB). The main model reads it, and a rewrite
+or Fix-LaTeX reads it again (the draft keeps the picture). Whether the model
+can read pictures comes from litellm's catalog (`vision` on the text route:
+yes, no or unknown); on "no" the paste, drop and button are off with the
+reason beside them, and "unknown" (a model of the user's own) is let try.
 The preview typesets math with MathJax 3 (bundled, `tex-svg-full`, the
 `\( \)` / `\[ \]` delimiters Anki uses) inside the sandboxed frame, and
 lists every formula that can't be shown above the card: TeX errors with
@@ -167,7 +176,7 @@ it.
   under its new question.
 - **Rewrite with AI** sits between the card and the actions: an instruction
   ("simpler, add an example, the formula is wrong…"), an optional new type,
-  and Rewrite (`Enter`). The default text model rewrites the whole card from
+  and Rewrite (`Enter`). The main model rewrites the whole card from
   the current one; Undo brings the old one back. The diagram is kept while
   the new card asks for the same one. Changing type after saving makes a
   new note of the new type; the old note stays.
@@ -197,7 +206,7 @@ the browser. "Run the setup wizard again" sits under the list.
 ## Note types
 
 Built 2026-11-13: ankinote's seven note types (Word, Phrase, Sentence, and
-STEM Concept / Formula / Procedure / Worked example) listed on the left
+STEM Concept / Formula / Procedure / Problem) listed on the left
 (a strip of chips on a phone), each at `/notetypes/<key>`, `↑`/`↓` to
 move. Each row shows how the type stands in Anki: `✓` up to date, `!` needs
 an update (fields or card templates missing, styling changed, or its deck

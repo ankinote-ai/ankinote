@@ -8,7 +8,10 @@ reuses the saved one for the same provider.
 """
 
 from dataclasses import dataclass
+from typing import Literal
 from urllib.parse import urlparse
+
+from litellm import model_cost
 
 from ankinote.model_presets import (
     CUSTOM_PRESET,
@@ -65,6 +68,8 @@ class RouteView:
     base_url: str
     key_hint: str
     follows_preset: bool
+    # Text route only: whether the model can read a picture.
+    vision: str = ""
 
 
 def key_hint(key: str) -> str:
@@ -76,6 +81,29 @@ def key_hint(key: str) -> str:
 
 def _profile_preset(profile: ProviderProfile) -> str:
     return profile.preset or preset_for(profile.vendor, profile.base_url).id
+
+
+type Vision = Literal["yes", "no", "unknown"]
+
+# The preset reaches DeepSeek through the OpenAI-compatible route, but
+# litellm's catalog lists its models as "deepseek/<id>".
+_CATALOG_PREFIX = {"deepseek": "deepseek/"}
+
+
+def vision_support(profile: ProviderProfile) -> Vision:
+    """Whether the profile's model can read a picture, per litellm's catalog.
+
+    "no" only for a preset provider's model the catalog lists without vision.
+    A model it doesn't list is "unknown", and so is anything on an endpoint
+    of the user's own, which can serve any model under any id.
+    """
+    preset = _profile_preset(profile)
+    entry = model_cost.get(_CATALOG_PREFIX.get(preset, "") + profile.model)
+    if entry is None:
+        return "unknown"
+    if entry.get("supports_vision"):
+        return "yes"
+    return "unknown" if preset == CUSTOM_PRESET else "no"
 
 
 def route_view(settings: Settings, route: Route) -> RouteView | None:
@@ -94,6 +122,7 @@ def route_view(settings: Settings, route: Route) -> RouteView | None:
         base_url=profile.base_url,
         key_hint=key_hint(profile.api_key),
         follows_preset=bool(profile.preset),
+        vision=vision_support(profile) if route == "text" else "",
     )
 
 

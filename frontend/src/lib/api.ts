@@ -19,6 +19,8 @@ export type RouteView = {
   base_url: string;
   key_hint: string;
   follows_preset: boolean;
+  /** Text route: can the model read a picture? "unknown" is allowed to try. */
+  vision: "" | "yes" | "no" | "unknown";
 };
 
 export type Settings = {
@@ -270,7 +272,13 @@ export const api = {
   generate: (
     kind: Kind,
     text: string,
-    options: { image?: boolean; audio?: boolean; card_type?: StemType } = {},
+    options: {
+      image?: boolean;
+      audio?: boolean;
+      card_type?: StemType;
+      /** STEM: a picture of the question. */
+      reference_image?: { data: string; mime: string };
+    } = {},
   ) => request<{ notes: DraftNote[] }>("POST", `/api/cards/${kind}`, { text, ...options }),
   editDraft: (id: string, values: FormValues) =>
     request<DraftNote>("PUT", `/api/cards/drafts/${id}/fields`, { values }),

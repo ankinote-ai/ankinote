@@ -15,6 +15,8 @@ be undone.
 """
 
 import asyncio
+import base64
+import binascii
 import json
 import uuid
 from collections import OrderedDict
@@ -24,6 +26,7 @@ from pathlib import PurePosixPath
 from typing import Any, Literal, Protocol
 
 from fastapi import APIRouter, HTTPException, Response
+from litellm.exceptions import BadRequestError
 from loguru import logger
 from pydantic import BaseModel, Field, ValidationError
 
@@ -50,6 +53,7 @@ from ankinote.collections.word import models as word_models
 from ankinote.collections.word import templates as word_templates
 from ankinote.collections.word.collection import WordCollection
 from ankinote.consts import Language
+from ankinote.model_routes import vision_support
 from ankinote.services import model_check
 from ankinote.services.ai import (
     ImageGenerationService,
@@ -77,7 +81,11 @@ _UNDO_LIMIT = 20
 _MEDIA_TYPES = {".mp3": "audio/mpeg", ".png": "image/png"}
 # Words, phrases and sentences; a STEM question or problem may be longer.
 _TEXT_LIMIT = 300
-_STEM_TEXT_LIMIT = 1000
+_STEM_TEXT_LIMIT = 4000
+# A STEM question may come with one picture, base64 in the request. The page
+# shrinks it first; this is the most the server takes, once decoded.
+_PICTURE_LIMIT = 5 * 1024 * 1024
+_PICTURE_TYPES = Literal["image/png", "image/jpeg", "image/webp"]
 
 Kind = Literal["word", "phrase", "sentence", "stem"]
 
@@ -213,6 +221,9 @@ class Draft:
     source: str = ""
     image: bool = False
     note_id: int | None = None
+    # The picture a STEM card was made from, read again by a rewrite.
+    picture: bytes | None = None
+    picture_mime: str = "image/png"
     # The card last written to Anki: saving again updates that note.
     saved: Any = None
     # Bumped by each edit: a re-made clip keeps its name, so its URL changes.
@@ -232,11 +243,23 @@ class Draft:
 _drafts: OrderedDict[str, Draft] = OrderedDict()
 
 
+class PictureIn(BaseModel):
+    data: str = Field(min_length=1, max_length=8_000_000, description="Base64.")
+    mime: _PICTURE_TYPES
+
+
 class GenerateIn(BaseModel):
     text: str = Field(
-        min_length=1,
+        default="",
         max_length=_STEM_TEXT_LIMIT,
-        description=f"Up to {_TEXT_LIMIT} characters except for STEM.",
+        description=(
+            f"Up to {_TEXT_LIMIT} characters except for STEM. "
+            "STEM may leave it empty when there is a picture."
+        ),
+    )
+    reference_image: PictureIn | None = Field(
+        default=None,
+        description="STEM only: a picture of the question for the model to read.",
     )
     image: bool | None = Field(
         default=None,
@@ -254,13 +277,51 @@ def _fail(status: int, code: str, detail: str = "") -> HTTPException:
     return HTTPException(status_code=status, detail={"code": code, "detail": detail})
 
 
-def _generation_error(exc: Exception, model: str) -> HTTPException:
+def _generation_error(
+    exc: Exception, model: str, *, with_picture: bool = False
+) -> HTTPException:
     if isinstance(exc, ValidationError) or isinstance(
         exc.__cause__, json.JSONDecodeError
     ):
         return _fail(502, "bad_output", str(exc)[:300])
     check = model_check.classify(exc, model)
-    return _fail(502, check.code or "error", check.detail)
+    code = check.code or "error"
+    # A plain rejection of a request that carried a picture: most likely the
+    # model can't read one (a model the catalog doesn't know isn't ruled out).
+    if with_picture and code == "error" and type(exc) is BadRequestError:
+        code = "no_vision"
+    return _fail(502, code, check.detail)
+
+
+def _request_input(kind: Kind, body: GenerateIn) -> tuple[str, bytes | None]:
+    """The text and the decoded picture of a request, or the reason to refuse."""
+    source = body.text.strip()
+    if kind != "stem" and len(source) > _TEXT_LIMIT:
+        raise _fail(422, "too_long", str(_TEXT_LIMIT))
+    if body.reference_image is not None and kind != "stem":
+        raise _fail(422, "image_not_supported")
+    picture = (
+        None if body.reference_image is None else _decode_picture(body.reference_image)
+    )
+    if not source and picture is None:
+        raise _fail(422, "empty")
+    return source, picture
+
+
+def _mime(body: GenerateIn) -> str:
+    return body.reference_image.mime if body.reference_image else "image/png"
+
+
+def _decode_picture(picture: PictureIn) -> bytes:
+    try:
+        data = base64.b64decode(picture.data, validate=True)
+    except binascii.Error as exc:
+        raise _fail(422, "bad_image", "not base64") from exc
+    if not data:
+        raise _fail(422, "bad_image", "empty")
+    if len(data) > _PICTURE_LIMIT:
+        raise _fail(422, "image_too_big", str(_PICTURE_LIMIT))
+    return data
 
 
 def _media_prefix(draft_id: str) -> str:
@@ -327,12 +388,12 @@ async def generate(kind: Kind, body: GenerateIn) -> dict:
     apply_env(settings)
     native = Language(settings.defaults.native_language)
     target = Language(settings.defaults.target_language)
-    source = body.text.strip()
-    if kind != "stem" and len(source) > _TEXT_LIMIT:
-        raise _fail(422, "too_long", str(_TEXT_LIMIT))
+    source, picture = _request_input(kind, body)
     text = active_profile(settings, "text")
     if text is None:
         raise _fail(409, "no_text_model")
+    if picture is not None and vision_support(text) == "no":
+        raise _fail(409, "no_vision", text.model)
     want_image = kind in ("word", "stem") and (
         settings.defaults.generate_image if body.image is None else body.image
     )
@@ -360,12 +421,21 @@ async def generate(kind: Kind, body: GenerateIn) -> dict:
     )
     try:
         async with asyncio.timeout(_timeout(kind)):
-            cards = await collection.generate_cards(source)
+            if isinstance(collection, StemCollection):
+                cards = await collection.generate_cards(
+                    source,
+                    picture,
+                    _mime(body),
+                )
+            else:
+                cards = await collection.generate_cards(source)
     except TimeoutError as exc:
         raise _fail(504, "timeout") from exc
     except Exception as exc:
         logger.warning("{} generation failed: {}", kind.capitalize(), exc)
-        raise _generation_error(exc, text.model) from exc
+        raise _generation_error(
+            exc, text.model, with_picture=picture is not None
+        ) from exc
     if not cards:
         raise _fail(502, "bad_output", "no notes")
 
@@ -387,6 +457,10 @@ async def generate(kind: Kind, body: GenerateIn) -> dict:
             files=collection.media_files(card),
             source=source,
             image=want_image,
+            picture=picture,
+            picture_mime=body.reference_image.mime
+            if body.reference_image
+            else "image/png",
         )
         _keep(draft)
         notes.append(_draft_out(draft, _for_draft(draft)))
@@ -547,9 +621,14 @@ async def rewrite_draft(draft_id: str, body: RewriteIn) -> dict:
     if not instruction and card_type is None:
         raise _fail(422, "blank", "instruction")
 
-    async def rewrite(collection: StemCollection) -> Any:
+    async def rewrite(collection: StemCollection, picture: bytes | None) -> Any:
         card = await collection.rewrite_card(
-            draft.card, draft.source, instruction, card_type=card_type
+            draft.card,
+            draft.source,
+            instruction,
+            card_type=card_type,
+            reference_image=picture,
+            reference_image_mime=draft.picture_mime,
         )
         if not draft.image:
             card.media.gaps[:] = []
@@ -581,7 +660,13 @@ async def fix_latex(draft_id: str, body: FixLatexIn) -> dict:
     problems = [LatexProblem(e.tex, e.message) for e in body.errors]
     return await _remake(
         draft,
-        lambda collection: collection.fix_latex(draft.card, draft.source, problems),
+        lambda collection, picture: collection.fix_latex(
+            draft.card,
+            draft.source,
+            problems,
+            reference_image=picture,
+            reference_image_mime=draft.picture_mime,
+        ),
         draws=False,
     )
 
@@ -595,13 +680,15 @@ def _stem_draft(draft_id: str) -> Draft:
 
 async def _remake(
     draft: Draft,
-    make: Callable[[StemCollection], Awaitable[Any]],
+    make: Callable[[StemCollection, bytes | None], Awaitable[Any]],
     *,
     draws: bool,
 ) -> dict:
     """Replace a STEM draft's card with what the text model ``make``s of it.
 
-    ``draws``: whether the collection gets the image model, for a new diagram.
+    ``make`` gets the collection and the picture the card was made from, which
+    is left out once the model can no longer read one. ``draws``: whether the
+    collection gets the image model, for a new diagram.
     """
     settings = load_settings()
     apply_env(settings)
@@ -618,14 +705,17 @@ async def _remake(
         else None,
     )
     assert isinstance(collection, StemCollection)
+    picture = None if vision_support(text) == "no" else draft.picture
     try:
         async with asyncio.timeout(STEM_TIMEOUT_SECONDS):
-            card = await make(collection)
+            card = await make(collection, picture)
     except TimeoutError as exc:
         raise _fail(504, "timeout") from exc
     except Exception as exc:
         logger.warning("STEM rewrite failed: {}", exc)
-        raise _generation_error(exc, text.model) from exc
+        raise _generation_error(
+            exc, text.model, with_picture=picture is not None
+        ) from exc
     draft.replace(collection, card)
     return _draft_out(draft, _for_draft(draft))
 

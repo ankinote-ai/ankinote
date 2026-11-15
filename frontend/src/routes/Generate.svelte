@@ -12,6 +12,7 @@
   } from "../lib/api";
   import { editErrorText } from "../lib/editText";
   import { session, type Row } from "../lib/generate.svelte";
+  import { PictureError, pictureIn, readPicture, type Picture } from "../lib/picture";
   import { t, type MessageKey } from "../lib/i18n.svelte";
   import { link } from "../lib/router.svelte";
   import { sectionFor } from "../lib/settings";
@@ -23,10 +24,20 @@
   let width = $state(1200);
   let field = $state<HTMLTextAreaElement | HTMLInputElement>();
   let queueList = $state<HTMLUListElement>();
+  let fileInput = $state<HTMLInputElement>();
+  /** STEM: the picture of the question, if one is attached. */
+  let picture = $state<Picture | null>(null);
+  let pictureError = $state("");
 
   /** Matches the CSS container query: a phone gets a single-line input. */
   const phone = $derived(width <= 600);
-  const lines = $derived(input.split("\n").filter((line) => line.trim()).length);
+  const stem = $derived(session.kind === "stem");
+  /** One line to type in; STEM is a whole question, so it keeps the big box. */
+  const compact = $derived(phone && !stem);
+  const lines = $derived(
+    stem ? (input.trim() || picture ? 1 : 0) : input.split("\n").filter((line) => line.trim()).length,
+  );
+  const canPicture = $derived(session.vision !== "no");
   const row = $derived(session.selected);
   const note = $derived(row?.note ?? null);
   const editing = $derived(row?.editing ?? null);
@@ -82,14 +93,67 @@
     return Math.max(0, Math.round((session.now - r.rewriting) / 1000));
   }
 
+  /** What a row is called: its question, shortened, or "Picture" for a picture alone. */
+  function label(r: Row): string {
+    const text = r.text.replace(/\s+/g, " ");
+    if (!text) return t("generate.picture.label");
+    return text.length > 80 ? `${text.slice(0, 80)}…` : text;
+  }
+
   function previewTitle(): string {
     if (!row) return t("generate.preview");
-    return t(editing ? "edit.title" : "generate.previewOf", { text: row.text });
+    return t(editing ? "edit.title" : "generate.previewOf", { text: label(row) });
   }
 
   function submit() {
-    if (session.add(input)) input = "";
+    const added = stem ? session.addStem(input, picture ?? undefined) : session.add(input);
+    if (added) {
+      input = "";
+      picture = null;
+      pictureError = "";
+    }
     field?.focus();
+  }
+
+  async function attach(file: File | null) {
+    if (!file) return;
+    pictureError = "";
+    if (!canPicture) {
+      pictureError = t("generate.picture.noVision");
+      return;
+    }
+    try {
+      picture = await readPicture(file);
+    } catch (error) {
+      const code = error instanceof PictureError ? error.code : "read";
+      pictureError = t(`generate.picture.err.${code}` as MessageKey);
+    }
+  }
+
+  /** Ctrl+V with a picture on the clipboard attaches it; text pastes as usual. */
+  function onPaste(event: ClipboardEvent) {
+    if (!stem) return;
+    const file = pictureIn(event.clipboardData?.files);
+    if (!file) return;
+    event.preventDefault();
+    void attach(file);
+  }
+
+  function onDrop(event: DragEvent) {
+    if (!stem) return;
+    const file = pictureIn(event.dataTransfer?.files);
+    if (!file) return;
+    event.preventDefault();
+    void attach(file);
+  }
+
+  function onDragOver(event: DragEvent) {
+    if (stem && event.dataTransfer?.types.includes("Files")) event.preventDefault();
+  }
+
+  function onPicked(event: Event & { currentTarget: HTMLInputElement }) {
+    void attach(event.currentTarget.files?.[0] ?? null);
+    event.currentTarget.value = "";
   }
 
   function message(prefix: string, code: string, vars: Record<string, string> = {}): string {
@@ -137,7 +201,7 @@
   }
 
   function onFieldKey(event: KeyboardEvent) {
-    const send = phone ? !event.shiftKey : event.ctrlKey || event.metaKey;
+    const send = compact ? !event.shiftKey : event.ctrlKey || event.metaKey;
     if (event.key === "Enter" && send && !event.isComposing) {
       event.preventDefault();
       submit();
@@ -242,6 +306,10 @@
             class:on={session.kind === kind}
             onclick={() => {
               session.kind = kind;
+              if (kind !== "stem") {
+                picture = null;
+                pictureError = "";
+              }
               field?.focus();
             }}
           >
@@ -250,14 +318,14 @@
         {/each}
       </div>
 
-      <label class="prompt">
+      <label class="prompt" class:stem ondragover={onDragOver} ondrop={onDrop}>
         <span class="mark" aria-hidden="true">&gt;</span>
-        {#if phone}
+        {#if compact}
           <input
             bind:this={field}
             bind:value={input}
             onkeydown={onFieldKey}
-            placeholder={t(`generate.placeholderPhone.${session.kind}`)}
+            placeholder={session.kind === "stem" ? "" : t(`generate.placeholderPhone.${session.kind}`)}
             aria-label={t("generate.input")}
             autocomplete="off"
             spellcheck="false"
@@ -267,12 +335,14 @@
             bind:this={field}
             bind:value={input}
             onkeydown={onFieldKey}
+            onpaste={onPaste}
             placeholder={t(`generate.placeholder.${session.kind}`)}
             aria-label={t("generate.input")}
+            class:stem
             spellcheck="false"
           ></textarea>
         {/if}
-        {#if phone}
+        {#if compact}
           <button class="send" type="submit" disabled={!lines} aria-label={t("generate.submit")}>
             <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
               <path d="M2 8h11M9 3.5 13.5 8 9 12.5" fill="none" stroke="currentColor" stroke-width="1.8" />
@@ -281,10 +351,53 @@
         {/if}
       </label>
 
-      {#if session.kind === "stem"}
+      {#if stem}
+        <div class="attach">
+          {#if picture}
+            <div class="thumb">
+              <img src={picture.url} alt={t("generate.picture.alt")} />
+              <button
+                type="button"
+                class="x"
+                aria-label={t("generate.picture.remove")}
+                title={t("generate.picture.remove")}
+                onclick={() => (picture = null)}
+              >
+                ✕
+              </button>
+            </div>
+          {:else}
+            <button
+              type="button"
+              class="secondary small"
+              disabled={!canPicture}
+              onclick={() => fileInput?.click()}
+            >
+              {t("generate.picture.add")}
+            </button>
+          {/if}
+          <input
+            bind:this={fileInput}
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            hidden
+            onchange={onPicked}
+          />
+          {#if !canPicture}
+            <span class="note off">
+              {t("generate.picture.noVision")}
+              <a class="go" href="/settings/models" onclick={link}>
+                {t("settings.open", { section: t("settings.section.models") })}
+              </a>
+            </span>
+          {:else if pictureError}
+            <span class="note off" role="alert">{pictureError}</span>
+          {/if}
+        </div>
+
         <div class="types">
           <div class="chips" role="radiogroup" aria-label={t("generate.stemType")}>
-            {#each ["auto", ...STEM_TYPES] as type (type)}
+            {#each ["auto", ...STEM_TYPES.filter((type) => type !== "procedure")] as type (type)}
               <button
                 type="button"
                 role="radio"
@@ -325,13 +438,13 @@
         {/if}
       </div>
 
-      {#if !phone}
+      {#if !compact}
         <div class="row">
           <button class="primary" type="submit" disabled={!lines}>
             {lines > 1 ? t("generate.submitN", { n: lines }) : t("generate.submit")}
-            <kbd class="hint">Ctrl ↵</kbd>
+            {#if !phone}<kbd class="hint">Ctrl ↵</kbd>{/if}
           </button>
-          <span class="note">{t("generate.lineHint")}</span>
+          <span class="note">{t(stem ? "generate.stemHint" : "generate.lineHint")}</span>
         </div>
       {/if}
     </form>
@@ -357,7 +470,7 @@
                   <span class="spin"></span>
                 {:else if r.state === "saved"}✓{:else if r.state === "failed"}✗{:else if r.state === "queued"}○{:else}●{/if}
               </span>
-              <span class="qw">{r.text}</span>
+              <span class="qw">{label(r)}</span>
               <span class="qs" class:busy={!!r.rewriting}>{status(r)}</span>
               {#if r.state === "ready" || r.state === "saved"}
                 {@const gaps = shortGaps(r)}
@@ -389,7 +502,7 @@
         <p class="note">{t("generate.waiting")}</p>
       {:else if row.state === "generating"}
         <div class="working" role="status">
-          <p class="mono">{t("generate.generating", { text: row.text, s: seconds(row) })}</p>
+          <p class="mono">{t("generate.generating", { text: label(row), s: seconds(row) })}</p>
           <p class="note">{t(`generate.patience.${row.kind}`)}</p>
         </div>
       {:else if row.state === "failed"}
@@ -640,6 +753,53 @@
     min-height: 84px;
     max-height: 30vh;
     resize: vertical;
+  }
+
+  textarea.stem {
+    min-height: 200px;
+    max-height: 50vh;
+  }
+
+  .prompt.stem {
+    align-items: flex-start;
+  }
+
+  .attach {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+  }
+
+  .thumb {
+    position: relative;
+    display: inline-block;
+  }
+
+  .thumb img {
+    display: block;
+    max-width: 200px;
+    max-height: 120px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #fff;
+  }
+
+  .thumb .x {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: var(--outer);
+    color: var(--fg);
+    font-size: 11px;
+    cursor: pointer;
   }
 
   textarea::placeholder,
@@ -1141,8 +1301,14 @@
       padding: 0 8px 8px;
       gap: 8px;
       grid-template-columns: minmax(0, 1fr);
-      grid-template-rows: auto minmax(0, 1fr) auto;
+      /* The preview keeps some room; a tall input (STEM) scrolls the page. */
+      grid-template-rows: auto minmax(240px, 1fr) auto;
       grid-template-areas: "queue" "preview" "input";
+      overflow-y: auto;
+    }
+
+    textarea.stem {
+      min-height: 120px;
     }
 
     .queue {

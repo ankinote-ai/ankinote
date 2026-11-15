@@ -1,5 +1,6 @@
 """Generate → preview → save, on a real temp collection with fake models."""
 
+import base64
 import copy
 import json
 import os
@@ -7,6 +8,7 @@ import re
 from typing import Any
 
 import httpx
+import litellm
 import pytest
 
 from ankinote.model_presets import PRESETS
@@ -88,9 +90,10 @@ class FakeImages:
 @pytest.fixture
 def models(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
     """Fake text answers; speech and images on unless a test turns them off."""
-    state: dict[str, Any] = {"answer": json.dumps([MOON]), "prompts": []}
+    state: dict[str, Any] = {"answer": json.dumps([MOON]), "prompts": [], "calls": []}
 
     async def acompletion(**kwargs: Any) -> Any:
+        state["calls"].append(kwargs["messages"])
         state["prompts"].append(kwargs["messages"][-1]["content"])
         answer = state["answer"]
         if isinstance(answer, Exception):
@@ -861,3 +864,187 @@ async def test_a_saved_stem_card_with_a_new_front_updates_the_same_note(
     stored = await runtime.submit(lambda col: col.get_note(first["note_id"]))
     assert stored["front"] == "State Newton's second law."
     assert sorted(stored.tags) == ["AI-generated", "Classical_Mechanics", "Physics"]
+
+
+# -- STEM from a picture ----------------------------------------------------
+
+PICTURE = b"\x89PNG-a-photographed-problem"
+PICTURE_B64 = base64.b64encode(PICTURE).decode()
+REFERENCE = {"data": PICTURE_B64, "mime": "image/png"}
+
+
+def _attached(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """The picture parts of the last user message."""
+    content = messages[-1]["content"]
+    return [
+        part for part in content if isinstance(content, list) and "image_url" in part
+    ]
+
+
+async def _post_picture(api: httpx.AsyncClient, **body: Any) -> httpx.Response:
+    return await api.post(
+        "/api/cards/stem", json={"reference_image": REFERENCE, **body}
+    )
+
+
+async def test_a_stem_card_can_be_made_from_a_picture_alone(
+    api: httpx.AsyncClient, models: dict[str, Any]
+) -> None:
+    await _gemini(api)
+    models["answer"] = json.dumps(NEWTON)
+
+    response = await _post_picture(api, card_type="formula")
+
+    assert response.status_code == 200, response.text
+    [part] = _attached(models["calls"][-1])
+    assert part["image_url"]["url"] == f"data:image/png;base64,{PICTURE_B64}"
+    assert "attached picture" in models["prompts"][-1][0]["text"]
+
+
+async def test_a_picture_goes_with_the_text_that_came_with_it(
+    api: httpx.AsyncClient, models: dict[str, Any]
+) -> None:
+    await _gemini(api)
+    models["answer"] = json.dumps(NEWTON)
+
+    response = await _post_picture(api, text="Solve part (b)", card_type="formula")
+
+    assert response.status_code == 200, response.text
+    assert "Solve part (b)" in models["prompts"][-1][0]["text"]
+
+
+async def test_a_stem_request_needs_text_or_a_picture(
+    api: httpx.AsyncClient, models: dict[str, Any]
+) -> None:
+    await _gemini(api)
+
+    response = await api.post("/api/cards/stem", json={"text": "   "})
+
+    assert response.status_code == 422
+    assert response.json()["detail"]["code"] == "empty"
+    assert models["calls"] == []
+
+
+async def test_a_picture_is_only_for_stem(
+    api: httpx.AsyncClient, models: dict[str, Any]
+) -> None:
+    await _gemini(api)
+
+    response = await api.post(
+        "/api/cards/word", json={"text": "moon", "reference_image": REFERENCE}
+    )
+
+    assert response.status_code == 422
+    assert response.json()["detail"]["code"] == "image_not_supported"
+    assert models["calls"] == []
+
+
+@pytest.mark.parametrize(
+    "reference",
+    [
+        {"data": "not base64 !!", "mime": "image/png"},
+        {"data": "", "mime": "image/png"},
+        {"data": PICTURE_B64, "mime": "image/gif"},
+    ],
+)
+async def test_an_unreadable_picture_is_refused(
+    api: httpx.AsyncClient, models: dict[str, Any], reference: dict[str, str]
+) -> None:
+    await _gemini(api)
+
+    response = await api.post(
+        "/api/cards/stem", json={"text": "x", "reference_image": reference}
+    )
+
+    assert response.status_code == 422
+    assert models["calls"] == []
+
+
+async def test_a_picture_over_the_limit_is_refused(
+    api: httpx.AsyncClient, models: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    await _gemini(api)
+    monkeypatch.setattr(cards_api, "_PICTURE_LIMIT", 10)
+
+    response = await _post_picture(api)
+
+    assert response.status_code == 422
+    assert response.json()["detail"] == {"code": "image_too_big", "detail": "10"}
+
+
+async def test_a_stem_question_may_run_to_four_thousand_characters(
+    api: httpx.AsyncClient, models: dict[str, Any]
+) -> None:
+    await _gemini(api)
+
+    ok = await _stem(api, models, text="x" * 4000)
+    over = await api.post("/api/cards/stem", json={"text": "x" * 4001})
+
+    assert ok["kind"] == "stem"
+    assert over.status_code == 422
+
+
+async def test_a_model_that_cannot_read_pictures_is_not_asked_to(
+    api: httpx.AsyncClient, models: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    await _gemini(api)
+    monkeypatch.setattr(cards_api, "vision_support", lambda _profile: "no")
+
+    refused = await _post_picture(api)
+    typed = await _stem(api, models)
+
+    assert refused.status_code == 409
+    assert refused.json()["detail"]["code"] == "no_vision"
+    assert typed["kind"] == "stem"  # text alone still works
+
+
+async def test_a_provider_that_rejects_the_picture_says_so(
+    api: httpx.AsyncClient, models: dict[str, Any]
+) -> None:
+    await _gemini(api)
+    models["answer"] = litellm.BadRequestError(
+        "image input is not supported", model="m", llm_provider="openai"
+    )
+
+    with_picture = await _post_picture(api)
+    without = await api.post("/api/cards/stem", json={"text": "F=ma"})
+
+    assert with_picture.status_code == 502
+    assert with_picture.json()["detail"]["code"] == "no_vision"
+    assert without.json()["detail"]["code"] == "error"
+
+
+async def test_a_rewrite_reads_the_original_picture_again(
+    api: httpx.AsyncClient, models: dict[str, Any]
+) -> None:
+    await _gemini(api)
+    models["answer"] = json.dumps(NEWTON)
+    note = (await _post_picture(api, card_type="formula")).json()["notes"][0]
+    url = f"/api/cards/drafts/{note['id']}"
+
+    await api.post(f"{url}/rewrite", json={"instruction": "shorter"})
+    rewrite_call = models["calls"][-1]
+    await api.post(
+        f"{url}/fix-latex", json={"errors": [{"tex": "F = ma", "message": ""}]}
+    )
+    fix_call = models["calls"][-1]
+
+    for call in (rewrite_call, fix_call):
+        [part] = _attached(call)
+        assert PICTURE_B64 in part["image_url"]["url"]
+
+
+async def test_a_rewrite_leaves_the_picture_out_once_the_model_cannot_read_it(
+    api: httpx.AsyncClient, models: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    await _gemini(api)
+    models["answer"] = json.dumps(NEWTON)
+    note = (await _post_picture(api, card_type="formula")).json()["notes"][0]
+    monkeypatch.setattr(cards_api, "vision_support", lambda _profile: "no")
+
+    response = await api.post(
+        f"/api/cards/drafts/{note['id']}/rewrite", json={"instruction": "shorter"}
+    )
+
+    assert response.status_code == 200, response.text
+    assert _attached(models["calls"][-1]) == []

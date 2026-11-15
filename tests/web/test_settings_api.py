@@ -695,3 +695,22 @@ def test_fal_cannot_serve_text(client: TestClient) -> None:
     response = client.put("/api/models", json={"text": {**FAL, "model": "m"}})
 
     assert response.status_code == 422
+
+
+def test_the_text_route_says_whether_the_model_can_read_pictures(
+    client: TestClient,
+) -> None:
+    client.put(
+        "/api/models",
+        json={
+            "text": {
+                "provider": "gemini",
+                "model": GEMINI.models["text"],
+                "api_key": "AIza-test-key-1234",
+            }
+        },
+    )
+
+    models = client.get("/api/settings").json()["models"]
+
+    assert models["text"]["vision"] == "yes"
