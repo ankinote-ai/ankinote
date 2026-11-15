@@ -26,8 +26,7 @@
     position: relative;
     min-width: 0;
     min-height: 0;
-    margin-top: 9px;
-    padding: 22px 16px 16px;
+    padding: 14px 16px 16px;
     background: var(--tile);
     border: 2px solid var(--border);
     border-radius: 10px;
@@ -42,13 +41,10 @@
     border-color: var(--accent);
   }
 
+  /* The title lives inside the tile, so the border stays one unbroken line. */
   .pane-title {
-    position: absolute;
-    top: -11px;
-    left: 12px;
-    margin: 0;
-    padding: 0 6px;
-    background: var(--tile);
+    flex: none;
+    margin: 0 0 12px;
     font-family: var(--mono);
     font-size: 13px;
     font-weight: 500;

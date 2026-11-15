@@ -12,8 +12,9 @@ preview they generated them in.
 
 - **Tiled panes, not cards.** The screen is split into gapped panes on a
   darker outer background, like a tiling window manager. Each pane's title
-  sits in its top border. The pane that has focus gets the accent border;
-  that is the only "active" signal, so don't add others.
+  sits inside the tile, at the top left; the border is never broken by it.
+  The pane that has focus gets the accent border; that is the only "active"
+  signal, so don't add others.
 - **Named palettes, not a brand colour.** Personality comes from four
   well-known editor palettes. The product has no colour of its own beyond
   the chosen palette's accent.
@@ -74,8 +75,10 @@ dark err, Gruvbox light ok). Re-check contrast whenever a value changes.
 
 ## Shape and spacing
 
-- Pane: 2px border, radius 10px, padding 22px top / 16px sides. Title is
-  13px mono on the tile background, overlapping the top border at `left:12px`.
+- Pane: 2px border, radius 10px, padding 14px top / 16px sides. Title is
+  13px mono muted, in the flow at the top of the tile with 12px below it. It
+  never overlaps the border (a title straddling the border put half its
+  box on the outer background, which read as a stray tab).
 - Gaps between panes: 10px (8px on phone). Controls: radius 8px for
   buttons and inputs, 6px for chips and segments, 4px for `kbd` and tags.
 - Touch targets: at least 44px tall for primary and secondary buttons,
