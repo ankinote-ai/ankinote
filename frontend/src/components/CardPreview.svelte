@@ -5,6 +5,7 @@
   import en from "../lib/locales/en.json";
   import frameScript from "../lib/previewFrame.js?raw";
   import { randomId } from "../lib/randomId";
+  import { inlineCss, inlineImages, mathjaxSource } from "../lib/frameAssets";
   import mathjaxUrl from "mathjax/es5/tex-svg-full.js?url";
 
   let {
@@ -30,6 +31,10 @@
   /** The frame document that said it's ready for content. */
   let readyDoc = $state("");
 
+  /** The card CSS and MathJax, fetched here (see frameAssets.ts); null until then. */
+  let css = $state<string | null>(null);
+  let mathText = $state<string | null>(null);
+
   const card = $derived(cards[Math.min(index, cards.length - 1)]!);
   const math = $derived(note.kind === "stem");
 
@@ -48,30 +53,54 @@
     mjx-container[jax="SVG"] > svg { overflow: visible; }
   `;
 
+  $effect(() => {
+    const source = note.css;
+    let stale = false;
+    void inlineCss(source).then((done) => {
+      if (!stale) css = done;
+    });
+    return () => (stale = true);
+  });
+
+  $effect(() => {
+    if (!math) {
+      mathText = "";
+      return;
+    }
+    let stale = false;
+    // Without MathJax the card still shows, formulas as their source.
+    mathjaxSource(new URL(mathjaxUrl, location.origin).href).then(
+      (text) => !stale && (mathText = text),
+      () => !stale && (mathText = ""),
+    );
+    return () => (stale = true);
+  });
+
   /**
    * The frame the card shows in, as Anki would show it. Sandboxed without
    * same-origin, and the CSP lets only this page's own script (and MathJax,
-   * which it loads) run: nothing in a field can reach the app. The card
+   * which is inlined) run: nothing in a field can reach the app. The card
    * itself is sent by message, so a change doesn't reload the frame.
    */
   const frameDoc = $derived.by(() => {
+    if (css === null || mathText === null) return null;
     const nonce = randomId();
     const origin = location.origin;
     const csp = [
       "default-src 'none'",
-      `img-src ${origin} data:`,
-      `media-src ${origin}`,
-      `font-src ${origin} data:`,
+      "img-src data:",
+      "font-src data:",
       "style-src 'unsafe-inline'",
       `script-src 'nonce-${nonce}'`,
     ].join("; ");
-    const mathjax = math ? new URL(mathjaxUrl, origin).href : "";
-    const srcdoc = `<!doctype html><html data-doc="${nonce}" data-mathjax="${mathjax}"><head><meta charset="utf-8">
+    const srcdoc = `<!doctype html><html data-doc="${nonce}" data-mathjax="${mathText ? "1" : ""}"><head><meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="${csp}">
 <base href="${origin}/"><meta name="viewport" content="width=device-width">
-<style>${CHROME}</style><style>${note.css}</style></head>
+<style>${CHROME}</style><style>${css}</style></head>
 <body class="card"><div id="qa"></div>
-<script nonce="${nonce}">${frameScript}<\/script></body></html>`;
+<script nonce="${nonce}">${frameScript}<\/script>${
+      mathText ? `<script nonce="${nonce}">${mathText}<\/script>` : ""
+    }</body></html>`;
     return { id: nonce, srcdoc };
   });
 
@@ -79,17 +108,28 @@
   $effect(() => {
     const mode = (night ?? theme.dark) ? " nightMode night_mode" : "";
     const content = { html: back ? card.back : card.front, cls: `card card${index + 1}${mode}` };
-    if (readyDoc !== frameDoc.id) return;
-    frame?.contentWindow?.postMessage({ ankinotePreview: content }, "*");
+    if (!frameDoc || readyDoc !== frameDoc.id) return;
+    let stale = false;
+    void inlineImages(content.html).then((html) => {
+      if (!stale) frame?.contentWindow?.postMessage({ ankinotePreview: { ...content, html } }, "*");
+    });
+    return () => (stale = true);
   });
 
   function onMessage(event: MessageEvent) {
     if (!frame || event.source !== frame.contentWindow) return;
-    const data = event.data as { doc?: string; height?: unknown; ready?: boolean; math?: MathError[] };
-    if (data?.doc !== frameDoc.id) return;
+    const data = event.data as { doc?: string; height?: unknown; ready?: boolean; math?: MathError[]; play?: unknown };
+    if (!frameDoc || data?.doc !== frameDoc.id) return;
+    if (typeof data.play === "string") return play(data.play);
     if (data.ready) readyDoc = data.doc;
     if (typeof data.height === "number" && data.height > 0) height = data.height;
     if (Array.isArray(data.math)) onmath?.(data.math);
+  }
+
+  /** Replay buttons play here: the frame can't fetch audio (see frameAssets.ts). */
+  function play(src: string) {
+    const url = new URL(src, location.origin);
+    if (url.origin === location.origin) void new Audio(url.href).play().catch(() => {});
   }
 
   function templateName(name: string): string {
@@ -126,7 +166,7 @@
     bind:this={frame}
     title={t("preview.frame", { name: templateName(card.name) })}
     sandbox="allow-scripts"
-    srcdoc={frameDoc.srcdoc}
+    srcdoc={frameDoc?.srcdoc}
     style:height="{height}px"
   ></iframe>
 </div>

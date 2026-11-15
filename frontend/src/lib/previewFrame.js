@@ -4,11 +4,12 @@
 // reloading the frame. Reports the frame's height, plays Anki replay
 // buttons, and, when the page asks for MathJax, typesets the card the way
 // Anki does (\( \) and \[ \]) and reports the formulas that didn't parse.
+// It makes no requests of its own (see frameAssets.ts): MathJax is inlined by
+// the page right after this script, and sound is played by the page.
 (() => {
   const root = document.documentElement;
   const doc = root.dataset.doc;
   const mathjax = root.dataset.mathjax;
-  const nonce = document.currentScript?.nonce ?? "";
   const qa = document.getElementById("qa");
   const post = (data) => parent.postMessage({ ...data, doc }, "*");
 
@@ -20,7 +21,7 @@
     const button = event.target.closest(".replay-button[data-src]");
     if (!button) return;
     event.preventDefault();
-    new Audio(button.dataset.src).play();
+    post({ play: button.dataset.src });
   });
 
   /** Formulas that failed in the current typeset: their TeX and why. */
@@ -108,10 +109,9 @@
       },
     },
   };
-  const script = document.createElement("script");
-  script.nonce = nonce;
-  script.src = mathjax;
-  // Without MathJax the card still shows, formulas as their source.
-  script.onerror = ready;
-  document.head.append(script);
+  // The inlined MathJax runs after this script; if it didn't (or can't), the
+  // card still shows, formulas as their source.
+  addEventListener("load", () => {
+    if (typeof window.MathJax?.typesetPromise !== "function") ready();
+  });
 })();
