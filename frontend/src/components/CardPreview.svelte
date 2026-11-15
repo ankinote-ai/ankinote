@@ -4,6 +4,7 @@
   import { theme } from "../lib/theme.svelte";
   import en from "../lib/locales/en.json";
   import frameScript from "../lib/previewFrame.js?raw";
+  import { randomId } from "../lib/randomId";
   import mathjaxUrl from "mathjax/es5/tex-svg-full.js?url";
 
   let {
@@ -54,7 +55,7 @@
    * itself is sent by message, so a change doesn't reload the frame.
    */
   const frameDoc = $derived.by(() => {
-    const nonce = crypto.randomUUID();
+    const nonce = randomId();
     const origin = location.origin;
     const csp = [
       "default-src 'none'",

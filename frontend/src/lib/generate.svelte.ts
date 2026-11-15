@@ -12,6 +12,7 @@
  * The session lives at module level, so switching workspaces keeps it; a
  * reload starts a new one (drafts are in the server's memory anyway).
  */
+import { randomId } from "./randomId";
 import {
   api,
   ApiError,
@@ -121,7 +122,7 @@ export class Editing {
 }
 
 export class Row {
-  readonly id = crypto.randomUUID();
+  readonly id = randomId();
   state = $state<RowState>("queued");
   /** One note per part of speech for a word. */
   notes = $state<DraftNote[]>([]);
