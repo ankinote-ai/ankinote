@@ -2,6 +2,7 @@
 
 import base64
 import json
+import re
 from collections.abc import Sequence
 from dataclasses import dataclass
 from importlib.resources import files
@@ -34,6 +35,23 @@ def _load_image_prompt() -> str:
         .joinpath("image.md")
         .read_text(encoding="utf-8")
     )
+
+
+# A JSON escape (`\\`, `\n`, `\u00e9`...) or else a lone backslash.
+_ESCAPE_OR_LONE = re.compile(r'\\(?:["\\/bfnrt]|u[0-9a-fA-F]{4})|\\')
+
+
+def _loads(content: str) -> object:
+    r"""``json.loads`` that forgives LaTeX backslashes JSON has no escape for.
+
+    Models write `\max\_left` inside a JSON string. A lone backslash is read as
+    a literal one, so the formula survives; valid escapes, and so valid JSON,
+    pass through unchanged.
+    """
+    fixed = _ESCAPE_OR_LONE.sub(
+        lambda m: m.group(0) if len(m.group(0)) > 1 else "\\\\", content
+    )
+    return json.loads(fixed)
 
 
 def _strip_json_fences(content: str) -> str:
@@ -187,7 +205,7 @@ async def generate_stem_data(
             reasoning_effort=reasoning_effort,
         )
         classification_data = cast(
-            dict[str, str], json.loads(_strip_json_fences(classification))
+            dict[str, str], _loads(_strip_json_fences(classification))
         )
         card_type = CardType(classification_data["card_type"])
     system_prompt = _load_system_prompt(card_type)
@@ -210,7 +228,7 @@ async def generate_stem_data(
         logger.info(f"Raw AI response length: {len(content)} characters")
 
         try:
-            data = cast(dict[str, object], json.loads(content))
+            data = cast(dict[str, object], _loads(content))
         except json.JSONDecodeError as e:
             logger.exception("Failed to parse JSON response")
             logger.debug(f"Response content: {content[:500]}...")

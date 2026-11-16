@@ -7,6 +7,7 @@ import pytest
 from ankinote.collections.phrase.generator import PhraseGenerator
 from ankinote.collections.sentence.generator import SentenceGenerator
 from ankinote.collections.stem.generator import StemGenerator
+from ankinote.collections.stem.models import CardType
 from ankinote.collections.word.generator import WordGenerator
 from ankinote.consts import Language
 from ankinote.services.ai import DISABLE_REASONING, TextMessage
@@ -291,3 +292,31 @@ async def test_stem_generator_uses_unified_text_service():
     assert text_service.calls[0]["model"] == "stem-model"
     # STEM keeps extended thinking: multi-step derivations benefit from it.
     assert text_service.calls[0]["reasoning_effort"] is None
+
+
+async def test_stem_generator_keeps_a_latex_escape_json_does_not_know():
+    # The model wrote `\_` the LaTeX way inside a JSON string; the card is fine.
+    text_service = FakeTextService(
+        [
+            r"""
+            {
+              "card_type": "example",
+              "front": "Trapped rain water for [0, 1, 0, 2, 1, 0, 1, 3, 2, 1, 2, 1]?",
+              "answer": "6",
+              "steps": [
+                "Water at i is \\(\\min(\\max\_left[i], \\max\_right[i]) - h[i]\\).",
+                "Sum it: 6."
+              ],
+              "tags": ["Algorithms"]
+            }
+            """,
+        ]
+    )
+    generator = StemGenerator(text_service=text_service, text_model="stem-model")
+
+    model = await generator.generate("water", card_type=CardType.EXAMPLE)
+
+    assert model.steps[0] == (
+        r"Water at i is \(\min(\max\_left[i], \max\_right[i]) - h[i]\)."
+    )
+    assert model.steps[1] == "Sum it: 6."
