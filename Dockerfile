@@ -17,7 +17,12 @@ ENV PYTHONUNBUFFERED=1 \
     XDG_CONFIG_HOME=/config \
     ANKI_CONNECT_URL=http://host.docker.internal:8765
 
-RUN pip install --no-cache-dir "ankinote-ai[headless]==${ANKINOTE_VERSION}"
+# Retry: right after a release, a CDN node can still serve an index without the
+# new version even after the workflow's PyPI wait step has seen it.
+RUN for i in 1 2 3 4 5 6; do \
+        pip install --no-cache-dir "ankinote-ai[headless]==${ANKINOTE_VERSION}" && exit 0; \
+        echo "pip install attempt $i failed, retrying in 20s"; sleep 20; \
+    done; exit 1
 
 RUN useradd --create-home --uid 1000 appuser \
     && mkdir -p /config/ankinote /data \
