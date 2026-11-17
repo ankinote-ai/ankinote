@@ -102,6 +102,26 @@ def test_structured_content_stays_in_separate_fields():
     assert "Subtract" not in example["explanation"]
 
 
+def test_example_explanation_shows_one_paragraph_per_thinking_step():
+    model = ExampleModel(
+        front="Climb 5 stairs, 1 or 2 at a time: how many ways?",
+        answer="8",
+        steps=["f(5) = 8"],
+        explanation="What decides the count? The last move.\n\nSo what do I add? f(4) + f(3).",
+        tags=["Math"],
+    )
+    fields = _make_collection()._build_note_data(model, None)
+    assert fields["explanation"] == (
+        "<p>What decides the count? The last move.</p>"
+        "<p>So what do I add? f(4) + f(3).</p>"
+    )
+
+
+def test_empty_explanation_stays_empty():
+    model = CARDS[3].model_copy(update={"explanation": ""})
+    assert _make_collection()._build_note_data(model, None)["explanation"] == ""
+
+
 def test_incompatible_fields_and_incomplete_solutions_are_rejected():
     with pytest.raises(ValidationError):
         ConceptModel.model_validate({**CARDS[0].model_dump(), "steps": ["irrelevant"]})

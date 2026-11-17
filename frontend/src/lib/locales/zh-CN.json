@@ -418,7 +418,7 @@
   "edit.field.summary": "概要",
   "edit.field.steps": "步骤",
   "edit.field.answer": "答案",
-  "edit.field.explanation": "讲解",
+  "edit.field.explanation": "思路",
   "edit.field.tags": "标签",
   "edit.col.symbol": "符号（LaTeX）",
   "edit.col.description": "含义",

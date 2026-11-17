@@ -508,6 +508,10 @@ class StemCollection:
         if isinstance(stem_model, (ProcedureModel, ExampleModel)):
             items = "".join(f"<li>{step}</li>" for step in stem_model.steps)
             fields["steps"] = f"<ol class='step-list'>{items}</ol>"
+        if isinstance(stem_model, ExampleModel):
+            # One thinking step per line (see prompts/example.md).
+            lines = (line.strip() for line in stem_model.explanation.splitlines())
+            fields["explanation"] = "".join(f"<p>{line}</p>" for line in lines if line)
         fields["image"] = (
             f"<img src='{image_filename}' class='diagram'>" if image_filename else ""
         )
