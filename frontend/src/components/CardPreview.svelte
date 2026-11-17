@@ -27,6 +27,9 @@
 
   let index = $state(0);
   let height = $state(320);
+  /** The iframe's top and bottom border: the app is border-box, so without
+   * it the card would be 2px taller than the frame and scroll by that much. */
+  const FRAME_BORDER = 2;
   let frame = $state<HTMLIFrameElement>();
   /** The frame document that said it's ready for content. */
   let readyDoc = $state("");
@@ -167,7 +170,7 @@
     title={t("preview.frame", { name: templateName(card.name) })}
     sandbox="allow-scripts"
     srcdoc={frameDoc?.srcdoc}
-    style:height="{height}px"
+    style:height="{height + FRAME_BORDER}px"
   ></iframe>
 </div>
 
