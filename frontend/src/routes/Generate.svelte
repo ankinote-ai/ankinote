@@ -176,7 +176,7 @@
   /** What the wait is for, from what this row asked for besides the text. */
   function patience(r: Row): MessageKey {
     const { image, audio } = r.asked;
-    if (r.kind === "stem") return image ? "generate.patience.stem" : "generate.patience.stemText";
+    if (r.kind === "stem") return "generate.patience.stem";
     if (r.kind === "word" && image) return audio ? "generate.patience.word" : "generate.patience.wordImage";
     return audio ? "generate.patience.phrase" : "generate.patience.text";
   }
