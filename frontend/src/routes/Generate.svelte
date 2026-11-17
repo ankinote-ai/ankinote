@@ -173,6 +173,14 @@
     return Math.max(0, Math.round((session.now - r.startedAt) / 1000));
   }
 
+  /** What the wait is for, from what this row asked for besides the text. */
+  function patience(r: Row): MessageKey {
+    const { image, audio } = r.asked;
+    if (r.kind === "stem") return image ? "generate.patience.stem" : "generate.patience.stemText";
+    if (r.kind === "word" && image) return audio ? "generate.patience.word" : "generate.patience.wordImage";
+    return audio ? "generate.patience.phrase" : "generate.patience.text";
+  }
+
   function status(r: Row): string {
     if (r.state === "generating") return t("generate.state.generating", { s: seconds(r) });
     if (r.rewriting) return t("generate.state.generating", { s: rewriteSeconds(r) });
@@ -503,7 +511,7 @@
       {:else if row.state === "generating"}
         <div class="working" role="status">
           <p class="mono">{t("generate.generating", { text: label(row), s: seconds(row) })}</p>
-          <p class="note">{t(`generate.patience.${row.kind}`)}</p>
+          <p class="note">{t(patience(row))}</p>
         </div>
       {:else if row.state === "failed"}
         <p class="error" role="alert">{failureText(row)} {@render goFix(row.failure?.code)}</p>

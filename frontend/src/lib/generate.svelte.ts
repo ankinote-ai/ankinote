@@ -130,6 +130,8 @@ export class Row {
   /** Which of `notes` the preview shows. */
   pick = $state(0);
   startedAt = $state(0);
+  /** What the generation under way was asked for besides the text. */
+  asked = $state({ image: false, audio: false });
   failure = $state<Failure | null>(null);
   saved = $state<SavedNote | null>(null);
   /** Set while the selected note's fields are being edited. */
@@ -452,6 +454,7 @@ class Session {
       card_type: row.cardType,
       reference_image: row.picture && { data: row.picture.data, mime: row.picture.mime },
     };
+    row.asked = { image: options.image, audio: options.audio };
     try {
       row.notes = (await api.generate(row.kind, row.text, options)).notes;
       row.pick = 0;
