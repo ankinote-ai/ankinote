@@ -430,6 +430,7 @@
   "settings.section.anki": "Anki",
   "settings.section.languages": "Idiomas",
   "settings.section.appearance": "Apariencia",
+  "settings.section.about": "Acerca de",
   "settings.save": "Guardar",
   "settings.saved": "Guardado.",
   "settings.unsaved": "Aún sin guardar.",
@@ -507,5 +508,17 @@
   "anki.hint.go.download": "Descarga de AnkiWeb para continuar.",
   "first.hintEmpty": "Genera una tarjeta y guárdala para terminar la configuración.",
   "first.toAnki": "Abrir Conectar Anki",
-  "wizard.returnTo": "Volver a {step}"
+  "wizard.returnTo": "Volver a {step}",
+  "about.version": "Versión",
+  "about.project": "Proyecto",
+  "about.issues": "Informar de un problema",
+  "about.releases": "Notas de la versión",
+  "about.license": "Licencia",
+  "about.copy": "Copiar",
+  "about.copied": "Copiado",
+  "about.diagnostics": "Diagnóstico",
+  "about.diagnosticsNote": "Pégalo en tu issue. Solo contiene versiones: ni claves, ni tarjetas, ni rutas de archivo.",
+  "about.copyDiagnostics": "Copiar diagnóstico",
+  "about.copyFailed": "No se pudo copiar. Selecciona el texto y cópialo tú mismo.",
+  "about.loadError": "No se pudo leer la versión del servidor. Recarga la página para reintentarlo."
 }

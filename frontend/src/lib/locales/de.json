@@ -430,6 +430,7 @@
   "settings.section.anki": "Anki",
   "settings.section.languages": "Sprachen",
   "settings.section.appearance": "Aussehen",
+  "settings.section.about": "Über",
   "settings.save": "Speichern",
   "settings.saved": "Gespeichert.",
   "settings.unsaved": "Noch nicht gespeichert.",
@@ -507,5 +508,17 @@
   "anki.hint.go.download": "Lade von AnkiWeb herunter, um fortzufahren.",
   "first.hintEmpty": "Erzeuge eine Karte und speichere sie, um die Einrichtung abzuschließen.",
   "first.toAnki": "„Anki verbinden“ öffnen",
-  "wizard.returnTo": "Zurück zu {step}"
+  "wizard.returnTo": "Zurück zu {step}",
+  "about.version": "Version",
+  "about.project": "Projekt",
+  "about.issues": "Problem melden",
+  "about.releases": "Versionshinweise",
+  "about.license": "Lizenz",
+  "about.copy": "Kopieren",
+  "about.copied": "Kopiert",
+  "about.diagnostics": "Diagnose",
+  "about.diagnosticsNote": "Füge das in dein Issue ein. Es enthält nur Versionen: keine Schlüssel, Karten oder Dateipfade.",
+  "about.copyDiagnostics": "Diagnose kopieren",
+  "about.copyFailed": "Kopieren nicht möglich. Markiere den Text und kopiere ihn selbst.",
+  "about.loadError": "Die Version konnte nicht vom Server gelesen werden. Lade die Seite neu und versuche es erneut."
 }

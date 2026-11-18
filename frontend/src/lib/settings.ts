@@ -1,5 +1,5 @@
 /** Settings' sections, each at /settings/<section>; /settings opens the first. */
-export const SECTIONS = ["models", "anki", "languages", "appearance"] as const;
+export const SECTIONS = ["models", "anki", "languages", "appearance", "about"] as const;
 export type Section = (typeof SECTIONS)[number];
 
 export function settingsSection(path: string): Section {
@@ -18,3 +18,6 @@ export function sectionFor(code: string): Section | null {
   if (["write_blocked", "not_open", "unreachable", "not_ankiconnect"].includes(code)) return "anki";
   return null;
 }
+
+/** Where the project lives; About links from here so a move is one edit. */
+export const REPO_URL = "https://github.com/ankinote-ai/ankinote";

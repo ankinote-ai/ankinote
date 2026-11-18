@@ -430,6 +430,7 @@
   "settings.section.anki": "Anki",
   "settings.section.languages": "语言",
   "settings.section.appearance": "外观",
+  "settings.section.about": "关于",
   "settings.save": "保存",
   "settings.saved": "已保存。",
   "settings.unsaved": "还没有保存。",
@@ -507,5 +508,17 @@
   "anki.hint.go.download": "从 AnkiWeb 下载后即可继续。",
   "first.hintEmpty": "先生成一张卡片，再保存即可完成设置。",
   "first.toAnki": "打开“连接 Anki”",
-  "wizard.returnTo": "回到{step}"
+  "wizard.returnTo": "回到{step}",
+  "about.version": "版本",
+  "about.project": "项目地址",
+  "about.issues": "反馈问题",
+  "about.releases": "更新日志",
+  "about.license": "开源协议",
+  "about.copy": "复制",
+  "about.copied": "已复制",
+  "about.diagnostics": "诊断信息",
+  "about.diagnosticsNote": "粘贴到你的 issue 里。其中只有版本信息，不含密钥、卡片或文件路径。",
+  "about.copyDiagnostics": "复制诊断信息",
+  "about.copyFailed": "无法复制。请选中文本后手动复制。",
+  "about.loadError": "无法从服务器读取版本号。请刷新页面重试。"
 }

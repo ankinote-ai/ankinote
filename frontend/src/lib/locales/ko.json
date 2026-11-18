@@ -430,6 +430,7 @@
   "settings.section.anki": "Anki",
   "settings.section.languages": "언어",
   "settings.section.appearance": "모양",
+  "settings.section.about": "정보",
   "settings.save": "저장",
   "settings.saved": "저장했습니다.",
   "settings.unsaved": "아직 저장되지 않았습니다.",
@@ -507,5 +508,17 @@
   "anki.hint.go.download": "계속하려면 AnkiWeb에서 내려받으세요.",
   "first.hintEmpty": "카드를 생성하고 저장하면 설정이 끝납니다.",
   "first.toAnki": "Anki 연결 열기",
-  "wizard.returnTo": "{step}(으)로 돌아가기"
+  "wizard.returnTo": "{step}(으)로 돌아가기",
+  "about.version": "버전",
+  "about.project": "프로젝트",
+  "about.issues": "문제 신고",
+  "about.releases": "릴리스 노트",
+  "about.license": "라이선스",
+  "about.copy": "복사",
+  "about.copied": "복사됨",
+  "about.diagnostics": "진단 정보",
+  "about.diagnosticsNote": "이슈에 붙여 넣으세요. 버전 정보만 들어 있으며 키, 카드, 파일 경로는 포함되지 않습니다.",
+  "about.copyDiagnostics": "진단 정보 복사",
+  "about.copyFailed": "복사하지 못했습니다. 텍스트를 선택해 직접 복사하세요.",
+  "about.loadError": "서버에서 버전을 읽지 못했습니다. 페이지를 새로고침하세요."
 }

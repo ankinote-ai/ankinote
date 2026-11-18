@@ -1,3 +1,4 @@
+import platform
 from pathlib import Path, PurePath, PurePosixPath, PureWindowsPath
 
 import pytest
@@ -21,7 +22,11 @@ def test_health_reports_version(dist: Path) -> None:
     response = client.get("/api/health")
 
     assert response.status_code == 200
-    assert response.json() == {"status": "ok", "version": __version__}
+    body = response.json()
+    assert body["status"] == "ok"
+    assert body["version"] == __version__
+    assert body["python"] == platform.python_version()
+    assert body["platform"] == platform.platform()
 
 
 def test_unknown_api_path_is_json_404_not_the_spa(dist: Path) -> None:

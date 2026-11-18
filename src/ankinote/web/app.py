@@ -5,6 +5,7 @@ development, run the Vite dev server instead; it proxies ``/api`` here.
 """
 
 import os
+import platform
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path, PurePath
@@ -55,7 +56,12 @@ def _api() -> APIRouter:
 
     @router.get("/health")
     async def health() -> dict[str, str]:
-        return {"status": "ok", "version": __version__}
+        return {
+            "status": "ok",
+            "version": __version__,
+            "python": platform.python_version(),
+            "platform": platform.platform(),
+        }
 
     @router.api_route(
         "/{path:path}",

@@ -1,4 +1,4 @@
-export type Health = { status: "ok"; version: string };
+export type Health = { status: "ok"; version: string; python: string; platform: string };
 
 export type Route = "text" | "image" | "speech";
 export const ROUTES: Route[] = ["text", "image", "speech"];

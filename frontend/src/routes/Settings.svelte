@@ -1,5 +1,6 @@
 <script lang="ts">
   import Pane from "../components/Pane.svelte";
+  import About from "./About.svelte";
   import AnkiStep from "./wizard/AnkiStep.svelte";
   import AppearanceStep from "./wizard/AppearanceStep.svelte";
   import LanguageStep from "./wizard/LanguageStep.svelte";
@@ -42,6 +43,8 @@
           <AnkiStep settings />
         {:else if section === "languages"}
           <LanguageStep settings />
+        {:else if section === "about"}
+          <About />
         {:else}
           <AppearanceStep settings />
         {/if}

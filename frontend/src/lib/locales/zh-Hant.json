@@ -430,6 +430,7 @@
   "settings.section.anki": "Anki",
   "settings.section.languages": "語言",
   "settings.section.appearance": "外觀",
+  "settings.section.about": "關於",
   "settings.save": "儲存",
   "settings.saved": "已儲存。",
   "settings.unsaved": "尚未儲存。",
@@ -507,5 +508,17 @@
   "anki.hint.go.download": "請從 AnkiWeb 下載以繼續。",
   "first.hintEmpty": "生成一張卡片，再儲存它以完成設定。",
   "first.toAnki": "前往「連接 Anki」",
-  "wizard.returnTo": "回到{step}"
+  "wizard.returnTo": "回到{step}",
+  "about.version": "版本",
+  "about.project": "專案位址",
+  "about.issues": "回報問題",
+  "about.releases": "更新日誌",
+  "about.license": "開源授權",
+  "about.copy": "複製",
+  "about.copied": "已複製",
+  "about.diagnostics": "診斷資訊",
+  "about.diagnosticsNote": "貼到你的 issue 裡。其中只有版本資訊，不含金鑰、卡片或檔案路徑。",
+  "about.copyDiagnostics": "複製診斷資訊",
+  "about.copyFailed": "無法複製。請選取文字後手動複製。",
+  "about.loadError": "無法從伺服器讀取版本號。請重新整理頁面再試。"
 }

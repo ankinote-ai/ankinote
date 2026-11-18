@@ -430,6 +430,7 @@
   "settings.section.anki": "Anki",
   "settings.section.languages": "Languages",
   "settings.section.appearance": "Appearance",
+  "settings.section.about": "About",
   "settings.save": "Save",
   "settings.saved": "Saved.",
   "settings.unsaved": "Not saved yet.",
@@ -507,5 +508,17 @@
   "anki.hint.go.download": "Download from AnkiWeb to continue.",
   "first.hintEmpty": "Generate a card, then save it to finish setup.",
   "first.toAnki": "Open Connect Anki",
-  "wizard.returnTo": "Back to {step}"
+  "wizard.returnTo": "Back to {step}",
+  "about.version": "Version",
+  "about.project": "Project",
+  "about.issues": "Report a problem",
+  "about.releases": "Release notes",
+  "about.license": "License",
+  "about.copy": "Copy",
+  "about.copied": "Copied",
+  "about.diagnostics": "Diagnostics",
+  "about.diagnosticsNote": "Paste this into your issue. It holds versions only: no keys, cards or file paths.",
+  "about.copyDiagnostics": "Copy diagnostics",
+  "about.copyFailed": "Couldn't copy. Select the text and copy it yourself.",
+  "about.loadError": "Couldn't read the version from the server. Reload the page to try again."
 }

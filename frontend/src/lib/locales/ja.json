@@ -430,6 +430,7 @@
   "settings.section.anki": "Anki",
   "settings.section.languages": "言語",
   "settings.section.appearance": "外観",
+  "settings.section.about": "このアプリについて",
   "settings.save": "保存",
   "settings.saved": "保存しました。",
   "settings.unsaved": "まだ保存されていません。",
@@ -507,5 +508,17 @@
   "anki.hint.go.download": "続けるには AnkiWeb からダウンロードしてください。",
   "first.hintEmpty": "カードを生成して保存すると、セットアップが完了します。",
   "first.toAnki": "Anki の接続を開く",
-  "wizard.returnTo": "{step}に戻る"
+  "wizard.returnTo": "{step}に戻る",
+  "about.version": "バージョン",
+  "about.project": "プロジェクト",
+  "about.issues": "問題を報告",
+  "about.releases": "リリースノート",
+  "about.license": "ライセンス",
+  "about.copy": "コピー",
+  "about.copied": "コピーしました",
+  "about.diagnostics": "診断情報",
+  "about.diagnosticsNote": "issue に貼り付けてください。含まれるのはバージョン情報のみで、キー、カード、ファイルパスは含まれません。",
+  "about.copyDiagnostics": "診断情報をコピー",
+  "about.copyFailed": "コピーできませんでした。テキストを選択して手動でコピーしてください。",
+  "about.loadError": "サーバーからバージョンを読み取れませんでした。ページを再読み込みしてください。"
 }
