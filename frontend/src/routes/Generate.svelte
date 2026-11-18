@@ -25,6 +25,7 @@
   let field = $state<HTMLTextAreaElement | HTMLInputElement>();
   let queueList = $state<HTMLUListElement>();
   let fileInput = $state<HTMLInputElement>();
+  let workEl = $state<HTMLDivElement>();
   /** STEM: the picture of the question, if one is attached. */
   let picture = $state<Picture | null>(null);
   let pictureError = $state("");
@@ -112,7 +113,15 @@
       picture = null;
       pictureError = "";
     }
-    field?.focus();
+    if (added && phone) {
+      // The page scrolls on a phone: close the keyboard and go back to the
+      // top, where the session strip shows the new card's progress.
+      field?.blur();
+      const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+      workEl?.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
+    } else {
+      field?.focus();
+    }
   }
 
   async function attach(file: File | null) {
@@ -293,7 +302,7 @@
   {/if}
 {/snippet}
 
-<div class="work" class:editing={!!editing} class:live bind:clientWidth={width}>
+<div class="work" class:editing={!!editing} class:live bind:clientWidth={width} bind:this={workEl}>
   <!-- A phone needs the room for the editor, and a live editor the whole
        width; nothing is generated meanwhile. -->
   {#if !(phone && editing) && !live}
@@ -1309,10 +1318,25 @@
       padding: 0 8px 8px;
       gap: 8px;
       grid-template-columns: minmax(0, 1fr);
-      /* The preview keeps some room; a tall input (STEM) scrolls the page. */
-      grid-template-rows: auto minmax(240px, 1fr) auto;
+      /* The page scrolls as a whole and the preview is as tall as the card,
+       * so it reads top to bottom: card, Save, then the input for the next
+       * one. Squeezed into one screen, the card got ~250px and scrolled
+       * inside itself. Panes have min-height: 0, so "auto" rows would still
+       * shrink to the screen; max-content rows don't. */
+      grid-template-rows: repeat(3, max-content);
       grid-template-areas: "queue" "preview" "input";
       overflow-y: auto;
+    }
+
+    .stage,
+    .stage.split,
+    .col {
+      flex: none;
+      overflow: visible;
+    }
+
+    .stage.split:has(.tabs) {
+      grid-template-rows: auto auto;
     }
 
     textarea.stem {
@@ -1352,7 +1376,7 @@
     }
 
     .work.editing {
-      grid-template-rows: auto minmax(0, 1fr);
+      grid-template-rows: repeat(2, max-content);
       grid-template-areas: "queue" "preview";
     }
 

@@ -518,9 +518,11 @@
     gap: 8px 14px;
   }
 
+  /* The sample is as wide as the card preview (560px), so the anatomy sits
+   * right beside it instead of at the far edge of a wide pane. */
   .cols {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 260px;
+    grid-template-columns: minmax(0, 560px) 260px;
     gap: 24px;
     align-items: start;
     padding-bottom: 8px;

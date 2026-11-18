@@ -175,11 +175,17 @@
 </div>
 
 <style>
+  /* The card CSS sizes itself from the viewport (vw), so the frame's width
+   * decides what it looks like. A frame as wide as the pane is a desktop
+   * reviewer at full size; capped at a large phone's width, the card
+   * renders as it will where most reviewing happens, with its own rules. */
   .preview {
     display: flex;
     flex-direction: column;
     gap: 10px;
     min-width: 0;
+    width: 100%;
+    max-width: 560px;
   }
 
   .controls {

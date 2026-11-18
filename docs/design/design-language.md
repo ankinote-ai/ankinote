@@ -74,13 +74,21 @@ the default palette there and regenerate. The name is always written
 
 ## Type
 
-- Sans: IBM Plex Sans, then the system's Chinese face: `"PingFang SC",
+- Sans: Source Sans 3 (since 2026-11-18; was IBM Plex Sans), then the
+  system's Chinese face: `"PingFang SC",
   "Hiragino Sans GB", "Noto Sans CJK SC", "Noto Sans SC", "Source Han Sans
   SC", "Microsoft YaHei"`. Mono: IBM Plex Mono with the same CJK fallbacks.
   Text marked `lang="ja"`, `"ko"` or `"zh-Hant"` puts that language's faces
-  first (Japanese kanji forms, a Hangul font). Self-host the Plex files (`woff2`, Latin subset plus IPA
-  extensions); never load fonts from a CDN at runtime.
-- UI body 15px / 1.5. Card body 16px / 1.6. Pane titles, status and keys
+  first (Japanese kanji forms, a Hangul font). Self-host the font files
+  (`woff2`); never load fonts from a CDN at runtime.
+- Why Source Sans 3: cards print pronunciations, and Plex's shipped subsets
+  lack most IPA (ʃ ɪ ʊ ˈ ː …), so every pronunciation mixed in a fallback
+  face; Source Sans covers IPA (Latin Extended) and θ/β (Greek). It is also
+  the Latin half of Source Han Sans / Noto Sans CJK, so mixed lines like
+  "源自拉丁语 luna（月亮）" share proportions and weight. Its x-height is lower
+  than Plex's, hence the 16px UI body. A replacement must pass the same IPA
+  check.
+- UI body 16px / 1.5; labels and notes 14px. Card body 16px / 1.6. Pane titles, status and keys
   13px mono (12px for `kbd`). Card headword 40–48px sans semibold. Sentence
   case everywhere; no all-caps labels.
 
@@ -106,7 +114,7 @@ device type.
 | --- | --- | --- |
 | > 1000px | desktop, iPad landscape (1180) | left column 360px: input over queue; preview fills the right |
 | 601–1000px | iPad portrait (820) | input spans the top; queue 250px left, preview right |
-| ≤ 600px | phone | queue as a horizontal chip strip on top, preview in the middle, input pinned to the bottom with a send button |
+| ≤ 600px | phone | queue as a horizontal chip strip on top, preview in the middle at the card's full height, input at the bottom with a send button; the page scrolls as a whole and sending returns to the top |
 
 The top bar holds the brand, workspaces (`1 Generate`, `2 Note types`,
 `3 Settings`, switchable with the number keys), connection status and the
@@ -336,12 +344,16 @@ step; the flow above supersedes it.
   `.night_mode .card`, so Anki's own night mode switches them on every
   client. A test keeps hex colours, `rgba()` and font stacks out of
   `style.css`.
-- Card fonts ship as collection media (`_ankinote-ibm-plex-sans-*.woff2`,
-  Latin and Latin Extended at 400 and 600; the leading underscore keeps
+- Card fonts ship as collection media (`_ankinote-source-sans-3-*.woff2`,
+  Latin, Latin Extended and Greek at 400 and 600; the leading underscore keeps
   Anki's "check media" from deleting them) so AnkiDroid and AnkiMobile
   render the same type offline. They're stored whenever a note type is set
   up or restyled. The preview loads them from `/api/card-theme/fonts/`.
-- Cards follow the UI's shape and type rules: Plex Sans, panels with a 1px
+  The preview is at most 560px wide (a large phone): the card CSS sizes
+  itself from the viewport, so a pane-wide frame would show it at a wide
+  desktop reviewer's maximum (21px text, 67px headword). Don't override the
+  card's sizes in the preview; change its width.
+- Cards follow the UI's shape and type rules: Source Sans 3, panels with a 1px
   border and 10px radius on the `--outer` background, no shadows or
   gradients, sentence-case section titles, chips at 6px.
 - Note fields and card templates stay as they are; any field change is
