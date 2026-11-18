@@ -3,6 +3,7 @@
 import functools
 import json
 import os
+import tempfile
 from collections.abc import Callable
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -796,8 +797,23 @@ def save_settings(settings: Settings) -> None:
         "card_theme_light": settings.card_theme_light,
         "card_theme_dark": settings.card_theme_dark,
     }
-    path = _get_config_path()
-    path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+    _write_private(_get_config_path(), json.dumps(data, indent=2))
+
+
+def _write_private(path: Path, text: str) -> None:
+    """Replace ``path`` with ``text`` in one step, readable only by the user.
+
+    The file holds API keys. ``mkstemp`` creates it as 0600, and the rename
+    means a crash mid-write never leaves a truncated settings.json.
+    """
+    fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as stream:
+            stream.write(text)
+        os.replace(tmp, path)
+    except BaseException:
+        Path(tmp).unlink(missing_ok=True)
+        raise
 
 
 def apply_env(settings: Settings) -> None:

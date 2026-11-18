@@ -52,6 +52,12 @@ To use it from your phone or another computer, pick one:
 Avoid `ANKINOTE_PUBLISH=8080` (all interfaces) on a machine reachable from
 the internet.
 
+AnkiNote answers only to `localhost` and IP addresses, so that a web page can't
+reach it through a DNS name it controls. If you open it by name (the proxy's
+`ankinote.example.com`, a Tailscale MagicDNS name, `mybox.local`), add that
+name to `ANKINOTE_ALLOWED_HOSTS`; otherwise every request gets a
+"does not answer to the host name" error.
+
 ## `headless/`
 
 One `ankinote` service. It runs with `ANKI_BACKEND=collection`, opens an Anki
@@ -85,6 +91,7 @@ Anki.
 | Variable | Default | What it does |
 | --- | --- | --- |
 | `ANKINOTE_PUBLISH` | `127.0.0.1:8080` | Address and port on the host. Read the section above before changing the address. |
+| `ANKINOTE_ALLOWED_HOSTS` | unset | Comma-separated host names AnkiNote answers to besides `localhost` and IP addresses, e.g. `ankinote.example.com`. |
 | `ANKINOTE_IMAGE` | `ghcr.io/ankinote-ai/ankinote:latest` | Image and tag. Pin a minor version (`…:1.1`) to get fixes but not new features. |
 | `ANKIWEB_USERNAME` / `ANKIWEB_PASSWORD` | unset | `headless/` only. Signs in to AnkiWeb; overrides a login made in the app; the password is never written to disk. |
 | `ANKI_CONNECT_URL` | `http://host.docker.internal:8765` | `standard/` only. Where AnkiConnect listens. |

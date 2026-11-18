@@ -443,3 +443,19 @@ def test_load_settings_migrates_legacy_custom_provider_as_active(
     assert profile.vendor == CUSTOM_VENDOR
     assert profile.model == "Qwen/Qwen2.5-7B"
     assert profile.base_url == "http://localhost:8000/v1"
+
+
+@pytest.mark.skipif(os.name == "nt", reason="POSIX file modes")
+def test_saved_settings_are_private_to_the_user(tmp_path, monkeypatch) -> None:
+    # settings.json holds API keys; other local users must not read it.
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    path = tmp_path / "ankinote" / "settings.json"
+    path.parent.mkdir()
+    path.write_text("{}")
+    path.chmod(0o644)
+
+    save_settings(Settings(api_keys={"OPENAI_API_KEY": "sk-secret"}))
+
+    assert path.stat().st_mode & 0o777 == 0o600
+    assert json.loads(path.read_text())["api_keys"] == {"OPENAI_API_KEY": "sk-secret"}
+    assert [p.name for p in path.parent.iterdir()] == ["settings.json"]

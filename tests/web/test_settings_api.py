@@ -41,7 +41,7 @@ GEMINI_LIST = {
 
 @pytest.fixture
 def client(tmp_path: Path) -> TestClient:
-    return TestClient(create_app(tmp_path / "no-dist"))
+    return TestClient(create_app(tmp_path / "no-dist"), base_url="http://localhost")
 
 
 @pytest.fixture
@@ -402,7 +402,7 @@ def test_0x_google_tts_key_shows_as_speech_route(tmp_path: Path) -> None:
             }
         )
     )
-    client = TestClient(create_app(tmp_path / "no-dist"))
+    client = TestClient(create_app(tmp_path / "no-dist"), base_url="http://localhost")
 
     body = client.get("/api/settings").json()
 

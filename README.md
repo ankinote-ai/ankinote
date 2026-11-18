@@ -118,6 +118,8 @@ docker compose up -d      # open http://localhost:8080
 
 Already running Anki Desktop with AnkiConnect? Use `deploy/standard` instead. See [`deploy/README.md`](deploy/README.md) for full deployment options, reverse-proxy tips, and migration guides.
 
+AnkiNote answers only to `localhost` and IP addresses. To open it by a host name (a reverse proxy, a Tailscale name), list that name in `ANKINOTE_ALLOWED_HOSTS`, comma-separated.
+
 ---
 
 ## ⌨️ From the Terminal or an AI Agent

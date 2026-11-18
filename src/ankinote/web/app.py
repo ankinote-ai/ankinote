@@ -6,7 +6,7 @@ development, run the Vite dev server instead; it proxies ``/api`` here.
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from pathlib import Path
+from pathlib import Path, PurePath
 
 from fastapi import APIRouter, FastAPI
 from fastapi.responses import FileResponse, PlainTextResponse, Response
@@ -22,6 +22,7 @@ from ankinote.web import (
     note_types_api,
     settings_api,
 )
+from ankinote.web.guard import LocalAccessGuard, allowed_host_names
 
 DIST_DIR = Path(__file__).parent / "dist"
 
@@ -33,6 +34,18 @@ _NOT_BUILT = (
     "From a source checkout, run `make web-build`, or use `make web-dev` "
     "while developing.\n"
 )
+
+
+def is_root_file_name(dist_dir: PurePath, path: str) -> bool:
+    """Whether the URL ``path`` names one file directly inside ``dist_dir``.
+
+    Checked with ``dist_dir``'s own path rules, so on Windows a drive letter,
+    UNC prefix or backslash in the URL can't point outside it.
+    """
+    if not path or path.startswith("."):
+        return False
+    candidate = dist_dir / path
+    return candidate.name == path and candidate.parent == dist_dir
 
 
 def _api() -> APIRouter:
@@ -70,6 +83,7 @@ def create_app(dist_dir: Path = DIST_DIR) -> FastAPI:
     app = FastAPI(
         title="ankinote", version=__version__, docs_url="/api/docs", lifespan=_lifespan
     )
+    app.add_middleware(LocalAccessGuard, allowed_hosts=allowed_host_names())
     app.include_router(settings_api.router)
     app.include_router(anki_api.router)
     app.include_router(cards_api.router)
@@ -88,7 +102,7 @@ def create_app(dist_dir: Path = DIST_DIR) -> FastAPI:
             return PlainTextResponse(_NOT_BUILT, status_code=503)
         # frontend/public/ (icons, manifest) lands next to index.html.
         public = dist_dir / path
-        if path and "/" not in path and not path.startswith(".") and public.is_file():
+        if is_root_file_name(dist_dir, path) and public.is_file():
             return FileResponse(public, media_type=_MEDIA_TYPES.get(public.suffix))
         # Client-side routes all load the same page; never cache it so a new
         # build's asset names are picked up.
