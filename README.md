@@ -5,267 +5,160 @@
 </p>
 
 <p align="center">
+  <strong>Turn any word, sentence, or STEM problem into a ready-to-review Anki card in seconds.</strong>
+</p>
+
+<p align="center">
   <a href="https://pypi.org/project/ankinote-ai/"><img src="https://img.shields.io/pypi/v/ankinote-ai?color=blue&logo=pypi&logoColor=white" alt="PyPI version"></a>
   <a href="https://pypi.org/project/ankinote-ai/"><img src="https://img.shields.io/pypi/pyversions/ankinote-ai?color=blue&logo=python&logoColor=white" alt="Python versions"></a>
   <a href="https://github.com/ignity21/ankinote-ai/blob/main/LICENSE"><img src="https://img.shields.io/pypi/l/ankinote-ai?color=blue" alt="License"></a>
   <a href="https://codecov.io/gh/ignity21/ankinote-ai"><img src="https://img.shields.io/codecov/c/github/ignity21/ankinote-ai?logo=codecov&logoColor=white" alt="Codecov"></a>
 </p>
 
-> AI-powered Anki card generator — vocabulary, phrases, sentences, and STEM concepts
-
-## 📖 About
-
-AnkiNote turns a word, phrase, sentence, or STEM concept into a finished Anki
-note — definitions, examples, mnemonics, image, and audio — using your own API
-key for Gemini, GPT, Claude, DeepSeek, or any other provider litellm supports.
-It writes straight into an Anki collection that it keeps synced with AnkiWeb,
-so a card added from your phone's browser shows up on every Anki client.
-
-## 🚀 Quick Start
-
-The only prerequisite is [uv](https://docs.astral.sh/uv/getting-started/installation/)
-(`curl -LsSf https://astral.sh/uv/install.sh | sh`); uv downloads a suitable
-Python by itself. Then:
-
-```bash
-uvx --from 'ankinote-ai[headless]' ankinote-gui
-```
-
-The Web UI opens at <http://localhost:8080>. In **Settings**:
-
-1. **Anki Backend** → *Direct collection (no desktop app needed)* → **Use
-   default** → **Apply**.
-2. **AnkiWeb sync** → **Log in and sync** with your AnkiWeb account. Cards can
-   be saved once the first sync finishes; if AnkiWeb already has your
-   collection, choose **Use the data on AnkiWeb** when asked.
-3. **Generation route** → add a profile with your API key (Gemini, OpenAI,
-   DeepSeek, …). Image and TTS keys are optional.
-
-Then type a word on the **Word** page. The note type and deck are created on the
-first save, and the card reaches your other Anki clients on their next sync.
-
-To keep it installed instead of fetching it on each run:
-`uv tool install 'ankinote-ai[headless]'`, then run `ankinote-gui`. For a
-server or NAS, use [Docker](#run-the-web-ui-with-docker).
-
-**Already run Anki Desktop?** Skip steps 1 and 2: install the
-[AnkiConnect](https://ankiweb.net/shared/info/2055492159) add-on, keep Anki
-open, and leave the backend on *AnkiConnect*. See
-[Which Anki backend?](#which-anki-backend).
-
-## ✨ Features
-
-- 🖥️ **Web UI** - Providers, keys, backend, and AnkiWeb login are all set from
-  the browser — no `.env` file or restart needed
-- 🔌 **Two Anki Backends** - the in-process `collection` backend runs
-  standalone and syncs with AnkiWeb, no Anki app required; `connect` plugs into
-  a running Anki Desktop through AnkiConnect
-- 🤖 **Multi-Provider AI** - Powered by litellm: Gemini, GPT, Claude, DeepSeek,
-  and any OpenAI-compatible endpoint for text
-- 🖼️ **AI Image Generation** - OpenAI (gpt-image), Gemini, or fal.ai
-- 🔊 **Audio Generation** - Text-to-Speech using Google Cloud TTS API
-- 📝 **Dual-Direction Cards** - Supports both word→definition and definition→word learning modes
-- 🎨 **Beautiful Templates** - Built-in Light/Dark mode responsive card templates
-- ⚡ **Batch Processing** - Generate multiple cards from word lists efficiently (CLI)
-- 🌐 **Multi-Language** - Learn English, French, Spanish, German, Japanese,
-  Chinese (Simplified or Traditional, with pinyin), or Korean (beta), with
-  explanations in any other of them
-- 🧮 **STEM Concepts** - Math, science, and programming concept cards with MathJax rendering
-
-AnkiNote has two front ends that share the same card-generation engine and the
-same settings file:
-
-- **Web UI** (`ankinote-gui`) — start here.
-- **CLI** (`ankinote`) — scriptable, batch-friendly. Bare `ankinote` opens an
-  interactive terminal menu for provider profiles, Anki backend, and the TTS
-  key. See the [CLI usage guide](docs/cli-usage.md).
+<p align="center">
+  <strong>English</strong> | <a href="README.zh-CN.md">简体中文</a> | <a href="README.ja.md">日本語</a> | <a href="README.es.md">Español</a> | <a href="README.fr.md">Français</a>
+</p>
 
 ---
 
-## 🖥️ Web UI
+<!-- MEDIA PLACEHOLDER #1: Hero Demo GIF / Video (recommended: docs/img/demo-hero.gif)
+     Show: Typing a word or uploading a STEM problem -> AI generates the card ->
+     flipping Front/Back preview -> clicking Save to sync straight to Anki. -->
 
-### Launching
+Making great Anki cards shouldn't take longer than reviewing them. **AnkiNote** is an AI-powered Anki card studio that turns a single word, phrase, sentence, or STEM problem into a complete, styled flashcard — with explanations, examples, memory hooks, custom illustrations, and native-sounding audio — and syncs it straight to your AnkiWeb account.
 
-```bash
-uvx --from 'ankinote-ai[headless]' ankinote-gui   # one-off, nothing installed
-ankinote-gui                                      # after `uv tool install`
-uv run ankinote-gui                               # from a source checkout
-```
-
-This opens `http://localhost:8080` in a browser (set `ANKINOTE_SHOW=false` to
-skip auto-open, e.g. on a headless server). The UI has six pages, reachable
-from the left drawer: **Word**, **Phrases**, **Sentences**, **STEM**, **Card
-Types** (note type + deck setup), and **Settings**.
-
-### Which Anki backend?
-
-- **`collection`** (recommended) — AnkiNote opens the collection file itself,
-  no Anki app involved, and keeps it synced with AnkiWeb on its own. Your
-  phone, desktop, and AnkiWeb all see new cards after a normal sync, and
-  AnkiNote can run as a long-lived service on a server, NAS, or in
-  [Docker](#run-the-web-ui-with-docker). Needs the `ankinote-ai[headless]`
-  extra (included in the commands above and in the Docker image).
-- **`connect`** — talks to an Anki Desktop you already have open, via the
-  AnkiConnect add-on. Cards land in your open collection immediately; Anki
-  Desktop syncs them as usual. This is the default until you switch.
-
-Pick one under **Settings → Anki Backend** and press **Apply**; the choice is
-saved and used on the next start too. Both work identically from the Web UI and
-CLI.
-
-### Example
-
-Generating a card for **chameleon** from the Word page:
-
-<img src="docs/img/word-generate.png" alt="Word page after generating a &quot;chameleon&quot; card" width="420">
-
-The resulting card, reviewed in Anki:
-
-<img src="docs/img/anki-card.png" alt="The generated &quot;chameleon&quot; card in Anki" width="320">
-
-### Configuration — all in the Settings page
-
-Settings are saved to `~/.config/ankinote/settings.json` (shared with the CLI)
-and applied immediately; nothing needs to be in a `.env` file.
-
-- **Anki Backend** — `collection` or `connect` (see above), and the collection
-  file path for `collection`.
-- **Generation route (text)** and **Image route** — each is a rack of named
-  provider profiles. Pick a vendor template (OpenAI, Anthropic, Gemini, Fal,
-  etc.) or "Custom / Other" for any OpenAI-compatible endpoint, then fill in
-  base URL, model (with a refresh button to fetch live model IDs), and API
-  key. Multiple profiles per vendor are supported (e.g. two OpenAI accounts),
-  and you switch which one is active by clicking its pill.
-  - For Fal image generation, use a `Fal` profile with base URL
-    `https://fal.run` and your Fal API key, with a full endpoint id such as
-    `fal-ai/z-image/turbo`.
-- **TTS (Google Cloud)** — paste the Google Cloud TTS API key.
-- **Defaults** — native/target language and whether image generation is on by
-  default for new cards.
-- **AnkiWeb sync** — shown when the `collection` backend is active:
-  login/logout, sync status, manual sync, sync interval, and the
-  upload/download choice on a required full sync.
-- **Backup & transfer** — export all provider profiles + the TTS key as a
-  passphrase-encrypted JSON bundle (scrypt + AES-256-GCM), and import one back
-  in, merged by profile name. Useful for moving settings between machines or
-  backing them up.
-
-### Environment variables (optional)
-
-None are needed for local use. They cover process-level options and
-deployments:
-
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `ANKINOTE_HOST` / `ANKINOTE_PORT` | `0.0.0.0` / `8080` | Bind address for the web server |
-| `ANKINOTE_SHOW` | `true` | Whether to auto-open a browser tab on start |
-| `ANKINOTE_STORAGE_SECRET` | generated | NiceGUI session-signing key. Generated on first start and kept in `~/.config/ankinote/storage_secret`; set it only to manage the secret yourself |
-| `ANKI_BACKEND` / `ANKI_COLLECTION_PATH` | unset (acts as `connect`) / – | Initial backend and collection file, used until a backend is saved on the Settings page (after that, `settings.json` wins) |
-| `ANKI_CONNECT_URL` | `http://localhost:8765` | Where AnkiConnect lives (`connect` backend) |
-| `ANKIWEB_USERNAME` / `ANKIWEB_PASSWORD` | – | Configure the `collection` backend's AnkiWeb login externally instead of through the Settings page; overrides a UI login, password never persisted to disk |
-| `XDG_CONFIG_HOME` | `~/.config` | Parent directory of `ankinote/settings.json` |
-
-### Collection backend: sync and data
-
-The `collection` backend synchronizes with AnkiWeb at startup, after each note
-save or note-type setup batch, and every five minutes. A fresh collection
-blocks writes until its initial sync completes; an initialized collection
-remains writable offline. A required full sync blocks writes until you resolve
-the upload/download choice, in the Settings page or via `ankinote anki sync`.
-
-Data is stored in the directory containing the collection file (by default
-`~/.local/share/ankinote/`). Beside the collection file, `.sync.json` stores
-credential-free status, `.credentials.json` stores saved login credentials with
-mode `0600`, `.account` retains an account binding after logout, and `.backups/`
-holds recoverable collection backups made before full sync. Logout removes the
-saved credential and pauses synchronization without deleting the collection or
-media. Use a different data directory to switch accounts. Open a collection from
-only one process at a time.
-
-### Run the web UI with Docker
-
-Published images (multi-arch `amd64` + `arm64`): `ghcr.io/ignity21/ankinote-ai`
-and `ignity21/ankinote-ai` (Docker Hub), tags `latest`, `<major>.<minor>`, and the
-exact version.
-
-Two ready-made compose stacks under [`deploy/`](deploy/):
-
-```bash
-cd deploy/standard        # GUI + an AnkiConnect you already run
-# or: cd deploy/headless  # standalone service — no Anki app, syncs itself to AnkiWeb
-cp .env.example .env      # optional: AnkiWeb login (headless), port, image tag
-docker compose up -d      # http://localhost:8080
-```
-
-AI provider keys are added in the web UI (Settings page), not `.env`. See
-[`deploy/README.md`](deploy/README.md) for the difference between the stacks, the
-AnkiConnect host setup, and building locally. The published image bundles the
-`anki` library, so both backends work without a custom build.
+No manual formatting. No copy-pasting between ChatGPT and Anki. Bring your own API key, run it anywhere, and review on your phone, tablet, or desktop.
 
 ---
 
-## ⌨️ CLI
+## ✨ Why AnkiNote?
 
-For scripting and batch runs, `ankinote` provides `word` / `phrase` /
-`sentence` / `stem` subcommands. It reads provider profiles and the Anki
-backend from the same `settings.json` the Web UI writes — run bare `ankinote`
-for an interactive menu to manage them, or pass `--profile`/`--image-profile`
-to pick one by name (`ankinote profiles list --json` shows what's
-configured); `.env` / environment variables still work as a fallback. See
-the [CLI usage guide](docs/cli-usage.md) for setup and the full command
-reference — most users should start with the Web UI above instead.
+- **Built-in Anki & AnkiWeb Sync** — No Anki Desktop or AnkiConnect required. AnkiNote embeds the Anki engine directly and syncs with AnkiWeb automatically, so cards added from a browser or NAS appear on every device. *(Already use Anki Desktop? AnkiConnect is supported too.)*
+- **One-Key Setup Wizard** — Paste a single Gemini AI Studio key and the 5-step onboarding wizard configures text, image, and speech routes for you. Or mix and match OpenAI, Claude, DeepSeek, fal.ai, Google Cloud TTS, and any OpenAI-compatible endpoint.
+- **4 Card Modes: Word, Phrase, Sentence & STEM**
+  - **Language Learning**: Definitions, natural examples, memory hooks/mnemonics, AI-generated illustrations, and TTS audio. Supports **English, French, Spanish, German, Japanese, Chinese (Simplified & Traditional, with ruby/pinyin), and Korean (beta)** — learn any of them, explained in any other.
+  - **STEM & Problem Solving**: Type a question or **upload a photo of a problem** to generate a structured, step-by-step explanation card with MathJax formulas and optional diagrams.
+- **Live Preview, Inline Editing & AI Rewrite** — Flip front/back and toggle Light/Dark mode before saving. Tweak any field directly, ask AI to rewrite a STEM explanation, or fix broken LaTeX with one click (with undo).
+- **Curated Card Themes** — Choose from **Rosé Pine**, **Kanagawa**, **Tokyo Night**, and **Gruvbox** in both Light and Dark modes, with responsive layouts for desktop and mobile Anki.
+- **Web App + CLI** — A modern Svelte web studio (`ankinote-web`) for daily card creation, plus a scriptable CLI & TUI (`ankinote`) for batch workflows.
 
-## 📦 Tech Stack
+---
 
-- **Language**: Python 3.14+
-- **Package Manager**: uv
-- **AI/ML**: litellm (OpenAI, Gemini, Claude, DeepSeek, fal.ai, etc.)
-- **TTS**: Gemini, OpenAI, or Google Cloud Text-to-Speech
-- **Image Generation**: OpenAI (gpt-image), Gemini, fal.ai
-- **Anki Integration**: in-process `anki` library with AnkiWeb sync, or AnkiConnect
-- **Card Templates**: HTML + CSS
+## 📸 Card & UI Showcase
 
-## 🔧 API Services
+<!-- MEDIA PLACEHOLDER #2a: Language Card Showcase (recommended: docs/img/showcase-word.png)
+     Show: A generated Word/Sentence card in preview or Anki (front/back with image, ruby/phonetics, example, audio). -->
 
-### AI Provider (via litellm)
-- Text generation for definitions, examples, and mnemonics
-- Image generation (OpenAI gpt-image, Gemini, fal.ai) for card visuals
-- Supports Gemini, GPT, Claude, DeepSeek, Qwen, and more
+<!-- MEDIA PLACEHOLDER #2b: STEM Card Showcase (recommended: docs/img/showcase-stem.png)
+     Show: A STEM card generated from a problem or photo, with MathJax formulas and step-by-step explanation. -->
 
-### Text-to-speech
-- Gemini (same AI Studio key as text and images), OpenAI, or Google Cloud
-  Text-to-Speech (its own Cloud API key, `GOOGLE_TTS_KEY`)
-- A random voice per clip; audio is stored as MP3
+<!-- MEDIA PLACEHOLDER #3: Card Themes Comparison (docs/img/themes-light.png + docs/img/themes-dark.png, swapped by GitHub's color scheme via <picture>)
+     Show: Rosé Pine, Kanagawa, Tokyo Night, and Gruvbox palettes side by side. -->
 
-### Anki
-- `collection`: opens the collection in-process and syncs it with AnkiWeb
-- `connect`: talks to a running Anki Desktop through AnkiConnect
+---
+
+## 🚀 Quick Start (1 Minute)
+
+The only prerequisite is [uv](https://docs.astral.sh/uv/getting-started/installation/) (it manages Python for you):
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+Run AnkiNote directly without installing:
+
+```bash
+uvx --from ankinote-ai ankinote-web
+```
+
+Then open **<http://127.0.0.1:8000>** in your browser. On first launch, the **Setup Wizard** walks you through:
+
+1. **AI Provider** — Paste a Gemini API key (covers text, image, and speech) or expand **Advanced** for OpenAI, Claude, DeepSeek, fal.ai, or custom endpoints.
+2. **Anki Connection** — Choose **Built-in Anki** and sign in to AnkiWeb *(or choose **AnkiConnect** if you keep Anki Desktop open)*.
+3. **Languages** — Pick your native and target languages.
+4. **Appearance** — Choose a color palette and light or dark mode; your Anki cards get the same palette.
+5. **First Card** — Generate and save your first card right inside the wizard.
+
+<!-- MEDIA PLACEHOLDER #4: Setup Wizard Screenshot (recommended: docs/img/wizard-setup.png)
+     Show: The 5-step onboarding wizard in the web UI. -->
+
+To install globally as a command:
+
+```bash
+uv tool install ankinote-ai
+ankinote-web
+```
+
+> **Note:** On Linux, `ankinote-ai` requires `glibc >= 2.35` (Ubuntu 22.04+, Debian 12+, or similar). macOS 12+ and Windows are also supported.
+
+---
+
+## 🐳 Self-Hosting with Docker
+
+Run AnkiNote 24/7 on a server, VPS, or NAS so you can create cards from your phone's browser anytime. Multi-arch images (`amd64` + `arm64`) are published to `ghcr.io/ignity21/ankinote-ai` and `ignity21/ankinote-ai`.
+
+```bash
+# Standalone mode (recommended — built-in Anki + AnkiWeb sync, no desktop app needed)
+cd deploy/headless
+cp .env.example .env      # optional: set ANKIWEB_USERNAME / ANKIWEB_PASSWORD, port, etc.
+docker compose up -d      # open http://localhost:8080
+```
+
+Already running Anki Desktop with AnkiConnect? Use `deploy/standard` instead. See [`deploy/README.md`](deploy/README.md) for full deployment options, reverse-proxy tips, and migration guides.
+
+---
+
+## ⌨️ CLI & Batch Mode
+
+AnkiNote also ships a CLI (`ankinote`) that shares the same `settings.json` (`~/.config/ankinote/settings.json`) as the Web App:
+
+```bash
+ankinote                  # open the interactive terminal UI (TUI)
+ankinote word ephemeral   # generate a vocabulary card
+ankinote stem "..."       # generate a STEM card
+ankinote profiles list    # inspect configured provider profiles
+```
+
+See the [CLI Usage Guide](docs/cli-usage.md) for batch lists, flags, and automation examples.
+
+---
+
+## 🤖 Supported Providers
+
+| Capability | Built-in Presets & Compatibility |
+| --- | --- |
+| **Text Generation** | Gemini, OpenAI, Claude, DeepSeek, or any OpenAI-compatible endpoint (via `litellm`) |
+| **Image Generation** | Gemini, OpenAI (`gpt-image`), fal.ai |
+| **Text-to-Speech** | Gemini TTS, OpenAI TTS, Google Cloud TTS |
+
+All API keys and settings are stored locally on your machine (`~/.config/ankinote/settings.json`) and can be exported/imported as an encrypted backup bundle (`scrypt` + `AES-256-GCM`) from **Settings**.
+
+---
 
 ## 🛠️ Development
 
 ```bash
-# Clone the repository
 git clone https://github.com/ignity21/ankinote-ai.git
 cd ankinote-ai
 
-# Install the project and development dependencies
-uv sync
+uv sync                   # install Python dependencies (Python 3.14+)
+make web-dev              # run Svelte + Vite frontend dev server
+uv run ankinote-web       # run FastAPI backend
 
-# Run tests
-make test
-
-# Format code
-make format
-
-# Type checking
-make check
+make test                 # run pytest suite
+make format               # format with ruff
+make check                # lint & type-check (ruff + ty)
 ```
 
-## Documentation
+---
+
+## 📚 Documentation
+
 - [CLI Usage Guide](docs/cli-usage.md)
-- [Note Types](docs/NoteType.org)
-- [Skill](.agents/skills/ankinote-cli/SKILL.md) — for using AnkiNote with AI coding assistants
+- [Docker Deployment Guide](deploy/README.md)
+- [Note Types Reference](docs/NoteType.org)
+- [Agent Skill](.agents/skills/ankinote-cli/SKILL.md) — for using AnkiNote with AI coding assistants
 
 ## 📄 License
 
-MIT License - see [LICENSE](LICENSE) file for details
+MIT License — see [LICENSE](LICENSE) for details.
