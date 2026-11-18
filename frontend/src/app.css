@@ -1,8 +1,8 @@
 /* Base styles. Colours come from the palette roles set on :root by
    lib/theme.svelte.ts; see docs/design/design-language.md. */
 
-@import "@fontsource/ibm-plex-sans/400.css";
-@import "@fontsource/ibm-plex-sans/600.css";
+@import "@fontsource/source-sans-3/400.css";
+@import "@fontsource/source-sans-3/600.css";
 @import "@fontsource/ibm-plex-mono/400.css";
 @import "@fontsource/ibm-plex-mono/500.css";
 
@@ -10,7 +10,7 @@
   /* CJK fallbacks: macOS/iOS, Linux (Noto CJK under both names), Windows. */
   --cjk: "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Noto Sans SC",
     "Source Han Sans SC", "Microsoft YaHei";
-  --sans: "IBM Plex Sans", var(--cjk), sans-serif;
+  --sans: "Source Sans 3", var(--cjk), sans-serif;
   --mono: "IBM Plex Mono", var(--cjk), monospace;
   --gap: 10px;
   /* Pre-JS fallback (Rosé Pine dark) so the first paint isn't white. */
@@ -38,7 +38,7 @@
 :lang(ja),
 :lang(ko),
 :lang(zh-Hant) {
-  --sans: "IBM Plex Sans", var(--cjk), sans-serif;
+  --sans: "Source Sans 3", var(--cjk), sans-serif;
   --mono: "IBM Plex Mono", var(--cjk), monospace;
   font-family: var(--sans);
 }
@@ -56,7 +56,7 @@ body {
   background: var(--outer);
   color: var(--fg);
   font-family: var(--sans);
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.5;
   -webkit-text-size-adjust: 100%;
 }
@@ -135,7 +135,7 @@ kbd {
 }
 
 .field > .label {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--muted);
 }
 
@@ -172,7 +172,7 @@ select.input {
 
 .note {
   margin: 0;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--muted);
 }
 

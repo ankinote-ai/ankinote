@@ -1,4 +1,4 @@
-"""Card themes: the app's palettes and IBM Plex Sans, applied to card CSS.
+"""Card themes: the app's palettes and Source Sans 3, applied to card CSS.
 
 A theme is a light palette and a dark one, chosen separately. Each note
 type's ``style.css`` only refers to ``--an-*`` tokens; :func:`compose` puts
@@ -14,25 +14,24 @@ from dataclasses import dataclass
 from functools import cache
 from importlib.resources import files
 
-STYLE_VERSION = "1.0"
+STYLE_VERSION = "1.1"
 
 _CJK = (
     '"PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Noto Sans SC", '
     '"Source Han Sans SC", "Microsoft YaHei"'
 )
-SANS = f'"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", {_CJK}, sans-serif'
+SANS = f'"Source Sans 3", system-ui, -apple-system, "Segoe UI", {_CJK}, sans-serif'
 
 # Collection media name -> packaged file, with the range each subset covers
 # (as @fontsource ships them), so a card loads only what its text needs.
+# latin-ext carries the IPA block and greek carries θ and β, so a
+# pronunciation line like /ˈθɪŋ.kɪŋ/ renders in one face.
 _FONTS = {
-    400: {
-        "latin": "ibm-plex-sans-latin-400-normal.woff2",
-        "latin-ext": "ibm-plex-sans-latin-ext-400-normal.woff2",
-    },
-    600: {
-        "latin": "ibm-plex-sans-latin-600-normal.woff2",
-        "latin-ext": "ibm-plex-sans-latin-ext-600-normal.woff2",
-    },
+    weight: {
+        subset: f"source-sans-3-{subset}-{weight}-normal.woff2"
+        for subset in ("latin", "latin-ext", "greek")
+    }
+    for weight in (400, 600)
 }
 _RANGES = {
     "latin": (
@@ -43,8 +42,9 @@ _RANGES = {
     "latin-ext": (
         "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,"
         "U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,"
-        "U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+        "U+20AD-20C4,U+2113,U+2C60-2C7F,U+A720-A7FF"
     ),
+    "greek": "U+0370-0377,U+037A-037F,U+0384-038A,U+038C,U+038E-03A1,U+03A3-03FF",
 }
 MEDIA_PREFIX = "_ankinote-"
 
@@ -100,7 +100,7 @@ def font_files() -> dict[str, bytes]:
 def _font_faces() -> str:
     return "".join(
         "@font-face {\n"
-        '  font-family: "IBM Plex Sans";\n'
+        '  font-family: "Source Sans 3";\n'
         "  font-style: normal;\n"
         f"  font-weight: {weight};\n"
         "  font-display: swap;\n"

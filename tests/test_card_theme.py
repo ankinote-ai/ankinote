@@ -28,7 +28,7 @@ def _block(css: str, selector_start: str) -> str:
 
 def test_light_palette_on_card_and_dark_under_night_mode() -> None:
     css = theme_css(CardTheme(light="gruvbox", dark="rose-pine"))
-    assert css.startswith("/* ankinote-style: 1.0 · light: gruvbox · dark: rose-pine")
+    assert css.startswith("/* ankinote-style: 1.1 · light: gruvbox · dark: rose-pine")
     light = _block(css, ".card {")
     dark = _block(css, ".card.nightMode,")
     assert "--an-tile: #FBF1C7;" in light  # Gruvbox light

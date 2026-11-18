@@ -4,7 +4,7 @@ The mark has no colour of its own: lines use the palette's ``fg`` and the
 answer tile its ``accent``. Fixed assets (favicon, app icons, README) use the
 default palette. Run ``make brand`` after changing the mark or the default
 palette; it needs ``rsvg-convert`` (librsvg) for the PNGs and Playwright's
-Chromium for the social preview, which uses the bundled IBM Plex Sans.
+Chromium for the social preview, which uses the bundled Source Sans 3.
 """
 
 import json
@@ -72,10 +72,10 @@ def icon(colors: dict[str, str], *, scale: float, radius: float) -> str:
 
 
 SOCIAL = """<!doctype html><meta charset="utf-8"><style>
-@font-face{{font-family:Plex;font-weight:400;src:url("{fonts}/ibm-plex-sans-latin-400-normal.woff2")}}
-@font-face{{font-family:Plex;font-weight:600;src:url("{fonts}/ibm-plex-sans-latin-600-normal.woff2")}}
+@font-face{{font-family:Sans;font-weight:400;src:url("{fonts}/source-sans-3-latin-400-normal.woff2")}}
+@font-face{{font-family:Sans;font-weight:600;src:url("{fonts}/source-sans-3-latin-600-normal.woff2")}}
 html,body{{margin:0}}
-body{{width:1280px;height:640px;box-sizing:border-box;padding:40px;background:{outer};font-family:Plex}}
+body{{width:1280px;height:640px;box-sizing:border-box;padding:40px;background:{outer};font-family:Sans}}
 .tile{{height:100%;box-sizing:border-box;border:3px solid {border};border-radius:16px;background:{tile};
 display:flex;align-items:center;gap:56px;padding:0 96px}}
 h1{{margin:0;font-size:104px;font-weight:600;letter-spacing:-0.02em;color:{fg};line-height:1}}
