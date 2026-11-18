@@ -2,8 +2,8 @@
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ignity21/ankinote-ai/main/docs/brand/mark-dark.svg">
-    <img src="https://raw.githubusercontent.com/ignity21/ankinote-ai/main/docs/brand/mark-light.svg" width="96" alt="AnkiNote logo">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ankinote-ai/ankinote/main/docs/brand/mark-dark.svg">
+    <img src="https://raw.githubusercontent.com/ankinote-ai/ankinote/main/docs/brand/mark-light.svg" width="96" alt="AnkiNote logo">
   </picture>
 </p>
 
@@ -14,8 +14,8 @@
 <p align="center">
   <a href="https://pypi.org/project/ankinote-ai/"><img src="https://img.shields.io/pypi/v/ankinote-ai?color=blue&logo=pypi&logoColor=white" alt="PyPI version"></a>
   <a href="https://pypi.org/project/ankinote-ai/"><img src="https://img.shields.io/pypi/pyversions/ankinote-ai?color=blue&logo=python&logoColor=white" alt="Python versions"></a>
-  <a href="https://github.com/ignity21/ankinote-ai/blob/main/LICENSE"><img src="https://img.shields.io/pypi/l/ankinote-ai?color=blue" alt="License"></a>
-  <a href="https://codecov.io/gh/ignity21/ankinote-ai"><img src="https://img.shields.io/codecov/c/github/ignity21/ankinote-ai?logo=codecov&logoColor=white" alt="Codecov"></a>
+  <a href="https://github.com/ankinote-ai/ankinote/blob/main/LICENSE"><img src="https://img.shields.io/pypi/l/ankinote-ai?color=blue" alt="License"></a>
+  <a href="https://codecov.io/gh/ankinote-ai/ankinote"><img src="https://img.shields.io/codecov/c/github/ankinote-ai/ankinote?logo=codecov&logoColor=white" alt="Codecov"></a>
 </p>
 
 <p align="center">
@@ -25,7 +25,7 @@
 ---
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/ignity21/ankinote-ai/main/docs/img/demo-hero.gif" width="860" alt="AnkiNote demo: type a word, generate the card, flip to the back">
+  <img src="https://raw.githubusercontent.com/ankinote-ai/ankinote/main/docs/img/demo-hero.gif" width="860" alt="AnkiNote demo: type a word, generate the card, flip to the back">
 </p>
 
 Making great Anki cards shouldn't take longer than reviewing them. **AnkiNote** is an AI-powered Anki card studio that turns a single word, phrase, sentence, or STEM problem into a complete, styled flashcard — with explanations, examples, memory hooks, custom illustrations, and native-sounding audio — and syncs it straight to your AnkiWeb account.
@@ -51,15 +51,15 @@ No manual formatting. No copy-pasting between ChatGPT and Anki. Bring your own A
 
 <table>
   <tr>
-    <td width="50%" valign="top" align="center"><img src="https://raw.githubusercontent.com/ignity21/ankinote-ai/main/docs/img/showcase-word.png" alt="Language card: definition, illustration, examples"><br><sub>Language card: definition, illustration, examples</sub></td>
-    <td width="50%" valign="top" align="center"><img src="https://raw.githubusercontent.com/ignity21/ankinote-ai/main/docs/img/showcase-stem.png" alt="STEM card: formulas and a step-by-step solution"><br><sub>STEM card: formulas and a step-by-step solution</sub></td>
+    <td width="50%" valign="top" align="center"><img src="https://raw.githubusercontent.com/ankinote-ai/ankinote/main/docs/img/showcase-word.png" alt="Language card: definition, illustration, examples"><br><sub>Language card: definition, illustration, examples</sub></td>
+    <td width="50%" valign="top" align="center"><img src="https://raw.githubusercontent.com/ankinote-ai/ankinote/main/docs/img/showcase-stem.png" alt="STEM card: formulas and a step-by-step solution"><br><sub>STEM card: formulas and a step-by-step solution</sub></td>
   </tr>
 </table>
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ignity21/ankinote-ai/main/docs/img/themes-dark.png">
-    <img src="https://raw.githubusercontent.com/ignity21/ankinote-ai/main/docs/img/themes-light.png" width="860" alt="Four card palettes: Kanagawa, Tokyo Night, Gruvbox and Rosé Pine, in light and dark">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ankinote-ai/ankinote/main/docs/img/themes-dark.png">
+    <img src="https://raw.githubusercontent.com/ankinote-ai/ankinote/main/docs/img/themes-light.png" width="860" alt="Four card palettes: Kanagawa, Tokyo Night, Gruvbox and Rosé Pine, in light and dark">
   </picture>
 </p>
 
@@ -89,8 +89,8 @@ Then open **<http://127.0.0.1:8000>** in your browser. On first launch, the **Se
 
 <table>
   <tr>
-    <td width="50%" valign="top" align="center"><img src="https://raw.githubusercontent.com/ignity21/ankinote-ai/main/docs/img/wizard-api.png" alt="Setup wizard, step 1: connect an AI model"><br><sub>Setup wizard, step 1: connect an AI model</sub></td>
-    <td width="50%" valign="top" align="center"><img src="https://raw.githubusercontent.com/ignity21/ankinote-ai/main/docs/img/wizard-anki-account.png" alt="Setup wizard, step 2: connect Anki"><br><sub>Setup wizard, step 2: connect Anki</sub></td>
+    <td width="50%" valign="top" align="center"><img src="https://raw.githubusercontent.com/ankinote-ai/ankinote/main/docs/img/wizard-api.png" alt="Setup wizard, step 1: connect an AI model"><br><sub>Setup wizard, step 1: connect an AI model</sub></td>
+    <td width="50%" valign="top" align="center"><img src="https://raw.githubusercontent.com/ankinote-ai/ankinote/main/docs/img/wizard-anki-account.png" alt="Setup wizard, step 2: connect Anki"><br><sub>Setup wizard, step 2: connect Anki</sub></td>
   </tr>
 </table>
 
@@ -107,7 +107,7 @@ ankinote-web
 
 ## 🐳 Self-Hosting with Docker
 
-Run AnkiNote 24/7 on a server, VPS, or NAS so you can create cards from your phone's browser anytime. Multi-arch images (`amd64` + `arm64`) are published to `ghcr.io/ignity21/ankinote-ai` and `ignity21/ankinote-ai`.
+Run AnkiNote 24/7 on a server, VPS, or NAS so you can create cards from your phone's browser anytime. Multi-arch images (`amd64` + `arm64`) are published to `ghcr.io/ankinote-ai/ankinote` and `ignity21/ankinote-ai`.
 
 ```bash
 # Standalone mode (recommended — built-in Anki + AnkiWeb sync, no desktop app needed)
@@ -157,7 +157,7 @@ All API keys and settings stay on your machine, in `~/.config/ankinote/settings.
 ## 🛠️ Development
 
 ```bash
-git clone https://github.com/ignity21/ankinote-ai.git
+git clone https://github.com/ankinote-ai/ankinote.git
 cd ankinote-ai
 
 uv sync                   # install Python dependencies (Python 3.14+)

@@ -42,9 +42,9 @@ ankinote = "ankinote.cli.main:main"
 ankinote-web = "ankinote.web.main:main"
 
 [project.urls]
-Homepage = "https://github.com/ignity21/ankinote-ai"
-Repository = "https://github.com/ignity21/ankinote-ai"
-Documentation = "https://github.com/ignity21/ankinote-ai"
+Homepage = "https://github.com/ankinote-ai/ankinote"
+Repository = "https://github.com/ankinote-ai/ankinote"
+Documentation = "https://github.com/ankinote-ai/ankinote"
 
 [tool.hatch.version]
 path = "src/ankinote/__init__.py"

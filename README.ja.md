@@ -14,8 +14,8 @@
 <p align="center">
   <a href="https://pypi.org/project/ankinote-ai/"><img src="https://img.shields.io/pypi/v/ankinote-ai?color=blue&logo=pypi&logoColor=white" alt="PyPI version"></a>
   <a href="https://pypi.org/project/ankinote-ai/"><img src="https://img.shields.io/pypi/pyversions/ankinote-ai?color=blue&logo=python&logoColor=white" alt="Python versions"></a>
-  <a href="https://github.com/ignity21/ankinote-ai/blob/main/LICENSE"><img src="https://img.shields.io/pypi/l/ankinote-ai?color=blue" alt="License"></a>
-  <a href="https://codecov.io/gh/ignity21/ankinote-ai"><img src="https://img.shields.io/codecov/c/github/ignity21/ankinote-ai?logo=codecov&logoColor=white" alt="Codecov"></a>
+  <a href="https://github.com/ankinote-ai/ankinote/blob/main/LICENSE"><img src="https://img.shields.io/pypi/l/ankinote-ai?color=blue" alt="License"></a>
+  <a href="https://codecov.io/gh/ankinote-ai/ankinote"><img src="https://img.shields.io/codecov/c/github/ankinote-ai/ankinote?logo=codecov&logoColor=white" alt="Codecov"></a>
 </p>
 
 <p align="center">
@@ -107,7 +107,7 @@ ankinote-web
 
 ## 🐳 Docker でのセルフホスト
 
-サーバー・VPS・NAS に常駐させれば、外出先からスマホのブラウザでいつでもカードを追加できます。マルチアーキテクチャ（`amd64` + `arm64`）イメージを `ghcr.io/ignity21/ankinote-ai` と `ignity21/ankinote-ai` で公開しています。
+サーバー・VPS・NAS に常駐させれば、外出先からスマホのブラウザでいつでもカードを追加できます。マルチアーキテクチャ（`amd64` + `arm64`）イメージを `ghcr.io/ankinote-ai/ankinote` と `ignity21/ankinote-ai` で公開しています。
 
 ```bash
 # スタンドアロン構成（推奨：Anki 内蔵 ＋ AnkiWeb 同期）
@@ -157,7 +157,7 @@ API キーと設定はすべて手元のマシン（`~/.config/ankinote/settings
 ## 🛠️ 開発
 
 ```bash
-git clone https://github.com/ignity21/ankinote-ai.git
+git clone https://github.com/ankinote-ai/ankinote.git
 cd ankinote-ai
 
 uv sync                   # Python 依存関係のインストール（Python 3.14+）

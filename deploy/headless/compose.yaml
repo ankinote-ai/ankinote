@@ -12,7 +12,7 @@
 
 services:
   ankinote:
-    image: ${ANKINOTE_IMAGE:-ghcr.io/ignity21/ankinote-ai:latest}
+    image: ${ANKINOTE_IMAGE:-ghcr.io/ankinote-ai/ankinote:latest}
     # Build from a PyPI release instead of pulling:
     #   ANKINOTE_VERSION=0.3.1 docker compose build
     # build:

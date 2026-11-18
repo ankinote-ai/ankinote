@@ -3,7 +3,7 @@
 Published images (multi-arch `amd64` + `arm64`), tags `latest`, `<major>.<minor>`,
 `<version>`:
 
-- `ghcr.io/ignity21/ankinote-ai`
+- `ghcr.io/ankinote-ai/ankinote`
 - `ignity21/ankinote-ai` (Docker Hub)
 
 Two ready-made stacks:
@@ -68,7 +68,7 @@ while the stack is running. Migrating from an AnkiConnect deployment: see
   to AnkiWeb without using the Settings page. When set they take precedence over
   a login entered in the UI, and the password is never persisted.
 - `ANKINOTE_IMAGE` overrides the image/tag (default
-  `ghcr.io/ignity21/ankinote-ai:latest`).
+  `ghcr.io/ankinote-ai/ankinote:latest`).
 
 ## Customizing beyond `.env`
 

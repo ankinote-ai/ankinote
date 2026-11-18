@@ -14,8 +14,8 @@
 <p align="center">
   <a href="https://pypi.org/project/ankinote-ai/"><img src="https://img.shields.io/pypi/v/ankinote-ai?color=blue&logo=pypi&logoColor=white" alt="PyPI version"></a>
   <a href="https://pypi.org/project/ankinote-ai/"><img src="https://img.shields.io/pypi/pyversions/ankinote-ai?color=blue&logo=python&logoColor=white" alt="Python versions"></a>
-  <a href="https://github.com/ignity21/ankinote-ai/blob/main/LICENSE"><img src="https://img.shields.io/pypi/l/ankinote-ai?color=blue" alt="License"></a>
-  <a href="https://codecov.io/gh/ignity21/ankinote-ai"><img src="https://img.shields.io/codecov/c/github/ignity21/ankinote-ai?logo=codecov&logoColor=white" alt="Codecov"></a>
+  <a href="https://github.com/ankinote-ai/ankinote/blob/main/LICENSE"><img src="https://img.shields.io/pypi/l/ankinote-ai?color=blue" alt="License"></a>
+  <a href="https://codecov.io/gh/ankinote-ai/ankinote"><img src="https://img.shields.io/codecov/c/github/ankinote-ai/ankinote?logo=codecov&logoColor=white" alt="Codecov"></a>
 </p>
 
 <p align="center">
@@ -107,7 +107,7 @@ ankinote-web
 
 ## 🐳 Autoalojamiento con Docker
 
-Ejecuta AnkiNote 24/7 en un servidor, VPS o NAS para crear tarjetas desde el móvil en cualquier momento. Imágenes multi-arquitectura (`amd64` + `arm64`) disponibles en `ghcr.io/ignity21/ankinote-ai` e `ignity21/ankinote-ai`.
+Ejecuta AnkiNote 24/7 en un servidor, VPS o NAS para crear tarjetas desde el móvil en cualquier momento. Imágenes multi-arquitectura (`amd64` + `arm64`) disponibles en `ghcr.io/ankinote-ai/ankinote` e `ignity21/ankinote-ai`.
 
 ```bash
 # Modo autónomo (recomendado: Anki integrado + sincronización AnkiWeb)
@@ -157,7 +157,7 @@ Todas las claves y ajustes se quedan en tu equipo, en `~/.config/ankinote/settin
 ## 🛠️ Desarrollo
 
 ```bash
-git clone https://github.com/ignity21/ankinote-ai.git
+git clone https://github.com/ankinote-ai/ankinote.git
 cd ankinote-ai
 
 uv sync                   # instalar dependencias Python (Python 3.14+)

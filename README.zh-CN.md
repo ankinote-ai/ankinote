@@ -14,8 +14,8 @@
 <p align="center">
   <a href="https://pypi.org/project/ankinote-ai/"><img src="https://img.shields.io/pypi/v/ankinote-ai?color=blue&logo=pypi&logoColor=white" alt="PyPI version"></a>
   <a href="https://pypi.org/project/ankinote-ai/"><img src="https://img.shields.io/pypi/pyversions/ankinote-ai?color=blue&logo=python&logoColor=white" alt="Python versions"></a>
-  <a href="https://github.com/ignity21/ankinote-ai/blob/main/LICENSE"><img src="https://img.shields.io/pypi/l/ankinote-ai?color=blue" alt="License"></a>
-  <a href="https://codecov.io/gh/ignity21/ankinote-ai"><img src="https://img.shields.io/codecov/c/github/ignity21/ankinote-ai?logo=codecov&logoColor=white" alt="Codecov"></a>
+  <a href="https://github.com/ankinote-ai/ankinote/blob/main/LICENSE"><img src="https://img.shields.io/pypi/l/ankinote-ai?color=blue" alt="License"></a>
+  <a href="https://codecov.io/gh/ankinote-ai/ankinote"><img src="https://img.shields.io/codecov/c/github/ankinote-ai/ankinote?logo=codecov&logoColor=white" alt="Codecov"></a>
 </p>
 
 <p align="center">
@@ -107,7 +107,7 @@ ankinote-web
 
 ## 🐳 Docker 自部署（NAS / 服务器）
 
-将 AnkiNote 部署在服务器、VPS 或 NAS 上，随时用手机浏览器打开就能制卡。Docker Hub 与 GHCR 均已提供多架构镜像（`amd64` + `arm64`）：`ghcr.io/ignity21/ankinote-ai` 与 `ignity21/ankinote-ai`。
+将 AnkiNote 部署在服务器、VPS 或 NAS 上，随时用手机浏览器打开就能制卡。Docker Hub 与 GHCR 均已提供多架构镜像（`amd64` + `arm64`）：`ghcr.io/ankinote-ai/ankinote` 与 `ignity21/ankinote-ai`。
 
 ```bash
 # 独立运行模式（推荐：内置 Anki + AnkiWeb 同步，无需桌面端）
@@ -157,7 +157,7 @@ ankinote word batch --file words.txt --rpm 30
 ## 🛠️ 本地开发
 
 ```bash
-git clone https://github.com/ignity21/ankinote-ai.git
+git clone https://github.com/ankinote-ai/ankinote.git
 cd ankinote-ai
 
 uv sync                   # 安装 Python 依赖（需 Python 3.14+）
