@@ -1,17 +1,25 @@
 # Anki backend and AnkiWeb sync
 
-Ankinote talks to Anki through one of two backends, selected via `ANKI_BACKEND`:
+AnkiNote saves cards through one of two backends. The CLI uses the one saved
+in `settings.json` (chosen in the web app's setup wizard or the bare
+`ankinote` menu); the `ANKI_BACKEND` environment variable is the fallback.
 
-- `connect` (default): uses [AnkiConnect](https://ankiweb.net/shared/info/2055492159) against a running Anki instance. `ANKI_CONNECT_URL` defaults to `http://localhost:8765`.
-- `collection`: in-process `DirectCollectionClient` that opens a `.anki2` collection file directly — no running Anki instance needed. Requires `ANKI_COLLECTION_PATH`. Used for headless/deploy setups (see README.md).
+- **Built-in Anki** (`collection`): AnkiNote opens the collection file itself
+  and syncs with AnkiWeb. No Anki desktop needed. Only one process can hold
+  the collection, so the CLI fails with "in use by another process" while
+  `ankinote-web` or Anki desktop has it open.
+- **AnkiConnect** (`connect`): talks to a running Anki desktop with the
+  [AnkiConnect](https://ankiweb.net/shared/info/2055492159) add-on
+  (`ANKI_CONNECT_URL`, default `http://localhost:8765`). Anki desktop syncs.
 
-## AnkiWeb sync (collection backend only)
+## AnkiWeb sync (built-in Anki only)
 
 ```
-uv run ankinote anki login    # prompts for AnkiWeb credentials, or set ANKIWEB_USERNAME/ANKIWEB_PASSWORD
-uv run ankinote anki status
-uv run ankinote anki sync
-uv run ankinote anki logout
+ankinote anki status   # local sync state as JSON; doesn't contact AnkiWeb
+ankinote anki sync     # sync now
+ankinote anki login    # prompts for credentials, or uses ANKIWEB_USERNAME/ANKIWEB_PASSWORD
+ankinote anki logout   # stop syncing; keeps the cards
 ```
 
-Relevant env vars: `ANKI_BACKEND`, `ANKI_COLLECTION_PATH`, `ANKIWEB_USERNAME`, `ANKIWEB_PASSWORD`.
+Cards added by `add`/`batch` sync on their own when the user is logged in.
+Don't run `login` with credentials you weren't given; ask the user to sign in.

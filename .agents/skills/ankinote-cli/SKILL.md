@@ -1,134 +1,85 @@
 ---
 name: ankinote-cli
-description: Use the ankinote CLI to generate and push Anki cards. Use when the task involves creating, batching, or initializing Anki cards for vocabulary, sentences, phrases, or STEM topics through the ankinote command-line tool.
+description: Make Anki cards with the ankinote CLI from words, phrases, sentences, or STEM problems the user gives you (typed, in a file, or picked out of a photo or text they're reading). Use when the user asks to add something to Anki or turn material into flashcards.
 ---
 
-# Ankinote CLI
+# AnkiNote CLI
 
-Generate AI-powered Anki cards from the terminal via litellm (OpenAI, DeepSeek, Gemini, fal.ai, or any configured provider), optionally generate images/diagrams, and push cards to Anki.
+`ankinote` turns words, phrases, sentences, and STEM questions into finished
+Anki cards (AI-written fields, optional picture and audio) and saves them to
+the user's Anki collection. It reads the same settings as the AnkiNote web
+app, so once the user has finished the web app's setup wizard, the CLI needs
+no configuration.
 
-## Prerequisites
+## Typical workflow
 
-- Anki running with [AnkiConnect](https://ankiweb.net/shared/info/2055492159) installed (default backend), or the in-process collection backend configured — see [references/anki-sync.md](references/anki-sync.md) if not using AnkiConnect.
-- At least one text provider profile configured (run bare `ankinote` for the interactive menu, or use the Web UI's Settings page) — check with `ankinote profiles list`. A provider API key set directly in the environment (e.g. `OPENAI_API_KEY`, `DEEPSEEK_API_KEY`, `GEMINI_API_KEY`, or `FAL_AI_API_KEY`) also works as a fallback litellm reads automatically.
-- Project installed: `uv sync`
+1. Work out the items from what the user gave you: underlined words in a
+   photo of a page, a vocabulary list, sentences from an article, a
+   photographed math problem.
+2. Show the list and confirm it if you had to guess (unclear handwriting,
+   ambiguous underlines). Otherwise go ahead.
+3. Run one `batch` (or `add`) command per card kind, e.g.
+   `ankinote word batch serendipity ephemeral eloquent`.
+4. Report what was saved and any items that failed.
+
+CLI cards are saved without a preview. If the user wants to check or edit
+each card first, suggest pasting the list into the web app's Generate page
+instead.
+
+## Running it
+
+Use whichever works: `ankinote` (installed with `uv tool install ankinote-ai`),
+`uvx --from ankinote-ai ankinote`, or `uv run ankinote` inside a checkout of
+this repository.
+
+Before the first run in a session, check what is configured:
+
+```bash
+ankinote profiles list --json   # provider profiles; never prints API keys
+```
+
+If no text profile exists, ask the user to run `ankinote-web` and finish the
+setup wizard (or run bare `ankinote` for a terminal menu). Don't invent API
+keys or edit `settings.json` by hand.
 
 ## Commands
 
-### Global structure
-
 ```
-ankinote [--version] <collection> <command> [args...]
-ankinote anki <login|logout|status|sync>   # AnkiWeb sync — see references/anki-sync.md
-ankinote profiles list [--json]            # list configured provider profiles
-```
-
-Four card collections: `word`, `phrase`, `sentence`, `stem`. Each has three subcommands: `add`, `batch`, `init`.
-
-Run `uv run ankinote --help` for the full list.
-
-### Collection overview
-
-| Collection | Purpose | Input | Image support |
-|---|---|---|---|
-| `word` | Vocabulary cards (word + definition) | A single word per card | Yes (generated) |
-| `phrase` | Phrase/sentence cards | A phrase or short sentence | No |
-| `sentence` | Production-direction sentence cards (V2) | A sentence in the **target** language; AI generates the native-language translation shown on the front | No |
-| `stem` | STEM knowledge cards (Math, CS, Finance, ML, ...) | Any question or concept (e.g. "What is a derivative?", "State Bayes' theorem") | Yes (diagrams) — see [references/stem.md](references/stem.md) for its extra options |
-
-### Common options
-
-All collections accept `--llm` to override the default model (currently `gpt-5.6-luna`; not load-bearing — any litellm-routable model works, including fal.ai's).
-`word` and `stem` accept `--image-model` (defaults to `gpt-image-1.5` at `low` quality, 512px) and `--image-size <pixels>`.
-
-All collections also accept `--profile <name>` (a named text provider profile
-from `settings.json`; defaults to the active one), and `word`/`stem`
-additionally accept `--image-profile <name>` for the image provider. Profiles
-are configured interactively — run bare `ankinote` (no subcommand) to open a
-terminal menu for managing provider profiles, the Anki backend, and the TTS
-key, sharing the same `settings.json` the Web UI uses. `--llm`/`--image-model`
-still override the profile's own model when given. For scripted/agent use,
-prefer `--profile <name>` over ad hoc env vars so runs are reproducible
-against a profile someone has already configured through the menu or Web UI.
-An unknown profile name exits with an error listing the available ones.
-
-Before picking a `--profile`/`--image-profile` name, discover what's actually
-configured with `ankinote profiles list --json` — a read-only command that
-prints each text/image profile's name, vendor, model, and which one is
-active, without ever printing `api_key`:
-
-```bash
-ankinote profiles list --json
-```
-Language-aware collections (`word`, `phrase`, `sentence` — not `stem`, which is language-agnostic) accept `--native` and `--target`:
-
-```
---native [English|Chinese(Simplified)|Chinese(Traditional)|Japanese|French|Spanish|German|Korean|other]
---target [English|Chinese(Simplified)|Chinese(Traditional)|Japanese|French|Spanish|German|Korean|other]
+ankinote <word|phrase|sentence|stem> add <item>
+ankinote <word|phrase|sentence|stem> batch [items...] [--file path] [--rpm N]
+ankinote <word|phrase|sentence|stem> init        # create note type + deck if missing
+ankinote anki <login|logout|status|sync>         # built-in Anki only
+ankinote profiles list [--json]
 ```
 
-Defaults: `--native Chinese(Simplified) --target English`.
+| Kind | Input | Notes |
+| --- | --- | --- |
+| `word` | one word | picture + audio when configured |
+| `phrase` | a phrase or short sentence | |
+| `sentence` | a sentence **in the target language** | the card front shows its translation; tests producing the sentence |
+| `stem` | a question, concept, or problem | `--image <file>` solves from a photo (needs a vision-capable model); see [references/stem.md](references/stem.md) |
 
-All collections accept `--thinking [off|low|medium|high|default]` to override the
-model's extended-thinking level for that run. Omitted, `word`/`phrase`/`sentence`
-disable thinking (the default text model doesn't need it) and `stem` defaults to
-`high`. `off` disables it, `default` forces the provider default, and the named
-levels are passed through as `reasoning_effort`.
+Run `ankinote <kind> <command> --help` for the full, current option list.
 
-### `add` — Single card
+Decisions that matter:
 
-```
-uv run ankinote word add <word>
-uv run ankinote sentence add <sentence>
-uv run ankinote phrase add <phrase>
-uv run ankinote stem add <topic>
-```
+- **Languages:** `word`/`phrase`/`sentence` use the native and target
+  languages saved in the web app's settings. Pass `--native`/`--target` only
+  when the user wants cards for a different pair this time.
+- **Provider:** prefer `--profile <name>` (and `--image-profile` for
+  `word`/`stem`) with a name from `profiles list`. `--llm` / `--image-model`
+  override just the model.
+- **Rate:** `--rpm` defaults to 8 for `word`, 10 for `stem`, 60 otherwise.
+  Keep the default unless the user's provider allows more.
+- **Note types:** the web app's setup already creates them. Run `init` only
+  if a command reports a missing note type or deck.
 
-### `batch` — Multiple cards
+## Built-in Anki vs AnkiConnect
 
-```
-uv run ankinote word batch <word1> <word2> ...
-uv run ankinote sentence batch --file sentences.txt
-uv run ankinote phrase batch "call off" --file more.txt
-uv run ankinote stem batch --file topics.txt
-```
-
-Accepts inline arguments, `--file <path>` (one item per line), or both.
-Use `--rpm <N>` to set the rate limit (defaults: 8 for `word`, 60 for `phrase`/`sentence`, 10 for `stem`).
-
-### `init` — Create note type and deck
-
-```
-uv run ankinote word init
-uv run ankinote sentence init
-uv run ankinote phrase init
-uv run ankinote stem init
-```
-
-Must be run once before adding cards to a new collection. Creates the note type and deck in Anki.
-
-## Workflows
-
-### First-time setup
-
-```bash
-uv run ankinote word init
-uv run ankinote word add serendipity
-```
-
-### Batch import from file
-
-```bash
-cat > words.txt << EOF
-ephemeral
-eloquent
-ubiquitous
-EOF
-uv run ankinote word batch --file words.txt --rpm 30
-```
-
-For STEM-specific workflows (diagrams, reference images, card-type selection), see [references/stem.md](references/stem.md).
-
-## Troubleshooting
-
-See [references/troubleshooting.md](references/troubleshooting.md).
+The backend is whatever the user chose in the web app (or `ANKI_BACKEND`).
+With built-in Anki, the collection can only be open in one process: if the
+CLI reports the collection is in use, the web app (or Anki desktop) has it
+open. Ask the user before stopping it. In a Docker deployment, run the CLI
+inside the container (`docker exec <container> ankinote …`).
+See [references/anki-sync.md](references/anki-sync.md) for sync commands and
+[references/troubleshooting.md](references/troubleshooting.md) for errors.

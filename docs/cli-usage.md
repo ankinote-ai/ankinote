@@ -69,9 +69,9 @@ ankinote word batch --file words.txt
 ankinote phrase add "look after"
 ankinote phrase batch --file phrases.txt
 
-# sentence argument is in the native language; the target-language version
-# is generated for the card back
-ankinote sentence add "我今天起晚了。"
+# sentence argument is in the target language; its native-language
+# translation goes on the card front
+ankinote sentence add "I overslept this morning."
 ankinote sentence batch --file sentences.txt
 ```
 
@@ -106,6 +106,9 @@ using `ankinote stem init` or the web app's Note types page.
 ### Common options
 
 Language-learning commands accept `--native`, `--target`, and `--llm`.
+`--native` and `--target` default to the languages saved in settings (the
+web app's Languages step); without a settings file they default to
+`Chinese(Simplified)` and `English`.
 Batch commands also accept `--file` and `--rpm`. STEM commands accept
 `--llm`, and can additionally configure diagram generation with
 `--image-model` and `--image-size`.

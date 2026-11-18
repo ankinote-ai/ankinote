@@ -1,27 +1,20 @@
-# STEM collection specifics
+# STEM cards
 
-`stem` cards are language-agnostic (no `--native`/`--target`) and support generated diagrams.
+`stem` takes any question, concept, or problem, in any language, and has no
+`--native`/`--target`.
 
-## Options
-
-```
---image-size <pixels>    # Image size in pixels (square); default 512
---image-model <id>       # Image model for diagram generation (default: gpt-image-1.5, low quality)
---type <auto|...>        # Force a specific card type instead of auto-detecting from the topic
-```
-
-`add` additionally accepts:
-
-```
---image <path>           # Attach a local reference image alongside the generated content
-```
-
-`batch` rate limit default is 10 rpm (not the 60 used by `phrase`/`sentence`).
-`--thinking` defaults to `high` for stem (unlike `word`/`phrase`/`sentence`, which default to off).
-
-## Example
+- `--type [auto|concept|formula|procedure|example]`: `auto` (default) spends
+  one extra AI call classifying the request. Pick a type when it's obvious:
+  `example` for a problem to solve, `formula` for a law or equation,
+  `procedure` for "how do I…", `concept` for "what is…".
+- `--image <file>` (`add` only): a photographed problem for the AI to solve
+  from. Needs a vision-capable text model; with `--type example` it's the
+  usual way to turn a homework or textbook problem into a card.
+- `--thinking` defaults to `high` for STEM (off for language cards).
+- Diagrams use the image profile; `--image-size` sets the square size.
 
 ```bash
-uv run ankinote stem add "What is a derivative?" --image-size 1024
-uv run ankinote stem add "Explain the CAP theorem" --type auto --image ./diagram.png
+ankinote stem add "What is a derivative?"
+ankinote stem add "Solve the problem in this photo" --type example --image problem.jpg
+ankinote stem batch --file topics.txt --type concept
 ```
