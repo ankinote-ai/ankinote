@@ -1,4 +1,4 @@
-# ankinote web GUI, talking to an AnkiConnect you already run (the Anki desktop
+# AnkiNote talking to an AnkiConnect you already run (the Anki desktop
 # app on the host, or one elsewhere).
 #
 #   cd deploy/standard
@@ -14,14 +14,14 @@ services:
   ankinote:
     image: ${ANKINOTE_IMAGE:-ghcr.io/ankinote-ai/ankinote:latest}
     # Build from a PyPI release instead of pulling:
-    #   ANKINOTE_VERSION=0.3.1 docker compose build
+    #   ANKINOTE_VERSION=1.1.0 docker compose build
     # build:
     #   context: ../..
     #   args:
     #     ANKINOTE_VERSION: ${ANKINOTE_VERSION:?set ANKINOTE_VERSION}
     ports:
-      # Change the published address/port via ANKINOTE_PUBLISH in .env, e.g.
-      # "8080" (all interfaces) or "127.0.0.1:9000".
+      # Change via ANKINOTE_PUBLISH in .env. AnkiNote has no login, so keep it
+      # on 127.0.0.1 unless deploy/README.md says otherwise for your setup.
       - "${ANKINOTE_PUBLISH:-127.0.0.1:8080}:8080"
     env_file:
       - path: .env
@@ -33,7 +33,7 @@ services:
       # host.docker.internal natively).
       - "host.docker.internal:host-gateway"
     volumes:
-      # Provider profiles and API keys entered on the Settings page.
+      # Settings and API keys entered in the app.
       - ankinote-config:/config
     restart: unless-stopped
 

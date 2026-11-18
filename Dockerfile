@@ -1,12 +1,12 @@
 # syntax=docker/dockerfile:1
 #
-# Runs the ankinote web app (`ankinote-web`). The image installs a published release straight from
-# PyPI, so its contents match `pip install 'ankinote-ai[headless]==<version>'`
-# exactly. The `headless` extra bundles the `anki` library so the in-process
-# collection backend (ANKI_BACKEND=collection) works out of the box; the image
-# still defaults to AnkiConnect.
+# Runs the AnkiNote web app (`ankinote-web`). The image installs a published
+# release straight from PyPI, so its contents match
+# `pip install 'ankinote-ai==<version>'` exactly. The `anki` library comes with
+# it, so the in-process collection backend works out of the box; the setup
+# wizard (or ANKI_BACKEND) picks it or AnkiConnect.
 #
-#   docker build --build-arg ANKINOTE_VERSION=0.3.1 -t ankinote-ai .
+#   docker build --build-arg ANKINOTE_VERSION=1.1.0 -t ankinote .
 FROM python:3.14-slim
 
 ARG ANKINOTE_VERSION
@@ -20,7 +20,7 @@ ENV PYTHONUNBUFFERED=1 \
 # Retry: right after a release, a CDN node can still serve an index without the
 # new version even after the workflow's PyPI wait step has seen it.
 RUN for i in 1 2 3 4 5 6; do \
-        pip install --no-cache-dir "ankinote-ai[headless]==${ANKINOTE_VERSION}" && exit 0; \
+        pip install --no-cache-dir "ankinote-ai==${ANKINOTE_VERSION}" && exit 0; \
         echo "pip install attempt $i failed, retrying in 20s"; sleep 20; \
     done; exit 1
 

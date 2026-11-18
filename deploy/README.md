@@ -1,74 +1,105 @@
-# Deploying the AnkiNote web GUI
+# Deploying AnkiNote with Docker
 
 Published images (multi-arch `amd64` + `arm64`), tags `latest`, `<major>.<minor>`,
 `<version>`:
 
 - `ghcr.io/ankinote-ai/ankinote`
-- `ignity21/ankinote-ai` (Docker Hub)
+- `ignity21/ankinote-ai` (Docker Hub, same image)
 
 Two ready-made stacks:
 
 | Directory | Use it when |
 | --- | --- |
+| [`headless/`](headless/) (recommended) | You want a self-contained stack: no Anki desktop app, no AnkiConnect. AnkiNote keeps its own Anki collection and syncs it straight with AnkiWeb. |
 | [`standard/`](standard/) | You already run AnkiConnect — the Anki desktop app on the host, or one elsewhere. |
-| [`headless/`](headless/) | You want a self-contained stack with no Anki desktop app and no AnkiConnect. The GUI keeps its own Anki collection and syncs it straight with AnkiWeb. |
 
 Each directory is standalone:
 
 ```bash
-cd deploy/standard        # or deploy/headless
+cd deploy/headless        # or deploy/standard
 cp .env.example .env      # optional: AnkiWeb login (headless), port, image tag
 docker compose up -d      # http://localhost:8080
 ```
 
-The published image bundles the `anki` library, so `headless/` needs no extra
-build. Both stacks use the same image; only the environment differs.
+Open the address and the setup wizard walks you through the rest: an AI key
+(one Google AI Studio key covers text, pictures and audio), Anki, languages
+and a palette. **API keys are entered in the app, not in `.env`**; they
+persist in the `ankinote-config` volume.
 
-**AI provider keys are configured in the web UI**, not in `.env` — open the
-Settings page after first launch and add your text/image provider profiles and the
-Google TTS key. They persist in the `ankinote-config` volume.
+## Before you open it to other devices
+
+AnkiNote has **no login of its own**. Anyone who can reach the port can make
+cards with your API keys and write to your Anki collection. That's why both
+stacks publish on `127.0.0.1:8080` by default.
+
+To use it from your phone or another computer, pick one:
+
+- **A private network** such as Tailscale or WireGuard: set
+  `ANKINOTE_PUBLISH` to the machine's address on that network
+  (e.g. `100.64.0.5:8080`).
+- **A reverse proxy with a login**, keeping AnkiNote on `127.0.0.1`. With
+  Caddy, which also gets the HTTPS certificate:
+
+  ```
+  ankinote.example.com {
+      basic_auth {
+          you <hash from `caddy hash-password`>
+      }
+      reverse_proxy 127.0.0.1:8080
+  }
+  ```
+
+Avoid `ANKINOTE_PUBLISH=8080` (all interfaces) on a machine reachable from
+the internet.
+
+## `headless/`
+
+One `ankinote` service. It runs with `ANKI_BACKEND=collection`, opens an Anki
+collection at `/data/collection.anki2` in-process, and synchronizes it directly
+with AnkiWeb — at startup, after every card save, and every five minutes. The
+collection, its media, the credential-free sync state, and the backups taken
+before a full sync all live in the `anki-data` volume.
+
+Set `ANKIWEB_USERNAME` / `ANKIWEB_PASSWORD` in `.env` to sign in from the
+deployment environment; the password is passed through the environment and never
+written to disk. They are optional — leave them blank and sign in to AnkiWeb in
+the app instead. Either way, a brand-new collection cannot save cards until its
+first AnkiWeb sync completes; if AnkiWeb already has data you will be asked once
+whether to upload or download.
+
+To use an existing collection directory instead of the named volume, see the
+commented bind mount in `headless/compose.yaml`. Open a given collection from
+only one process at a time — do not point Anki desktop at the same directory
+while the stack is running.
 
 ## `standard/`
 
 The container reaches your AnkiConnect via `ANKI_CONNECT_URL` (default
 `http://host.docker.internal:8765`, i.e. the host). In the AnkiConnect add-on
-config (Tools -> Add-ons -> AnkiConnect -> Config) set `"webBindAddress": "0.0.0.0"`
+config (Tools → Add-ons → AnkiConnect → Config) set `"webBindAddress": "0.0.0.0"`
 and add the container origin to `"webCorsOriginList"` (or use `"*"`), then restart
 Anki.
 
-## `headless/`
+## Settings in `.env`
 
-One `ankinote` service, no sidecar. It runs with `ANKI_BACKEND=collection`, opens
-an Anki collection at `/data/collection.anki2` in-process, and synchronizes it
-directly with AnkiWeb — at startup, after every card save, and every five
-minutes. The collection, its media, the credential-free sync state, and the
-backups taken before a full sync all live in the `anki-data` volume.
+| Variable | Default | What it does |
+| --- | --- | --- |
+| `ANKINOTE_PUBLISH` | `127.0.0.1:8080` | Address and port on the host. Read the section above before changing the address. |
+| `ANKINOTE_IMAGE` | `ghcr.io/ankinote-ai/ankinote:latest` | Image and tag. Pin a minor version (`…:1.1`) to get fixes but not new features. |
+| `ANKIWEB_USERNAME` / `ANKIWEB_PASSWORD` | unset | `headless/` only. Signs in to AnkiWeb; overrides a login made in the app; the password is never written to disk. |
+| `ANKI_CONNECT_URL` | `http://host.docker.internal:8765` | `standard/` only. Where AnkiConnect listens. |
 
-Set `ANKIWEB_USERNAME` / `ANKIWEB_PASSWORD` in `.env` to sign in from the
-deployment environment; the password is passed through the environment and never
-written to disk. They are optional — leave them blank and use the **AnkiWeb
-sync** panel on the Settings page instead. Either way, a brand-new collection
-cannot save cards until its first AnkiWeb sync completes; if AnkiWeb already has
-data you will be asked to choose an upload or download once on the Settings page.
+## Upgrading
 
-To use an existing collection directory instead of the named volume, see the
-commented bind mount in `headless/compose.yaml`. Open a given collection from
-only one process at a time — do not point Anki desktop at the same directory
-while the stack is running. Migrating from an AnkiConnect deployment: see
-[Migrating to the headless stack](#migrating-to-the-headless-stack).
+```bash
+docker compose pull && docker compose up -d
+```
 
-## Config & secrets
-
-- Provider profiles and API keys entered on the Settings page persist in the
-  `ankinote-config` volume (`/config` in the container) — there is no need to put
-  them in `.env`.
-- `ANKINOTE_PUBLISH` sets the published address/port (default `127.0.0.1:8080`).
-  Use `8080` to bind all interfaces, `127.0.0.1:9000` for a different port.
-- `headless/` optionally takes `ANKIWEB_USERNAME` / `ANKIWEB_PASSWORD` to sign in
-  to AnkiWeb without using the Settings page. When set they take precedence over
-  a login entered in the UI, and the password is never persisted.
-- `ANKINOTE_IMAGE` overrides the image/tag (default
-  `ghcr.io/ankinote-ai/ankinote:latest`).
+Your settings and collection are in the volumes and survive the new
+container. With a pinned `ANKINOTE_IMAGE`, change the tag first. From 1.1 the
+images are published as `ghcr.io/ankinote-ai/ankinote`; if your `.env` still
+names `ghcr.io/ignity21/ankinote-ai`, switch to the new name — the old one is
+no longer updated.
 
 ## Customizing beyond `.env`
 
@@ -77,7 +108,7 @@ drop a `compose.override.yaml` next to the stack's `compose.yaml`. Compose loads
 and merges it automatically on `docker compose up`; it is gitignored.
 
 ```yaml
-# deploy/standard/compose.override.yaml
+# deploy/headless/compose.override.yaml
 services:
   ankinote:
     volumes:
@@ -89,19 +120,18 @@ replaced) — for the published port use `ANKINOTE_PUBLISH` instead.
 
 ## Building locally
 
-The image installs a released version straight from PyPI, with the `headless`
-extra:
+The image installs a released version straight from PyPI:
 
 ```bash
-docker build --build-arg ANKINOTE_VERSION=0.3.1 -t ankinote-ai ../..
+docker build --build-arg ANKINOTE_VERSION=1.1.0 -t ankinote ../..
 ```
 
 (run from either stack directory; the build context is the repo root). Each
 `compose.yaml` has a commented `build:` block for `docker compose build`.
 
-## Migrating to the headless stack
+## Moving from AnkiConnect to `headless/`
 
-Moving from an AnkiConnect deployment (`standard/`, or a previous headless stack
+Moving from an AnkiConnect deployment (`standard/`, or an old headless stack
 that ran `glechic/anki-connect-server`) to the in-process backend:
 
 1. **Sync the source collection to AnkiWeb** so nothing is only local. In Anki
@@ -109,11 +139,11 @@ that ran `glechic/anki-connect-server`) to the in-process backend:
 2. **Stop the old stack** (`docker compose down`). Leave its volumes in place
    until the new stack is verified.
 3. **Start `headless/`** with `ANKIWEB_USERNAME` / `ANKIWEB_PASSWORD` set, or
-   log in on the Settings page. The empty `anki-data` volume pulls the whole
-   collection from AnkiWeb on first sync; when prompted for a data source,
-   choose **download**.
-4. **Verify** on the Settings page that the last full sync just completed, then
-   open a card page and confirm your decks and note types are present.
+   sign in to AnkiWeb in the app. The empty `anki-data` volume pulls the whole
+   collection from AnkiWeb on first sync; when asked for a data source, choose
+   **download**.
+4. **Check** that the first full sync completed, then open Note types and
+   confirm your decks and note types are there.
 5. Only then remove the old stack's volumes.
 
 Rehearse against a copy first: `docker run --rm -v OLD_VOLUME:/from -v $PWD:/to
