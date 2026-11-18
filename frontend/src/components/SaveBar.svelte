@@ -38,14 +38,20 @@
 </div>
 
 <style>
+  /* Sticks to the bottom of the scrolling section, like the wizard's StepNav,
+   * so Save is never below the pane's edge however long the section. */
   .bar {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+    background: var(--tile);
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: flex-end;
     gap: 10px;
     margin-top: 24px;
-    padding-top: 12px;
+    padding: 12px 0 2px;
     border-top: 1px solid var(--border);
   }
 

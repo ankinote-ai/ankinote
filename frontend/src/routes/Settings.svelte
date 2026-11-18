@@ -33,7 +33,7 @@
     </p>
   </Pane>
 
-  <Pane title={t(`settings.section.${section}`)} area="body">
+  <Pane title={t(`settings.section.${section}`)} area="body" fill>
     <div class="body">
       <!-- Keyed so leaving a section drops its unsaved edits. -->
       {#key section}
@@ -101,7 +101,8 @@
 
   /* The pane title overlaps the border, so scroll inside, not on the pane. */
   .body {
-    height: 100%;
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
     margin: -4px -8px 0;
     padding: 4px 8px 0;

@@ -206,7 +206,7 @@
     {/if}
   </Pane>
 
-  <Pane title={showTheme ? t("cardtheme.title") : info ? fullName(info) : t("nav.notetypes")} area="detail">
+  <Pane title={showTheme ? t("cardtheme.title") : info ? fullName(info) : t("nav.notetypes")} area="detail" fill>
     <div class="body">
       {#if showTheme}
         <CardThemePicker />
@@ -464,7 +464,8 @@
 
   /* Detail: the pane title overlaps the border, so scroll inside it. */
   .body {
-    height: 100%;
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
     margin: -4px -8px 0;
     padding: 4px 8px 0;
