@@ -1,8 +1,8 @@
 /**
- * State for "Connect an AI model": the recommended provider (Gemini) serves
- * every route with one key; "Advanced" points any route at another provider
- * with its own key, or turns pictures and audio off. Shared by the wizard
- * and, later, Settings → Models.
+ * State for "Connect an AI model": the user picks a main provider (Gemini is
+ * recommended) whose one key serves every route it can; "Advanced" points any
+ * route at another provider with its own key, or turns pictures and audio
+ * off. Shared by the wizard and Settings → Models.
  */
 import { t } from "./i18n.svelte";
 import {
@@ -42,7 +42,7 @@ export class ModelSetup {
   saved = $state<Settings | null>(null);
   loadError = $state(false);
 
-  /** The recommended provider; its key is the one the wizard asks for. */
+  /** The chosen main provider; its key is the one asked for at the top. */
   main = $state("");
   apiKey = $state("");
   routes = $state<Record<Route, RouteState>>({
@@ -71,12 +71,20 @@ export class ModelSetup {
   );
   /** Whether any route uses the main provider's key. */
   readonly usesMain = $derived(ROUTES.some((route) => this.sameAsMain(route)));
-  /** Whether anything differs from the one-key default, so "Advanced" opens. */
+  /** Whether anything differs from what picking the main provider sets, so "Advanced" opens. */
   readonly customized = $derived(
     ROUTES.some((route) => {
       const r = this.routes[route];
-      return r.provider !== this.main || r.model.trim() !== this.recommended(route);
+      const model = this.provider(this.main)?.models[route];
+      if (!model) return r.provider !== OFF;
+      return r.provider !== this.main || r.model.trim() !== model;
     }),
+  );
+  /** Providers that can be the main one: any preset that writes cards. */
+  readonly mainChoices = $derived(
+    [...this.providers]
+      .filter((p) => p.id !== CUSTOM && p.models.text)
+      .sort((a, b) => Number(b.recommended) - Number(a.recommended)),
   );
   /** Every route that's on has a model, a key and (custom) an address. */
   readonly ready = $derived(ROUTES.every((route) => this.routeReady(route)));
@@ -134,7 +142,8 @@ export class ModelSetup {
     const main = this.providers.find((p) => p.recommended)?.id ?? this.providers[0]?.id ?? "";
     const text = this.saved?.models.text;
     if (this.saved && !this.saved.needs_setup && text && this.provider(text.provider)) {
-      this.main = main;
+      // The provider writing the cards is the main one, unless it's a custom endpoint.
+      this.main = this.mainChoices.some((p) => p.id === text.provider) ? text.provider : main;
       for (const route of ROUTES) {
         const view = this.saved.models[route];
         const known = view && this.provider(view.provider);
@@ -153,8 +162,9 @@ export class ModelSetup {
     }
   }
 
-  /** Pick the main provider; every route resets to its recommended model. */
+  /** Pick the main provider; every route resets to its recommended model, or off. */
   select(id: string) {
+    if (id !== this.main) this.apiKey = "";
     this.main = id;
     const provider = this.provider(id);
     for (const route of ROUTES) {

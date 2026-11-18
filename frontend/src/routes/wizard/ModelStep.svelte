@@ -5,7 +5,8 @@
   import SaveBar from "../../components/SaveBar.svelte";
   import StepNav from "../../components/StepNav.svelte";
   import { t, type MessageKey } from "../../lib/i18n.svelte";
-  import { ModelSetup } from "../../lib/modelSetup.svelte";
+  import { ModelSetup, OFF } from "../../lib/modelSetup.svelte";
+  import type { Provider } from "../../lib/api";
 
   /** `settings`: Settings → Models, where the footer saves instead of moving on. */
   let { onnext = () => {}, settings = false }: { onnext?: () => void; settings?: boolean } = $props();
@@ -22,6 +23,32 @@
   const main = $derived(setup.mainProvider);
   const savedHint = $derived(setup.savedKeyHint(setup.main));
   const mainRoutes = $derived(ROUTES.filter((route) => setup.sameAsMain(route)));
+  // Gemini's key steps (AI Studio, billing for pictures) are its own; others get the generic ones.
+  const isGemini = $derived(main?.id === "gemini");
+
+  /** What a provider can make with its one key, for its tile. */
+  function abilities(p: Provider): string {
+    const can = ROUTES.filter((route) => p.models[route]);
+    if (can.length === ROUTES.length) return t("model.can.all");
+    if (can.length === 1 && can[0] === "text") return t("model.can.textOnly");
+    return can.map((route) => t(`model.route.${route}` as MessageKey)).join(", ");
+  }
+
+  function pick(id: string) {
+    setup.select(id);
+    showKey = false;
+    refreshOptions();
+  }
+
+  /** A route not on the main key: off (and why), or the provider it uses instead. */
+  function elsewhere(route: (typeof ROUTES)[number]): { text: string; model: string } {
+    const r = setup.routes[route];
+    if (r.provider === OFF) {
+      const unsupported = !main?.models[route];
+      return { text: unsupported ? t("model.plan.unsupported", { name: main?.label ?? "" }) : t("model.off"), model: "" };
+    }
+    return { text: setup.label(r.provider), model: r.model.replace(/^[a-z_]+\//, "") };
+  }
 
   function refreshOptions() {
     if (advanced) for (const route of ROUTES) void setup.loadOptions(route);
@@ -66,19 +93,44 @@
 {#if setup.loadError}
   <p class="error" role="alert">{t("model.err.load")}</p>
 {:else if main}
+  <fieldset class="mains">
+    <legend class="label">{t("model.main")}</legend>
+    <div class="grid">
+      {#each setup.mainChoices as p (p.id)}
+        <label class="opt">
+          <input
+            type="radio"
+            name="main-provider"
+            value={p.id}
+            checked={setup.usesMain && setup.main === p.id}
+            onchange={() => pick(p.id)}
+          />
+          <span class="name">
+            {p.label}
+            {#if p.recommended}<span class="tag">{t("model.recommendedTag")}</span>{/if}
+          </span>
+          <span class="sub">{abilities(p)}</span>
+        </label>
+      {/each}
+    </div>
+    {#if advanced}<p class="note">{t("model.resetNote")}</p>{/if}
+  </fieldset>
+
   {#if setup.usesMain}
     <section class="howto" aria-labelledby="howto-title">
       <h2 id="howto-title" class="label">{t("model.howTo")}</h2>
       <ol>
         <li>
-          {t("model.howTo.key")}
+          {isGemini ? t("model.howTo.key") : t("model.howTo.keyOther", { name: main.label })}
           {#if main.key_url}
-            <a href={main.key_url} target="_blank" rel="noreferrer">{t("model.howTo.open")} ↗</a>
+            <a href={main.key_url} target="_blank" rel="noreferrer">
+              {isGemini ? t("model.howTo.open") : t("model.howTo.openOther", { name: main.label })} ↗
+            </a>
           {/if}
         </li>
-        {#if mainRoutes.includes("image")}<li>{t("model.howTo.billing")}</li>{/if}
+        {#if isGemini && mainRoutes.includes("image")}<li>{t("model.howTo.billing")}</li>{/if}
       </ol>
-      <p class="note">{t("model.howTo.noApis")}</p>
+      {#if isGemini}<p class="note">{t("model.howTo.noApis")}</p>{/if}
     </section>
 
     <div class="field key">
@@ -104,10 +156,18 @@
     <div class="plan">
       <span class="label">{t("model.plan")}</span>
       <ul>
-        {#each mainRoutes as route (route)}
+        {#each ROUTES as route (route)}
           <li>
             <span>{t(`model.route.${route}` as MessageKey)}</span>
-            <span class="model">{setup.routes[route].model.replace(/^[a-z]+\//, "")}</span>
+            {#if setup.sameAsMain(route)}
+              <span class="model">{setup.routes[route].model.replace(/^[a-z]+\//, "")}</span>
+            {:else}
+              {@const other = elsewhere(route)}
+              <span class="other">
+                {other.text}
+                {#if other.model}<span class="model">{other.model}</span>{/if}
+              </span>
+            {/if}
           </li>
         {/each}
       </ul>
@@ -166,6 +226,90 @@
     font-size: 13px;
     font-weight: 400;
     color: var(--muted);
+  }
+
+  .mains {
+    margin: 0 0 20px;
+    padding: 0;
+    border: 0;
+    min-width: 0;
+    max-width: 760px;
+  }
+
+  .mains legend {
+    padding: 0;
+    margin-bottom: 8px;
+  }
+
+  .mains .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 8px;
+  }
+
+  .opt {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--outer);
+    cursor: pointer;
+  }
+
+  /* The radio stays focusable and announced; the tile is what shows. */
+  .opt input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+  }
+
+  .opt:hover {
+    border-color: var(--muted);
+  }
+
+  .opt:has(input:checked) {
+    border-color: var(--accent);
+    background: var(--sel);
+  }
+
+  .opt:has(input:focus-visible) {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .opt .name {
+    font-weight: 600;
+  }
+
+  .opt .tag {
+    margin-left: 6px;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--accent);
+  }
+
+  .opt .sub {
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .mains > .note {
+    margin: 8px 0 0;
+    max-width: 62ch;
+  }
+
+  .other {
+    color: var(--muted);
+  }
+
+  .other .model {
+    margin-left: 8px;
   }
 
   .howto {
