@@ -129,7 +129,8 @@ def _provider_request_headers_params(
             "limit": "1000"
         }
     if litellm_provider in {"gemini", "vertex_ai"}:
-        return {}, {"key": api_key, "pageSize": "1000"}
+        # In a header, not ``?key=``, so the key stays out of URL logs.
+        return {"x-goog-api-key": api_key}, {"pageSize": "1000"}
     return {"Authorization": f"Bearer {api_key}"}, {}
 
 

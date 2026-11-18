@@ -46,7 +46,8 @@ async def test_fetch_model_ids_gemini_shape_adds_prefix(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     def handler(request: httpx.Request) -> httpx.Response:
-        assert request.url.params.get("key") == "k"
+        assert "key" not in request.url.params
+        assert request.headers["x-goog-api-key"] == "k"
         return httpx.Response(
             200,
             json={

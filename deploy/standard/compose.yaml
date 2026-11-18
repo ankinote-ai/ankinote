@@ -5,8 +5,8 @@
 #   cp .env.example .env      # optional: AnkiConnect URL, port, image tag
 #   docker compose up -d      # http://localhost:8080
 #
-# In the AnkiConnect add-on config set "webBindAddress": "0.0.0.0" and add the
-# container origin to "webCorsOriginList" (or use "*"), then restart Anki.
+# AnkiConnect must listen where the container can reach it: see `standard/` in
+# deploy/README.md. Don't touch its CORS list; no change there is needed.
 #
 # For a self-contained stack with no Anki desktop app, use ../headless instead.
 

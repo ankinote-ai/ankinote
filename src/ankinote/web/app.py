@@ -4,6 +4,7 @@ The frontend lives in ``frontend/`` and builds into ``DIST_DIR``. In
 development, run the Vite dev server instead; it proxies ``/api`` here.
 """
 
+import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path, PurePath
@@ -25,6 +26,7 @@ from ankinote.web import (
 from ankinote.web.guard import LocalAccessGuard, allowed_host_names
 
 DIST_DIR = Path(__file__).parent / "dist"
+API_DOCS_ENV = "ANKINOTE_API_DOCS"
 
 # Types ``mimetypes`` doesn't know on every supported Python.
 _MEDIA_TYPES = {".webmanifest": "application/manifest+json"}
@@ -55,7 +57,11 @@ def _api() -> APIRouter:
     async def health() -> dict[str, str]:
         return {"status": "ok", "version": __version__}
 
-    @router.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+    @router.api_route(
+        "/{path:path}",
+        methods=["GET", "POST", "PUT", "DELETE"],
+        include_in_schema=False,
+    )
     async def unknown(path: str) -> Response:
         # Keep unknown API paths out of the SPA fallback below.
         return Response(
@@ -80,8 +86,16 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 def create_app(dist_dir: Path = DIST_DIR) -> FastAPI:
+    # The interactive docs list every unauthenticated endpoint, so they are
+    # opt-in for development.
+    docs = os.environ.get(API_DOCS_ENV, "").lower() in {"1", "true", "yes"}
     app = FastAPI(
-        title="ankinote", version=__version__, docs_url="/api/docs", lifespan=_lifespan
+        title="ankinote",
+        version=__version__,
+        docs_url="/api/docs" if docs else None,
+        redoc_url=None,
+        openapi_url="/api/openapi.json" if docs else None,
+        lifespan=_lifespan,
     )
     app.add_middleware(LocalAccessGuard, allowed_hosts=allowed_host_names())
     app.include_router(settings_api.router)

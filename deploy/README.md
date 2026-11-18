@@ -81,10 +81,21 @@ while the stack is running.
 ## `standard/`
 
 The container reaches your AnkiConnect via `ANKI_CONNECT_URL` (default
-`http://host.docker.internal:8765`, i.e. the host). In the AnkiConnect add-on
-config (Tools → Add-ons → AnkiConnect → Config) set `"webBindAddress": "0.0.0.0"`
-and add the container origin to `"webCorsOriginList"` (or use `"*"`), then restart
-Anki.
+`http://host.docker.internal:8765`, i.e. the host). AnkiConnect listens on
+`127.0.0.1` by default. In the add-on config (Tools → Add-ons → AnkiConnect →
+Config):
+
+- **Linux:** set `"webBindAddress"` to the Docker bridge address
+  (`ip -4 addr show docker0`, usually `172.17.0.1`) and restart Anki. Only the
+  host and its containers can reach that address. Start Docker before Anki, or
+  AnkiConnect has no such address to listen on.
+- **Docker Desktop (macOS, Windows):** `host.docker.internal` reaches the
+  host's `127.0.0.1`, so the default usually works as is.
+
+Leave `"webCorsOriginList"` alone. AnkiNote calls AnkiConnect from its server,
+not from your browser, so CORS doesn't apply, and `"*"` would let any web page
+you visit read and change your collection. Avoid `"webBindAddress": "0.0.0.0"`
+as well: AnkiConnect has no login, and that opens it to your whole network.
 
 ## Settings in `.env`
 

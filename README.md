@@ -165,6 +165,7 @@ cd ankinote-ai
 uv sync                   # install Python dependencies (Python 3.14+)
 make web-dev              # run Svelte + Vite frontend dev server
 uv run ankinote-web       # run FastAPI backend
+                          # (ANKINOTE_API_DOCS=1 serves API docs at /api/docs)
 
 make test                 # run pytest suite
 make format               # format with ruff

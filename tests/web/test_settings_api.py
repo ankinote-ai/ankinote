@@ -64,6 +64,8 @@ def provider(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
     def handle(request: httpx.Request) -> httpx.Response:
         state["requests"].append(request)
         override = state["routes"].get(f"{request.url.host}{request.url.path}")
+        if isinstance(override, tuple) and isinstance(override[1], str):
+            return httpx.Response(override[0], text=override[1])
         if override is not None:
             return httpx.Response(override[0], json=override[1])
         return httpx.Response(state["list_status"], json=state["list"])
@@ -459,7 +461,9 @@ def test_connection_check_uses_the_pasted_key(
     assert provider["completions"][0]["model"] == GEMINI.models["text"]
     listed = provider["requests"][0]
     assert listed.url.path == "/v1beta/models"
-    assert listed.url.params["key"] == "AIza-test-key-1234"
+    # In the URL the key would end up in proxy and HTTP client logs.
+    assert "key" not in listed.url.params
+    assert listed.headers["x-goog-api-key"] == "AIza-test-key-1234"
 
 
 def test_off_routes_are_reported_off(
@@ -591,7 +595,29 @@ def test_list_models_reports_auth_failure(
         json={"route": "text", "target": {"provider": "openai", "api_key": "k"}},
     ).json()
 
-    assert body == {"models": [], "code": "auth", "detail": '{"error":"invalid key"}'}
+    assert body == {"models": [], "code": "auth", "detail": "invalid key"}
+
+
+def test_list_models_does_not_relay_raw_response_bodies(
+    client: TestClient, provider: dict[str, Any]
+) -> None:
+    # A custom base URL can point at anything the server reaches, such as a
+    # cloud metadata service; what that answers must not come back.
+    provider["routes"]["internal.test/latest/models"] = (404, "iam-secret-token")
+
+    body = client.post(
+        "/api/models/list",
+        json={
+            "route": "text",
+            "target": {
+                "provider": "custom",
+                "base_url": "http://internal.test/latest",
+                "api_key": "k",
+            },
+        },
+    ).json()
+
+    assert body == {"models": [], "code": "error", "detail": "HTTP 404"}
 
 
 # ---- single-route providers ----------------------------------------------
@@ -630,7 +656,8 @@ def test_google_cloud_tts_checks_the_voice_family(
     assert body["speech"]["status"] == "ok"
     assert body["speech"]["checked"] == "listed"
     voices = next(r for r in provider["requests"] if r.url.path == "/v1/voices")
-    assert voices.url.params["key"] == "gc-key"
+    assert "key" not in voices.url.params
+    assert voices.headers["x-goog-api-key"] == "gc-key"
 
 
 def test_google_cloud_tts_with_the_api_disabled(

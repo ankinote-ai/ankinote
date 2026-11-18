@@ -89,6 +89,23 @@ def test_missing_asset_is_404_not_index(dist: Path) -> None:
     assert client.get("/assets/missing.js").status_code == 404
 
 
+def test_api_docs_are_off_by_default(dist: Path) -> None:
+    client = TestClient(create_app(dist), base_url="http://localhost")
+
+    assert client.get("/api/docs").status_code == 404
+    assert "openapi" not in client.get("/openapi.json").text
+    assert client.get("/api/openapi.json").status_code == 404
+
+
+def test_api_docs_can_be_turned_on(dist: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("ANKINOTE_API_DOCS", "1")
+    client = TestClient(create_app(dist), base_url="http://localhost")
+
+    assert client.get("/api/docs").status_code == 200
+    assert "/api/openapi.json" in client.get("/api/docs").text
+    assert client.get("/api/openapi.json").json()["info"]["title"] == "ankinote"
+
+
 def test_missing_build_explains_how_to_build(tmp_path: Path) -> None:
     client = TestClient(create_app(tmp_path / "absent"), base_url="http://localhost")
 

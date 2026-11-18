@@ -125,26 +125,52 @@ def _code_from_message(message: str) -> FailureCode:
     return ""
 
 
+def _error_message(response: httpx.Response) -> str:
+    """The provider's own message from a JSON error body, else ``""``.
+
+    The raw body is never passed on: a custom base URL can point at any
+    service the server reaches, and that service's answer must not reach
+    whoever asked for the check.
+    """
+    try:
+        body = response.json()
+    except ValueError:
+        return ""
+    if not isinstance(body, dict):
+        return ""
+    error = body.get("error", body)
+    if isinstance(error, str):
+        return error
+    if isinstance(error, dict):
+        for field in ("message", "detail"):
+            if isinstance(value := error.get(field), str):
+                return value
+    return ""
+
+
 def classify(exc: BaseException, model: str) -> RouteCheck:
     """Map a provider or network error to a failure code."""
     if isinstance(exc, _TIMEOUTS):
         return _failure(model, "timeout")
     status: int | None = getattr(exc, "status_code", None)
-    message = str(exc)
+    message = detail = str(exc)
     if isinstance(exc, httpx.HTTPStatusError):
         status, message = exc.response.status_code, exc.response.text
+        detail = _error_message(exc.response)
     # The message is more specific than the type: Gemini sends a bad key as
     # 400, a disabled API as 403 and a free-tier zero quota as 429.
     if code := _code_from_message(message):
-        return _failure(model, code, message)
+        return _failure(model, code, detail)
     for types, code in _BY_TYPE:
         if isinstance(exc, types):
-            return _failure(model, code, message)
+            return _failure(model, code, detail)
     if isinstance(status, int) and status in _BY_STATUS:
-        return _failure(model, _BY_STATUS[status], message)
+        return _failure(model, _BY_STATUS[status], detail)
     if isinstance(exc, httpx.HTTPStatusError):
-        return _failure(model, "error", f"HTTP {status}: {message}")
-    return _failure(model, "error", message or type(exc).__name__)
+        return _failure(
+            model, "error", f"HTTP {status}: {detail}" if detail else f"HTTP {status}"
+        )
+    return _failure(model, "error", detail or type(exc).__name__)
 
 
 async def check_text(profile: ProviderProfile) -> RouteCheck:
@@ -169,10 +195,11 @@ def _list_url_and_auth(
     provider = PRESETS[preset_id].litellm_provider
     base = profile.base_url.rstrip("/")
     key = profile.api_key
+    # Google keys go in a header: in the URL they'd land in proxy and client logs.
     if preset_id == "google_tts":
-        return f"{base}/voices", {}, {"key": key}
+        return f"{base}/voices", {"x-goog-api-key": key}, {}
     if provider == "gemini":
-        return f"{base}/models", {}, {"key": key, "pageSize": "1000"}
+        return f"{base}/models", {"x-goog-api-key": key}, {"pageSize": "1000"}
     if provider == "anthropic":
         return (
             f"{base}/models",
