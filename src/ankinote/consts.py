@@ -43,7 +43,7 @@ TARGET_LANGUAGES = (
 NATIVE_LANGUAGES = tuple(lang for lang in Language if lang is not Language.OTHER)
 
 # Targets shown as beta until a competent reader has reviewed sample output
-# (docs/plans/productization.md, Phase 2). Only members of TARGET_LANGUAGES
+# (docs/plans/v1.md, Phase 2). Only members of TARGET_LANGUAGES
 # are offered.
 BETA_TARGET_LANGUAGES = frozenset({Language.KOREAN})
 

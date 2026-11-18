@@ -91,10 +91,9 @@ Open items:
 
 Status: minor follow-ups; not scheduled.
 
-## Productization: shorter path to the first card
+## 1.0: shorter path to the first card
 
-Direction agreed 2026-11-12; work breakdown in
-[plans/productization.md](plans/productization.md).
+Direction agreed 2026-11-12; work breakdown in [plans/v1.md](plans/v1.md).
 
 Positioning: a free, open, bring-your-own-key card maker for self-hosters and
 heavy Anki users, not a general-purpose toolkit. The fixed prompts and note
@@ -148,7 +147,9 @@ Confirmed 2026-11-12 for workstreams 4 and 5:
   editor.
 
 Not planned: HyperTTS-level provider coverage, a hosted multi-user service,
-an Anki add-on rewrite, free-form prompt/template editing in the UI.
+an Anki add-on rewrite. (Editing the built-in types' prompts and templates was
+listed here until 2026-11-18; it is now planned under "Customizing the
+built-in card types" below, bounded by reset-to-default.)
 
 Earlier questions, now settled: the CLI stays and shares `settings.json` with
 the Web UI (shipped 2026-09-22); the Anki backend, collection path, and
@@ -157,7 +158,7 @@ storage secret no longer need env vars (shipped 2026-09-22).
 ### 1.0 rewrite (decided 2026-11-12)
 
 0.x is frozen at v0.6.5; the `release/0.x` branch takes critical fixes only.
-The 1.0 productization rewrite lives on the long-lived `feat/1.0` branch and
+The 1.0 rewrite lives on the long-lived `feat/1.0` branch and
 merges into `main` once its acceptance checks are green; until then `main`
 stays at 0.x and runnable. (Changed 2026-11-12 from rewriting on `main`
 directly.)
@@ -178,6 +179,47 @@ directly.)
   3. Never break existing cards: note type names and fields stay or get a
      migration (field changes force a full AnkiWeb sync), and 1.0 imports a
      0.x `settings.json`.
+
+## Interface languages (to do, 2026-11-18)
+
+The language menu in the top bar offers only English and Simplified Chinese.
+
+- Offer every language the cards support (French, Spanish, German,
+  Japanese, Korean, …), so the interface can be read in the same languages
+  the cards explain in.
+- Add Traditional Chinese (`zh-Hant`) as an interface language. Cards already
+  support it as native and target language; this is the UI catalog only.
+- Each catalog needs the same keys as `en.json`; a missing key should fall
+  back to English rather than show the key.
+
+## Customizing the built-in card types (Advanced; planned 2026-11-18)
+
+For each built-in card type, an Advanced section lets the user change:
+
+- the card templates (front/back of each card),
+- the styling (CSS),
+- the generation prompt,
+- possibly the deck it is saved to (undecided: changing it moves where new
+  cards go, and the Anki-step setup creates decks by name; decide when
+  building this).
+
+The fields can't be changed. Notes already in the collection depend on them,
+and a field change forces a full AnkiWeb sync on every user.
+
+The principle: **anything editable can be reset to the built-in default**,
+per item (one template, the CSS, the prompt) and per card type. That is what
+makes editing safe to offer, so an editable item without a reset doesn't
+ship. A release that updates a built-in template or prompt updates
+unedited items; edited ones keep the user's version and say that a newer
+default exists.
+
+Template and CSS edits change only the note type's templates and styling
+(no schema change, so a normal sync carries them, as with card themes).
+Card themes keep working on top: the theme's tokens are composed in front of
+the user's CSS.
+
+This is the first, bounded step toward the 2.0 custom card types below: same
+editing surfaces (template, style, prompt, preview), but on fixed fields.
 
 ## The CLI as an agent's tool (idea, 2026-11-18)
 
@@ -217,9 +259,11 @@ law, programming, certifications) and to heavy Anki users who already have
 their own note types.
 
 It reverses a 1.0 position ("the fixed prompts and note types are the
-product"; free-form prompt/template editing is not planned). Taking it on
-means repositioning 2.0 from "good cards out of the box" to "a card
-generation platform", decided deliberately.
+product"). Taking it on means repositioning 2.0 from "good cards out of the
+box" to "a card generation platform", decided deliberately. Editing the
+built-in types' templates, styling and prompts with reset-to-default (see
+"Customizing the built-in card types" above) comes first; 2.0 adds what that
+leaves out: user-defined fields and new types.
 
 ### Card type spec
 
@@ -315,8 +359,8 @@ cover:
   publicly reachable AnkiConnect instance.
 
 2026-09-15: previously set aside to keep the product single-user; back on the
-table as a maybe-later if the single-user product gains traction (see the
-productization section above). Still no architecture work started.
+table as a maybe-later if the single-user product gains traction (see
+"1.0: shorter path to the first card" above). Still no architecture work started.
 
 Status: idea only; not scheduled and not a commitment to a specific framework
 or authentication provider.
