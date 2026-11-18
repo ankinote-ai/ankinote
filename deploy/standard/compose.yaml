@@ -28,7 +28,6 @@ services:
         required: false
     environment:
       ANKI_CONNECT_URL: ${ANKI_CONNECT_URL:-http://host.docker.internal:8765}
-      ANKINOTE_STORAGE_SECRET: ${ANKINOTE_STORAGE_SECRET:-}
     extra_hosts:
       # Lets the container reach the host on Linux too (Docker Desktop provides
       # host.docker.internal natively).

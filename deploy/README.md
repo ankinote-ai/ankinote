@@ -62,9 +62,6 @@ while the stack is running. Migrating from an AnkiConnect deployment: see
 - Provider profiles and API keys entered on the Settings page persist in the
   `ankinote-config` volume (`/config` in the container) — there is no need to put
   them in `.env`.
-- `ANKINOTE_STORAGE_SECRET` signs the GUI session cookie. Optional: when unset, a
-  random secret is generated on first start and kept in the `ankinote-config`
-  volume. Set it (e.g. `openssl rand -hex 32`) only to manage it yourself.
 - `ANKINOTE_PUBLISH` sets the published address/port (default `127.0.0.1:8080`).
   Use `8080` to bind all interfaces, `127.0.0.1:9000` for a different port.
 - `headless/` optionally takes `ANKIWEB_USERNAME` / `ANKIWEB_PASSWORD` to sign in

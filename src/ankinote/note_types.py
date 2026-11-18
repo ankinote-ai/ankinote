@@ -1,7 +1,7 @@
 """The note types and decks ankinote manages in Anki.
 
-Shared by the web API (wizard "Connect Anki", the Note types workspace) and
-the NiceGUI Card Types page. Each spec mirrors what its collection's
+Used by the web API (wizard "Connect Anki", the Note types workspace) and
+the CLI's ``init`` commands. Each spec mirrors what its collection's
 ``ensure_in_anki()`` writes, so a status computed here matches what setting
 it up will actually do.
 """

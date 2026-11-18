@@ -1,4 +1,4 @@
-"""Tests for GUI configuration helpers."""
+"""Tests for settings.json loading, saving and defaults."""
 
 import json
 import os
@@ -16,7 +16,6 @@ from ankinote.settings import (
     fetch_image_model_ids,
     fetch_model_ids,
     get_image_provider_models,
-    get_or_create_storage_secret,
     image_provider_for,
     load_settings,
     save_settings,
@@ -292,36 +291,6 @@ def test_load_settings_prefers_saved_anki_backend_over_env(
     save_settings(Settings(anki_backend="connect", anki_collection_path=""))
     settings = load_settings()
     assert settings.anki_backend == "connect"
-
-
-def test_storage_secret_env_override_is_used_and_not_persisted(
-    tmp_path, monkeypatch
-) -> None:
-    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
-    monkeypatch.setenv("ANKINOTE_STORAGE_SECRET", "from-env")
-    assert get_or_create_storage_secret() == "from-env"
-    assert not (tmp_path / "ankinote" / "storage_secret").exists()
-
-
-def test_storage_secret_is_generated_and_persisted_on_first_run(
-    tmp_path, monkeypatch
-) -> None:
-    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
-    monkeypatch.delenv("ANKINOTE_STORAGE_SECRET", raising=False)
-
-    secret = get_or_create_storage_secret()
-    assert secret
-    secret_file = tmp_path / "ankinote" / "storage_secret"
-    assert secret_file.read_text(encoding="utf-8").strip() == secret
-
-
-def test_storage_secret_is_reused_across_calls(tmp_path, monkeypatch) -> None:
-    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
-    monkeypatch.delenv("ANKINOTE_STORAGE_SECRET", raising=False)
-
-    first = get_or_create_storage_secret()
-    second = get_or_create_storage_secret()
-    assert first == second
 
 
 def test_settings_round_trip_preserves_profiles(tmp_path, monkeypatch) -> None:

@@ -3,7 +3,6 @@
 import functools
 import json
 import os
-import secrets
 from collections.abc import Callable
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -499,33 +498,6 @@ def _get_config_dir() -> Path:
 
 def _get_config_path() -> Path:
     return _get_config_dir() / "settings.json"
-
-
-def get_or_create_storage_secret() -> str:
-    """Return the session-signing secret for the NiceGUI web app.
-
-    ``ANKINOTE_STORAGE_SECRET`` overrides everything else, for deployments
-    (e.g. Docker) that manage secrets externally. Otherwise reuse the secret
-    persisted from a previous run, or generate and persist a new one on first
-    run — so a fresh install gets a private secret without the user ever
-    having to set an env var.
-    """
-    env_secret = os.environ.get("ANKINOTE_STORAGE_SECRET")
-    if env_secret:
-        return env_secret
-
-    path = _get_config_dir() / "storage_secret"
-    if path.exists():
-        secret = path.read_text(encoding="utf-8").strip()
-        if secret:
-            return secret
-
-    secret = secrets.token_hex(32)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "w", encoding="utf-8") as stream:
-        os.fchmod(stream.fileno(), 0o600)
-        stream.write(secret)
-    return secret
 
 
 def _parse_profiles(raw: dict) -> dict[str, ProviderProfile]:

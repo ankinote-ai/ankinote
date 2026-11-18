@@ -30,7 +30,6 @@ services:
     environment:
       ANKI_BACKEND: collection
       ANKI_COLLECTION_PATH: /data/collection.anki2
-      ANKINOTE_STORAGE_SECRET: ${ANKINOTE_STORAGE_SECRET:-}
     volumes:
       # Provider profiles and API keys entered on the Settings page.
       - ankinote-config:/config

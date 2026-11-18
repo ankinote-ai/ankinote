@@ -18,7 +18,6 @@ ROOT = Path(__file__).resolve().parent.parent
 THEMES = ROOT / "src" / "ankinote" / "themes"
 PUBLIC = ROOT / "frontend" / "public"
 DOCS = ROOT / "docs" / "brand"
-LEGACY_UI = ROOT / "src" / "ankinote" / "ui" / "static"
 
 # The mark on a 32-unit grid: the card's front (outlined, with a word on it)
 # and its back (filled), side by side like two tiled panes.
@@ -126,8 +125,6 @@ def main() -> None:
 
     adaptive = adaptive_mark(palette)
     (PUBLIC / "favicon.svg").write_text(adaptive)
-    (LEGACY_UI / "ankinote-logo.svg").write_text(adaptive)
-    (LEGACY_UI / "ankinote-logo-micro.svg").write_text(adaptive)
 
     (DOCS / "mark-light.svg").write_text(_svg(mark(light["fg"], light["accent"])))
     (DOCS / "mark-dark.svg").write_text(_svg(mark(dark["fg"], dark["accent"])))

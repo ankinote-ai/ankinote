@@ -96,12 +96,12 @@ and images are stored in dedicated fields; tags use Anki's native tag store.
 `--type auto` (the default) first classifies the request, then generates with the
 selected type's schema and prompt. Choosing a type skips that extra AI request.
 `stem init` initializes all four types; `stem init --type concept` initializes
-only Concept. The GUI supports the same type selection and previews every type
+only Concept. The web app supports the same type selection and previews every type
 for editing before saving, including variables, steps, tags, and diagram prompts.
 
 The old `AINote STEM` type is no longer managed. Existing test notes are left
 untouched; this change does not migrate or delete them. Initialize the new types
-using `ankinote stem init` or the GUI's Card Types page.
+using `ankinote stem init` or the web app's Note types page.
 
 ### Common options
 

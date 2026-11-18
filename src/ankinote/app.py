@@ -9,7 +9,6 @@ class Application:
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        # Do not inspect or cancel global tasks here.  In the GUI this context
-        # runs in NiceGUI's event loop, so those tasks include the server and
-        # the client's websocket handler.
+        # Do not inspect or cancel global tasks here: when this runs inside a
+        # server's event loop, those tasks include the server's own.
         await close_session()
