@@ -53,6 +53,36 @@ def test_built_assets_are_served(dist: Path) -> None:
     assert response.text == "console.log(1)"
 
 
+@pytest.mark.parametrize(
+    ("name", "content_type"),
+    [
+        ("favicon.svg", "image/svg+xml"),
+        ("manifest.webmanifest", "application/manifest+json"),
+    ],
+)
+def test_public_files_at_the_root_are_served(
+    dist: Path, name: str, content_type: str
+) -> None:
+    # Vite copies frontend/public/ to the top of dist/, next to index.html.
+    (dist / name).write_text("x")
+    client = TestClient(create_app(dist))
+
+    response = client.get(f"/{name}")
+
+    assert response.status_code == 200
+    assert response.text == "x"
+    assert response.headers["content-type"].startswith(content_type)
+
+
+@pytest.mark.parametrize("path", ["/index.html/", "/assets", "/../pyproject.toml"])
+def test_only_plain_files_at_the_root_are_public(dist: Path, path: str) -> None:
+    client = TestClient(create_app(dist))
+
+    response = client.get(path)
+
+    assert "<div id=app>" in response.text
+
+
 def test_missing_asset_is_404_not_index(dist: Path) -> None:
     client = TestClient(create_app(dist))
 

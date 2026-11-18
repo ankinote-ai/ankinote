@@ -222,6 +222,8 @@ __marimo__/
 *.jpeg
 *.png
 !docs/img/*.png
+!docs/brand/*.png
+!frontend/public/*.png
 
 # project
 output/

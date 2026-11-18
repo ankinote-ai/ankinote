@@ -37,7 +37,15 @@
 <svelte:window onkeydown={onKey} />
 
 <header class="bar">
-  <span class="brand">AnkiNote</span>
+  <span class="logo">
+    <!-- The mark (scripts/brand.py): the card's front and back as two tiles. -->
+    <svg viewBox="0 0 32 32" width="20" height="20" aria-hidden="true">
+      <rect x="3.25" y="5.25" width="10.5" height="21.5" rx="2.75" fill="none" stroke="var(--fg)" stroke-width="2.5" />
+      <rect x="6" y="10" width="5" height="2.5" rx="1.25" fill="var(--fg)" />
+      <rect x="18" y="4" width="12" height="24" rx="3.5" fill="var(--accent)" />
+    </svg>
+    <span class="brand">AnkiNote</span>
+  </span>
   <nav class="ws">
     {#each workspaces as ws (ws.path)}
       <a
@@ -80,6 +88,16 @@
     font-family: var(--mono);
     font-size: 13px;
     color: var(--muted);
+  }
+
+  .logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .logo svg {
+    flex: none;
   }
 
   .brand {

@@ -25,6 +25,9 @@ from ankinote.web import (
 
 DIST_DIR = Path(__file__).parent / "dist"
 
+# Types ``mimetypes`` doesn't know on every supported Python.
+_MEDIA_TYPES = {".webmanifest": "application/manifest+json"}
+
 _NOT_BUILT = (
     "The web frontend has not been built.\n"
     "From a source checkout, run `make web-build`, or use `make web-dev` "
@@ -83,6 +86,10 @@ def create_app(dist_dir: Path = DIST_DIR) -> FastAPI:
     async def spa(path: str) -> Response:
         if not index.is_file():
             return PlainTextResponse(_NOT_BUILT, status_code=503)
+        # frontend/public/ (icons, manifest) lands next to index.html.
+        public = dist_dir / path
+        if path and "/" not in path and not path.startswith(".") and public.is_file():
+            return FileResponse(public, media_type=_MEDIA_TYPES.get(public.suffix))
         # Client-side routes all load the same page; never cache it so a new
         # build's asset names are picked up.
         return FileResponse(index, headers={"Cache-Control": "no-cache"})
