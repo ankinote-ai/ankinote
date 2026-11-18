@@ -9,27 +9,16 @@ from ankinote.cli.factory import (
     WordCollectionOptions,
     anki_client_scope,
     build_word_collection,
+    language_options,
+    resolve_languages,
     resolve_thinking,
 )
 from ankinote.cli.phrase import MAX_CONCURRENCY
-from ankinote.consts import Language
 from ankinote.services.ai import DEFAULT_AI_SERVICE_CONFIG, DISABLE_REASONING
 
 # -- Shared options -----------------------------------------------------------
 
 COLLECTION_OPTIONS = [
-    click.option(
-        "--native",
-        default="Chinese(Simplified)",
-        show_default=True,
-        type=click.Choice([lang.value for lang in Language]),
-    ),
-    click.option(
-        "--target",
-        default="English",
-        show_default=True,
-        type=click.Choice([lang.value for lang in Language]),
-    ),
     click.option(
         "--llm",
         default=None,
@@ -71,12 +60,12 @@ COLLECTION_OPTIONS = [
 def collection_options(cmd):
     for option in reversed(COLLECTION_OPTIONS):
         cmd = option(cmd)
-    return cmd
+    return language_options(cmd)
 
 
 def build_options(
-    native: str,
-    target: str,
+    native: str | None,
+    target: str | None,
     llm: str | None,
     image_model: str | None,
     image_size: int | None,
@@ -85,9 +74,10 @@ def build_options(
     thinking: str | None = None,
 ) -> WordCollectionOptions:
     """Convert CLI parameters to typed collection options."""
+    native_language, target_language = resolve_languages(native, target)
     return WordCollectionOptions(
-        native_language=Language(native),
-        target_language=Language(target),
+        native_language=native_language,
+        target_language=target_language,
         llm_model=llm,
         image_model=image_model,
         image_size=image_size,

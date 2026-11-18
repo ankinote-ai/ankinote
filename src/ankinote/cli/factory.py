@@ -50,6 +50,32 @@ def resolve_profile(
         ) from None
 
 
+LANGUAGE_CHOICES = click.Choice([lang.value for lang in Language])
+
+
+def language_options(cmd):
+    """Add ``--native``/``--target``, which default to the saved languages."""
+    for flag in ("--target", "--native"):
+        cmd = click.option(
+            flag,
+            default=None,
+            show_default="from settings",
+            type=LANGUAGE_CHOICES,
+        )(cmd)
+    return cmd
+
+
+def resolve_languages(
+    native: str | None, target: str | None
+) -> tuple[Language, Language]:
+    """Fill unset ``--native``/``--target`` from the languages in settings."""
+    if native is None or target is None:
+        defaults = load_settings().defaults
+        native = native or defaults.native_language
+        target = target or defaults.target_language
+    return Language(native), Language(target)
+
+
 @dataclass(frozen=True, slots=True)
 class LanguageCollectionOptions:
     """Shared CLI options for language-learning collections."""

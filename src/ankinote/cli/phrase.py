@@ -9,9 +9,10 @@ from ankinote.cli.factory import (
     LanguageCollectionOptions,
     anki_client_scope,
     build_phrase_collection,
+    language_options,
+    resolve_languages,
     resolve_thinking,
 )
-from ankinote.consts import Language
 from ankinote.services.ai import DEFAULT_AI_SERVICE_CONFIG, DISABLE_REASONING
 
 MAX_CONCURRENCY = 10
@@ -19,18 +20,6 @@ MAX_CONCURRENCY = 10
 # -- Shared options -----------------------------------------------------------
 
 COLLECTION_OPTIONS = [
-    click.option(
-        "--native",
-        default="Chinese(Simplified)",
-        show_default=True,
-        type=click.Choice([lang.value for lang in Language]),
-    ),
-    click.option(
-        "--target",
-        default="English",
-        show_default=True,
-        type=click.Choice([lang.value for lang in Language]),
-    ),
     click.option(
         "--llm",
         default=None,
@@ -56,20 +45,21 @@ COLLECTION_OPTIONS = [
 def collection_options(cmd):
     for option in reversed(COLLECTION_OPTIONS):
         cmd = option(cmd)
-    return cmd
+    return language_options(cmd)
 
 
 def build_options(
-    native: str,
-    target: str,
+    native: str | None,
+    target: str | None,
     llm: str | None,
     profile: str | None = None,
     thinking: str | None = None,
 ) -> LanguageCollectionOptions:
     """Convert CLI parameters to typed collection options."""
+    native_language, target_language = resolve_languages(native, target)
     return LanguageCollectionOptions(
-        native_language=Language(native),
-        target_language=Language(target),
+        native_language=native_language,
+        target_language=target_language,
         llm_model=llm,
         reasoning_effort=resolve_thinking(thinking, unset=DISABLE_REASONING),
         profile=profile,
