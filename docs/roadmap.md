@@ -180,17 +180,21 @@ directly.)
      migration (field changes force a full AnkiWeb sync), and 1.0 imports a
      0.x `settings.json`.
 
-## Interface languages (to do, 2026-11-18)
+## Interface languages (done, 2026-11-18)
 
-The language menu in the top bar offers only English and Simplified Chinese.
+The language menu in the top bar offers every language the cards support:
+English, Simplified and Traditional Chinese, Japanese, Korean, French,
+Spanish and German, so the interface can be read in the same languages the
+cards explain in.
 
-- Offer every language the cards support (French, Spanish, German,
-  Japanese, Korean, …), so the interface can be read in the same languages
-  the cards explain in.
-- Add Traditional Chinese (`zh-Hant`) as an interface language. Cards already
-  support it as native and target language; this is the UI catalog only.
-- Each catalog needs the same keys as `en.json`; a missing key should fall
-  back to English rather than show the key.
+- Catalogs live in `frontend/src/lib/locales/`, one JSON per language; the
+  first visit picks the closest to the browser language (`zh-TW`, `zh-HK` and
+  `zh-Hant` get Traditional).
+- Each catalog has the same keys and `{placeholders}` as `en.json`
+  (`tests/test_locale_catalogs.py` checks it). A missing key still falls back
+  to English rather than showing the key.
+- Adding a language: a new catalog, one line in `i18n.svelte.ts`, and its
+  card-language entries in `languages.ts`.
 
 ## Customizing the built-in card types (Advanced; planned 2026-11-18)
 
