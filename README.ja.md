@@ -21,8 +21,9 @@
 
 ---
 
-<!-- MEDIA PLACEHOLDER #1: Hero Demo GIF / Video (recommended: docs/img/demo-hero.gif)
-     内容：単語の入力または STEM 問題画像のアップロード -> AI カード生成 -> 表裏プレビュー切替 -> Anki へ保存・同期。 -->
+<p align="center">
+  <img src="docs/img/demo-hero.gif" width="860" alt="AnkiNote のデモ：単語を入力し、カードを生成して、裏面へ">
+</p>
 
 カード作りが、復習そのものより大変であってはいけません。**AnkiNote** は、単語・フレーズ・例文・STEM（数学・理科・プログラミング）問題を入力するだけで、解説・例文・語呂合わせ（記憶フック）・AI イラスト・自然な音声を備えた完成品カードを自動生成し、そのまま AnkiWeb に同期できる AI カードスタジオです。
 
@@ -45,14 +46,19 @@
 
 ## 📸 カード ＆ 画面イメージ
 
-<!-- MEDIA PLACEHOLDER #2a: Language Card Showcase (recommended: docs/img/showcase-word.png)
-     内容：語学カードの表示例（イラスト・ルビ/発音・例文・音声）。 -->
+<table>
+  <tr>
+    <td width="50%" valign="top" align="center"><img src="docs/img/showcase-word.png" alt="語学カード：定義・イラスト・例文"><br><sub>語学カード：定義・イラスト・例文</sub></td>
+    <td width="50%" valign="top" align="center"><img src="docs/img/showcase-stem.png" alt="STEM カード：数式とステップごとの解説"><br><sub>STEM カード：数式とステップごとの解説</sub></td>
+  </tr>
+</table>
 
-<!-- MEDIA PLACEHOLDER #2b: STEM Card Showcase (recommended: docs/img/showcase-stem.png)
-     内容：問題文または画像から生成した STEM カードの表示例（MathJax 数式・ステップ解説）。 -->
-
-<!-- MEDIA PLACEHOLDER #3: Card Themes Comparison (docs/img/themes-light.png + docs/img/themes-dark.png, swapped by GitHub's color scheme via <picture>)
-     内容：Rosé Pine / Kanagawa / Tokyo Night / Gruvbox テーマを並べて比較。 -->
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/img/themes-dark.png">
+    <img src="docs/img/themes-light.png" width="860" alt="4 つのカード配色：Kanagawa、Tokyo Night、Gruvbox、Rosé Pine（ライト／ダーク）">
+  </picture>
+</p>
 
 ---
 
@@ -78,8 +84,12 @@ uvx --from ankinote-ai ankinote-web
 4. **外観** — カラーパレットとライト／ダークモードを選択します。Anki のカードにも同じパレットが適用されます。
 5. **最初のカード** — ウィザード内で最初のカードを生成して保存できます。
 
-<!-- MEDIA PLACEHOLDER #4: Setup Wizard Screenshot (recommended: docs/img/wizard-setup.png)
-     内容：5 ステップの初回セットアップウィザード画面。 -->
+<table>
+  <tr>
+    <td width="50%" valign="top" align="center"><img src="docs/img/wizard-api.png" alt="セットアップウィザード 手順 1：AI モデルに接続"><br><sub>セットアップウィザード 手順 1：AI モデルに接続</sub></td>
+    <td width="50%" valign="top" align="center"><img src="docs/img/wizard-anki-account.png" alt="セットアップウィザード 手順 2：Anki に接続"><br><sub>セットアップウィザード 手順 2：Anki に接続</sub></td>
+  </tr>
+</table>
 
 コマンドとして恒久インストールする場合：
 

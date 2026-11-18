@@ -21,9 +21,9 @@
 
 ---
 
-<!-- MEDIA PLACEHOLDER #1: Hero Demo GIF / Video (recommended: docs/img/demo-hero.gif)
-     Mostrar: Escribir una palabra o subir la foto de un problema STEM -> generación con IA ->
-     voltear vista previa Anverso/Reverso -> guardar y sincronizar con Anki. -->
+<p align="center">
+  <img src="docs/img/demo-hero.gif" width="860" alt="Demo de AnkiNote: escribe una palabra, genera la tarjeta y dale la vuelta">
+</p>
 
 Crear buenas tarjetas de Anki no debería llevar más tiempo que repasarlas. **AnkiNote** es un estudio de tarjetas Anki impulsado por IA que transforma una palabra, expresión, oración o problema STEM en una tarjeta completa y estilizada — con definiciones, ejemplos, reglas mnemotécnicas, ilustraciones y audio natural — y la sincroniza directamente con tu cuenta de AnkiWeb.
 
@@ -46,14 +46,19 @@ Sin formato manual. Sin copiar y pegar entre ChatGPT y Anki. Usa tu propia clave
 
 ## 📸 Galería de tarjetas e interfaz
 
-<!-- MEDIA PLACEHOLDER #2a: Language Card Showcase (recommended: docs/img/showcase-word.png)
-     Mostrar: Tarjeta de idioma generada (imagen, pronunciación/ruby, ejemplo, audio). -->
+<table>
+  <tr>
+    <td width="50%" valign="top" align="center"><img src="docs/img/showcase-word.png" alt="Tarjeta de idioma: definición, ilustración y ejemplos"><br><sub>Tarjeta de idioma: definición, ilustración y ejemplos</sub></td>
+    <td width="50%" valign="top" align="center"><img src="docs/img/showcase-stem.png" alt="Tarjeta STEM: fórmulas y solución paso a paso"><br><sub>Tarjeta STEM: fórmulas y solución paso a paso</sub></td>
+  </tr>
+</table>
 
-<!-- MEDIA PLACEHOLDER #2b: STEM Card Showcase (recommended: docs/img/showcase-stem.png)
-     Mostrar: Tarjeta STEM generada desde texto o foto (fórmulas MathJax y explicación paso a paso). -->
-
-<!-- MEDIA PLACEHOLDER #3: Card Themes Comparison (docs/img/themes-light.png + docs/img/themes-dark.png, swapped by GitHub's color scheme via <picture>)
-     Mostrar: los 4 temas (Rosé Pine, Kanagawa, Tokyo Night, Gruvbox) lado a lado. -->
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/img/themes-dark.png">
+    <img src="docs/img/themes-light.png" width="860" alt="Cuatro paletas de tarjetas: Kanagawa, Tokyo Night, Gruvbox y Rosé Pine, en claro y oscuro">
+  </picture>
+</p>
 
 ---
 
@@ -79,8 +84,12 @@ Abre **<http://127.0.0.1:8000>** en tu navegador. En el primer arranque, el **as
 4. **Apariencia** — Elige la paleta de colores y el modo claro u oscuro; tus tarjetas de Anki usan la misma paleta.
 5. **Primera tarjeta** — Genera y guarda tu primera tarjeta sin salir del asistente.
 
-<!-- MEDIA PLACEHOLDER #4: Setup Wizard Screenshot (recommended: docs/img/wizard-setup.png)
-     Mostrar: El asistente inicial de 5 pasos en la interfaz web. -->
+<table>
+  <tr>
+    <td width="50%" valign="top" align="center"><img src="docs/img/wizard-api.png" alt="Asistente de configuración, paso 1: conectar un modelo de IA"><br><sub>Asistente de configuración, paso 1: conectar un modelo de IA</sub></td>
+    <td width="50%" valign="top" align="center"><img src="docs/img/wizard-anki-account.png" alt="Asistente de configuración, paso 2: conectar Anki"><br><sub>Asistente de configuración, paso 2: conectar Anki</sub></td>
+  </tr>
+</table>
 
 Para instalarlo de forma permanente:
 

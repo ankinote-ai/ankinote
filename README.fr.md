@@ -21,9 +21,9 @@
 
 ---
 
-<!-- MEDIA PLACEHOLDER #1: Hero Demo GIF / Video (recommended: docs/img/demo-hero.gif)
-     Montrer : saisie d'un mot ou import d'une photo de problème STEM -> génération par l'IA ->
-     aperçu Recto/Verso -> clic sur Enregistrer et synchronisation vers Anki. -->
+<p align="center">
+  <img src="docs/img/demo-hero.gif" width="860" alt="Démo d'AnkiNote : saisir un mot, générer la carte, la retourner">
+</p>
 
 Créer de bonnes cartes Anki ne devrait pas prendre plus de temps que de les réviser. **AnkiNote** est un studio de cartes Anki propulsé par l'IA qui transforme un mot, une expression, une phrase ou un problème STEM en une carte complète et soignée — avec définitions, exemples, moyens mnémotechniques, illustrations et audio naturel — puis la synchronise directement avec votre compte AnkiWeb.
 
@@ -46,14 +46,19 @@ Fini la mise en forme manuelle et les copier-coller entre ChatGPT et Anki. Utili
 
 ## 📸 Aperçu des cartes et de l'interface
 
-<!-- MEDIA PLACEHOLDER #2a: Language Card Showcase (recommended: docs/img/showcase-word.png)
-     Montrer : carte de langue générée (illustration, phonétique/ruby, exemple, audio). -->
+<table>
+  <tr>
+    <td width="50%" valign="top" align="center"><img src="docs/img/showcase-word.png" alt="Carte de langue : définition, illustration et exemples"><br><sub>Carte de langue : définition, illustration et exemples</sub></td>
+    <td width="50%" valign="top" align="center"><img src="docs/img/showcase-stem.png" alt="Carte STEM : formules et solution pas à pas"><br><sub>Carte STEM : formules et solution pas à pas</sub></td>
+  </tr>
+</table>
 
-<!-- MEDIA PLACEHOLDER #2b: STEM Card Showcase (recommended: docs/img/showcase-stem.png)
-     Montrer : carte STEM générée à partir d'un texte ou d'une photo (formules MathJax et explication). -->
-
-<!-- MEDIA PLACEHOLDER #3: Card Themes Comparison (docs/img/themes-light.png + docs/img/themes-dark.png, swapped by GitHub's color scheme via <picture>)
-     Montrer : les 4 thèmes (Rosé Pine, Kanagawa, Tokyo Night, Gruvbox) côte à côte. -->
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/img/themes-dark.png">
+    <img src="docs/img/themes-light.png" width="860" alt="Quatre palettes de cartes : Kanagawa, Tokyo Night, Gruvbox et Rosé Pine, en clair et en sombre">
+  </picture>
+</p>
 
 ---
 
@@ -79,8 +84,12 @@ Ouvrez **<http://127.0.0.1:8000>** dans votre navigateur. Au premier lancement, 
 4. **Apparence** — Choisissez la palette de couleurs et le mode clair ou sombre ; vos cartes Anki adoptent la même palette.
 5. **Première carte** — Générez et enregistrez votre première carte directement depuis l'assistant.
 
-<!-- MEDIA PLACEHOLDER #4: Setup Wizard Screenshot (recommended: docs/img/wizard-setup.png)
-     Montrer : l'assistant de configuration en 5 étapes dans l'interface web. -->
+<table>
+  <tr>
+    <td width="50%" valign="top" align="center"><img src="docs/img/wizard-api.png" alt="Assistant de configuration, étape 1 : connecter un modèle d'IA"><br><sub>Assistant de configuration, étape 1 : connecter un modèle d'IA</sub></td>
+    <td width="50%" valign="top" align="center"><img src="docs/img/wizard-anki-account.png" alt="Assistant de configuration, étape 2 : connecter Anki"><br><sub>Assistant de configuration, étape 2 : connecter Anki</sub></td>
+  </tr>
+</table>
 
 Pour l'installer globalement :
 

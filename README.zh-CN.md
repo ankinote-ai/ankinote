@@ -21,8 +21,9 @@
 
 ---
 
-<!-- MEDIA PLACEHOLDER #1: Hero Demo GIF / Video (recommended: docs/img/demo-hero.gif)
-     展示：输入单词或上传 STEM 题目图片 -> AI 生成卡片 -> 正反面预览切换 -> 点击保存直接同步到 Anki。 -->
+<p align="center">
+  <img src="docs/img/demo-hero.gif" width="860" alt="AnkiNote 演示：输入单词、生成卡片、翻到背面">
+</p>
 
 制卡不该比背卡还累。**AnkiNote** 是一款由 AI 驱动的 Anki 制卡工作台，只需输入一个单词、短语、句子或理工科（STEM）题目，即可自动生成包含释义、例句、助记、AI 配图与自然语音的精美卡片，并直接同步到你的 AnkiWeb 账号。
 
@@ -45,14 +46,19 @@
 
 ## 📸 卡片与界面展示
 
-<!-- MEDIA PLACEHOLDER #2a: Language Card Showcase (recommended: docs/img/showcase-word.png)
-     展示：单词/句子卡片效果（含配图、音标/注音、例句、音频）。 -->
+<table>
+  <tr>
+    <td width="50%" valign="top" align="center"><img src="docs/img/showcase-word.png" alt="语言卡片：释义、配图与例句"><br><sub>语言卡片：释义、配图与例句</sub></td>
+    <td width="50%" valign="top" align="center"><img src="docs/img/showcase-stem.png" alt="STEM 卡片：公式与分步解析"><br><sub>STEM 卡片：公式与分步解析</sub></td>
+  </tr>
+</table>
 
-<!-- MEDIA PLACEHOLDER #2b: STEM Card Showcase (recommended: docs/img/showcase-stem.png)
-     展示：通过题目文本或拍照生成的 STEM 卡片效果（含 MathJax 公式与分步解析）。 -->
-
-<!-- MEDIA PLACEHOLDER #3: Card Themes Comparison (docs/img/themes-light.png + docs/img/themes-dark.png, swapped by GitHub's color scheme via <picture>)
-     展示：Rosé Pine、Kanagawa、Tokyo Night、Gruvbox 四套卡片主题并排对比。 -->
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/img/themes-dark.png">
+    <img src="docs/img/themes-light.png" width="860" alt="四套卡片配色：Kanagawa、Tokyo Night、Gruvbox 与 Rosé Pine，含浅色与深色">
+  </picture>
+</p>
 
 ---
 
@@ -78,8 +84,12 @@ uvx --from ankinote-ai ankinote-web
 4. **外观** — 选择配色方案与浅色/深色模式，Anki 卡片也会使用同一套配色。
 5. **首张卡片** — 在向导中直接生成并保存你的第一张卡片。
 
-<!-- MEDIA PLACEHOLDER #4: Setup Wizard Screenshot (recommended: docs/img/wizard-setup.png)
-     展示：Web 端 5 步首次配置向导界面。 -->
+<table>
+  <tr>
+    <td width="50%" valign="top" align="center"><img src="docs/img/wizard-api.png" alt="设置向导第 1 步：连接 AI 模型"><br><sub>设置向导第 1 步：连接 AI 模型</sub></td>
+    <td width="50%" valign="top" align="center"><img src="docs/img/wizard-anki-account.png" alt="设置向导第 2 步：连接 Anki"><br><sub>设置向导第 2 步：连接 Anki</sub></td>
+  </tr>
+</table>
 
 如果想全局安装以便随时启动：
 

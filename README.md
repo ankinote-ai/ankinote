@@ -21,9 +21,9 @@
 
 ---
 
-<!-- MEDIA PLACEHOLDER #1: Hero Demo GIF / Video (recommended: docs/img/demo-hero.gif)
-     Show: Typing a word or uploading a STEM problem -> AI generates the card ->
-     flipping Front/Back preview -> clicking Save to sync straight to Anki. -->
+<p align="center">
+  <img src="docs/img/demo-hero.gif" width="860" alt="AnkiNote demo: type a word, generate the card, flip to the back">
+</p>
 
 Making great Anki cards shouldn't take longer than reviewing them. **AnkiNote** is an AI-powered Anki card studio that turns a single word, phrase, sentence, or STEM problem into a complete, styled flashcard — with explanations, examples, memory hooks, custom illustrations, and native-sounding audio — and syncs it straight to your AnkiWeb account.
 
@@ -46,14 +46,19 @@ No manual formatting. No copy-pasting between ChatGPT and Anki. Bring your own A
 
 ## 📸 Card & UI Showcase
 
-<!-- MEDIA PLACEHOLDER #2a: Language Card Showcase (recommended: docs/img/showcase-word.png)
-     Show: A generated Word/Sentence card in preview or Anki (front/back with image, ruby/phonetics, example, audio). -->
+<table>
+  <tr>
+    <td width="50%" valign="top" align="center"><img src="docs/img/showcase-word.png" alt="Language card: definition, illustration, examples"><br><sub>Language card: definition, illustration, examples</sub></td>
+    <td width="50%" valign="top" align="center"><img src="docs/img/showcase-stem.png" alt="STEM card: formulas and a step-by-step solution"><br><sub>STEM card: formulas and a step-by-step solution</sub></td>
+  </tr>
+</table>
 
-<!-- MEDIA PLACEHOLDER #2b: STEM Card Showcase (recommended: docs/img/showcase-stem.png)
-     Show: A STEM card generated from a problem or photo, with MathJax formulas and step-by-step explanation. -->
-
-<!-- MEDIA PLACEHOLDER #3: Card Themes Comparison (docs/img/themes-light.png + docs/img/themes-dark.png, swapped by GitHub's color scheme via <picture>)
-     Show: Rosé Pine, Kanagawa, Tokyo Night, and Gruvbox palettes side by side. -->
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/img/themes-dark.png">
+    <img src="docs/img/themes-light.png" width="860" alt="Four card palettes: Kanagawa, Tokyo Night, Gruvbox and Rosé Pine, in light and dark">
+  </picture>
+</p>
 
 ---
 
@@ -79,8 +84,12 @@ Then open **<http://127.0.0.1:8000>** in your browser. On first launch, the **Se
 4. **Appearance** — Choose a color palette and light or dark mode; your Anki cards get the same palette.
 5. **First Card** — Generate and save your first card right inside the wizard.
 
-<!-- MEDIA PLACEHOLDER #4: Setup Wizard Screenshot (recommended: docs/img/wizard-setup.png)
-     Show: The 5-step onboarding wizard in the web UI. -->
+<table>
+  <tr>
+    <td width="50%" valign="top" align="center"><img src="docs/img/wizard-api.png" alt="Setup wizard, step 1: connect an AI model"><br><sub>Setup wizard, step 1: connect an AI model</sub></td>
+    <td width="50%" valign="top" align="center"><img src="docs/img/wizard-anki-account.png" alt="Setup wizard, step 2: connect Anki"><br><sub>Setup wizard, step 2: connect Anki</sub></td>
+  </tr>
+</table>
 
 To install globally as a command:
 
