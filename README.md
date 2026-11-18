@@ -1,7 +1,10 @@
 # AnkiNote
 
 <p align="center">
-  <img src="src/ankinote/ui/static/ankinote-logo.svg" width="96" alt="AnkiNote logo">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ignity21/ankinote-ai/main/docs/brand/mark-dark.svg">
+    <img src="https://raw.githubusercontent.com/ignity21/ankinote-ai/main/docs/brand/mark-light.svg" width="96" alt="AnkiNote logo">
+  </picture>
 </p>
 
 <p align="center">
@@ -22,7 +25,7 @@
 ---
 
 <p align="center">
-  <img src="docs/img/demo-hero.gif" width="860" alt="AnkiNote demo: type a word, generate the card, flip to the back">
+  <img src="https://raw.githubusercontent.com/ignity21/ankinote-ai/main/docs/img/demo-hero.gif" width="860" alt="AnkiNote demo: type a word, generate the card, flip to the back">
 </p>
 
 Making great Anki cards shouldn't take longer than reviewing them. **AnkiNote** is an AI-powered Anki card studio that turns a single word, phrase, sentence, or STEM problem into a complete, styled flashcard — with explanations, examples, memory hooks, custom illustrations, and native-sounding audio — and syncs it straight to your AnkiWeb account.
@@ -40,7 +43,7 @@ No manual formatting. No copy-pasting between ChatGPT and Anki. Bring your own A
   - **STEM & Problem Solving**: Type a question or **upload a photo of a problem** to generate a structured, step-by-step explanation card with MathJax formulas and optional diagrams.
 - **Live Preview, Inline Editing & AI Rewrite** — Flip front/back and toggle Light/Dark mode before saving. Tweak any field directly, ask AI to rewrite a STEM explanation, or fix broken LaTeX with one click (with undo).
 - **Curated Card Themes** — Choose from **Rosé Pine**, **Kanagawa**, **Tokyo Night**, and **Gruvbox** in both Light and Dark modes, with responsive layouts for desktop and mobile Anki.
-- **Web App + CLI** — A modern Svelte web studio (`ankinote-web`) for daily card creation, plus a scriptable CLI & TUI (`ankinote`) for batch workflows.
+- **Works with your AI agent** — The `ankinote` CLI lets Claude Code, Codex, or any agent that can run commands turn what you're reading into cards.
 
 ---
 
@@ -48,15 +51,15 @@ No manual formatting. No copy-pasting between ChatGPT and Anki. Bring your own A
 
 <table>
   <tr>
-    <td width="50%" valign="top" align="center"><img src="docs/img/showcase-word.png" alt="Language card: definition, illustration, examples"><br><sub>Language card: definition, illustration, examples</sub></td>
-    <td width="50%" valign="top" align="center"><img src="docs/img/showcase-stem.png" alt="STEM card: formulas and a step-by-step solution"><br><sub>STEM card: formulas and a step-by-step solution</sub></td>
+    <td width="50%" valign="top" align="center"><img src="https://raw.githubusercontent.com/ignity21/ankinote-ai/main/docs/img/showcase-word.png" alt="Language card: definition, illustration, examples"><br><sub>Language card: definition, illustration, examples</sub></td>
+    <td width="50%" valign="top" align="center"><img src="https://raw.githubusercontent.com/ignity21/ankinote-ai/main/docs/img/showcase-stem.png" alt="STEM card: formulas and a step-by-step solution"><br><sub>STEM card: formulas and a step-by-step solution</sub></td>
   </tr>
 </table>
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/img/themes-dark.png">
-    <img src="docs/img/themes-light.png" width="860" alt="Four card palettes: Kanagawa, Tokyo Night, Gruvbox and Rosé Pine, in light and dark">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ignity21/ankinote-ai/main/docs/img/themes-dark.png">
+    <img src="https://raw.githubusercontent.com/ignity21/ankinote-ai/main/docs/img/themes-light.png" width="860" alt="Four card palettes: Kanagawa, Tokyo Night, Gruvbox and Rosé Pine, in light and dark">
   </picture>
 </p>
 
@@ -86,8 +89,8 @@ Then open **<http://127.0.0.1:8000>** in your browser. On first launch, the **Se
 
 <table>
   <tr>
-    <td width="50%" valign="top" align="center"><img src="docs/img/wizard-api.png" alt="Setup wizard, step 1: connect an AI model"><br><sub>Setup wizard, step 1: connect an AI model</sub></td>
-    <td width="50%" valign="top" align="center"><img src="docs/img/wizard-anki-account.png" alt="Setup wizard, step 2: connect Anki"><br><sub>Setup wizard, step 2: connect Anki</sub></td>
+    <td width="50%" valign="top" align="center"><img src="https://raw.githubusercontent.com/ignity21/ankinote-ai/main/docs/img/wizard-api.png" alt="Setup wizard, step 1: connect an AI model"><br><sub>Setup wizard, step 1: connect an AI model</sub></td>
+    <td width="50%" valign="top" align="center"><img src="https://raw.githubusercontent.com/ignity21/ankinote-ai/main/docs/img/wizard-anki-account.png" alt="Setup wizard, step 2: connect Anki"><br><sub>Setup wizard, step 2: connect Anki</sub></td>
   </tr>
 </table>
 
@@ -117,18 +120,25 @@ Already running Anki Desktop with AnkiConnect? Use `deploy/standard` instead. Se
 
 ---
 
-## ⌨️ CLI & Batch Mode
+## ⌨️ From the Terminal or an AI Agent
 
-AnkiNote also ships a CLI (`ankinote`) that shares the same `settings.json` (`~/.config/ankinote/settings.json`) as the Web App:
+The `ankinote` command makes cards without opening a browser, using the same settings as the web app. That makes it a tool any AI agent that can run commands (Claude Code, Codex, …) can use for you.
+
+**From a photo of what you're reading.** Photograph a page where you underlined new words and tell your agent: *"Make Anki cards for the underlined words."* It reads the picture, picks out the words, and runs:
 
 ```bash
-ankinote                  # open the interactive terminal UI (TUI)
-ankinote word ephemeral   # generate a vocabulary card
-ankinote stem "..."       # generate a STEM card
-ankinote profiles list    # inspect configured provider profiles
+ankinote word batch serendipity ephemeral eloquent
 ```
 
-See the [CLI Usage Guide](docs/cli-usage.md) for batch lists, flags, and automation examples.
+**From a list you already have.** One word per line:
+
+```bash
+ankinote word batch --file words.txt --rpm 30
+```
+
+Cards from the CLI go straight to Anki without a preview. To check each card before it's saved, paste the same list into the web app's Generate page instead.
+
+Run `ankinote` on its own for a menu in the terminal. The [CLI Usage Guide](docs/cli-usage.md) covers phrases, sentences, STEM, and every option.
 
 ---
 
@@ -140,7 +150,7 @@ See the [CLI Usage Guide](docs/cli-usage.md) for batch lists, flags, and automat
 | **Image Generation** | Gemini, OpenAI (`gpt-image`), fal.ai |
 | **Text-to-Speech** | Gemini TTS, OpenAI TTS, Google Cloud TTS |
 
-All API keys and settings are stored locally on your machine (`~/.config/ankinote/settings.json`) and can be exported/imported as an encrypted backup bundle (`scrypt` + `AES-256-GCM`) from **Settings**.
+All API keys and settings stay on your machine, in `~/.config/ankinote/settings.json`.
 
 ---
 

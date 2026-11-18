@@ -1,7 +1,10 @@
 # AnkiNote
 
 <p align="center">
-  <img src="src/ankinote/ui/static/ankinote-logo.svg" width="96" alt="AnkiNote logo">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/brand/mark-dark.svg">
+    <img src="docs/brand/mark-light.svg" width="96" alt="AnkiNote logo">
+  </picture>
 </p>
 
 <p align="center">
@@ -40,7 +43,7 @@
   - **STEM 理科解题**：输入题目或**直接上传题目截图/照片**，生成结构化的分步解析卡片，原生支持 MathJax 公式渲染与辅助示意图。
 - **实时预览、行内编辑与 AI 改写** — 保存前可随时翻转正反面、切换深色/浅色主题。支持直接修改任意字段，也可让 AI 按指令重写 STEM 解析或一键修复损坏的 LaTeX 公式（支持撤销）。
 - **精选卡片配色主题** — 内置 **Rosé Pine**、**Kanagawa**、**Tokyo Night**、**Gruvbox** 四套护眼配色（均含浅色与深色模式），桌面端与移动端 Anki 均自适应。
-- **Web 工作台 + CLI 命令行** — 日常制卡使用现代化的 Svelte Web 应用（`ankinote-web`），批量处理与自动化脚本可使用 CLI 与终端交互界面（`ankinote`）。
+- **可以交给 AI Agent** — 有了 `ankinote` 命令行，Claude Code、Codex 等能执行命令的 Agent 就能把你正在读的内容做成卡片。
 
 ---
 
@@ -117,18 +120,25 @@ docker compose up -d      # 访问 http://localhost:8080
 
 ---
 
-## ⌨️ CLI 与批量制卡
+## ⌨️ 在终端里用，或交给 AI Agent
 
-AnkiNote 提供命令行工具 `ankinote`，与 Web 端共用同一份配置（`~/.config/ankinote/settings.json`）：
+`ankinote` 命令不用打开浏览器就能制卡，和 Web 应用共用同一份设置。所以任何能执行命令的 AI Agent（Claude Code、Codex 等）都可以替你调用它。
+
+**从一张拍下来的书页开始。** 把划了生词的那一页拍下来，告诉 Agent：*“把划线的单词做成 Anki 卡片。”* 它会读图、挑出单词，然后执行：
 
 ```bash
-ankinote                  # 打开交互式终端菜单（TUI）
-ankinote word ephemeral   # 生成单词卡片
-ankinote stem "..."       # 生成 STEM 题目卡片
-ankinote profiles list    # 查看已配置的模型方案
+ankinote word batch serendipity ephemeral eloquent
 ```
 
-更多批量制卡与脚本自动化用法，请参考 [CLI 使用指南](docs/cli-usage.md)。
+**从现成的单词表开始。** 一行一个词：
+
+```bash
+ankinote word batch --file words.txt --rpm 30
+```
+
+命令行做的卡不经预览，直接进 Anki。想先逐张检查再保存，就把同一份列表粘贴到 Web 应用的生成页面。
+
+单独运行 `ankinote` 会在终端里打开菜单。短语、句子、STEM 卡片和全部选项见 [CLI 使用指南](docs/cli-usage.md)。
 
 ---
 
@@ -140,7 +150,7 @@ ankinote profiles list    # 查看已配置的模型方案
 | **图像生成** | Gemini、OpenAI（`gpt-image`）、fal.ai |
 | **语音合成（TTS）** | Gemini TTS、OpenAI TTS、Google Cloud TTS |
 
-所有 API Key 与配置均保存在本地（`~/.config/ankinote/settings.json`），并可在**设置**页面导出为加密备份文件（`scrypt` + `AES-256-GCM`），方便跨设备迁移。
+所有 API Key 与设置都只保存在你自己的电脑上（`~/.config/ankinote/settings.json`）。
 
 ---
 

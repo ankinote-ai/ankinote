@@ -1,7 +1,10 @@
 # AnkiNote
 
 <p align="center">
-  <img src="src/ankinote/ui/static/ankinote-logo.svg" width="96" alt="AnkiNote logo">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/brand/mark-dark.svg">
+    <img src="docs/brand/mark-light.svg" width="96" alt="AnkiNote logo">
+  </picture>
 </p>
 
 <p align="center">
@@ -40,7 +43,7 @@
   - **STEM 問題演習**：問題文の入力、または**問題の写真・スクリーンショットをアップロード**するだけで、MathJax 数式と図解付きのステップ解説カードを生成します。
 - **リアルタイムプレビュー・直接編集・AI リライト** — 保存前に表裏の反転やライト/ダーク表示を確認可能。各フィールドの手動編集はもちろん、STEM 解説の AI リライトや壊れた LaTeX 数式のワンクリック修復（元に戻す機能付き）にも対応しています。
 - **洗練されたカードテーマ** — **Rosé Pine**、**Kanagawa**、**Tokyo Night**、**Gruvbox** の 4 種類のカラーパレット（ライト/ダーク両対応）を搭載。
-- **Web アプリ ＋ CLI** — 日常のカード作成にはモダンな Svelte Web UI（`ankinote-web`）、一括処理やスクリプト連携には CLI ＆ TUI（`ankinote`）を利用できます。
+- **AI エージェントから使える** — `ankinote` CLI があれば、Claude Code や Codex などコマンドを実行できるエージェントが、読んでいる内容をカードにしてくれます。
 
 ---
 
@@ -117,18 +120,25 @@ docker compose up -d      # http://localhost:8080 にアクセス
 
 ---
 
-## ⌨️ CLI ＆ バッチ処理
+## ⌨️ ターミナルや AI エージェントから使う
 
-CLI（`ankinote`）は Web アプリと設定ファイル（`~/.config/ankinote/settings.json`）を共有します：
+`ankinote` コマンドはブラウザを開かずにカードを作れ、Web アプリと同じ設定を使います。コマンドを実行できる AI エージェント（Claude Code、Codex など）なら、あなたの代わりに使えます。
+
+**読んでいるページの写真から。** 新しい単語に線を引いたページを撮って、エージェントに *「線を引いた単語を Anki カードにして」* と頼むだけ。画像を読み、単語を拾い、次を実行します：
 
 ```bash
-ankinote                  # 対話型ターミナル UI（TUI）を起動
-ankinote word ephemeral   # 単語カードを生成
-ankinote stem "..."       # STEM カードを生成
-ankinote profiles list    # 設定済みプロファイルを確認
+ankinote word batch serendipity ephemeral eloquent
 ```
 
-バッチ処理や各種オプションは [CLI 利用ガイド](docs/cli-usage.md) を参照してください。
+**手元の単語リストから。** 1 行に 1 語：
+
+```bash
+ankinote word batch --file words.txt --rpm 30
+```
+
+CLI で作ったカードはプレビューなしで Anki に入ります。保存前に 1 枚ずつ確認したいときは、同じリストを Web アプリの生成ページに貼り付けてください。
+
+`ankinote` だけを実行するとターミナルにメニューが開きます。フレーズ・文・STEM と全オプションは [CLI 利用ガイド](docs/cli-usage.md) を参照してください。
 
 ---
 
@@ -140,7 +150,7 @@ ankinote profiles list    # 設定済みプロファイルを確認
 | **画像生成** | Gemini、OpenAI（`gpt-image`）、fal.ai |
 | **音声合成（TTS）** | Gemini TTS、OpenAI TTS、Google Cloud TTS |
 
-API キーと設定はすべてローカル（`~/.config/ankinote/settings.json`）に保存され、**設定**画面から暗号化バックアップ（`scrypt` + `AES-256-GCM`）としてエクスポート/インポートできます。
+API キーと設定はすべて手元のマシン（`~/.config/ankinote/settings.json`）にだけ保存されます。
 
 ---
 

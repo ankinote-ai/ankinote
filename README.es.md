@@ -1,7 +1,10 @@
 # AnkiNote
 
 <p align="center">
-  <img src="src/ankinote/ui/static/ankinote-logo.svg" width="96" alt="AnkiNote logo">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/brand/mark-dark.svg">
+    <img src="docs/brand/mark-light.svg" width="96" alt="AnkiNote logo">
+  </picture>
 </p>
 
 <p align="center">
@@ -40,7 +43,7 @@ Sin formato manual. Sin copiar y pegar entre ChatGPT y Anki. Usa tu propia clave
   - **STEM y resolución de problemas**: Escribe un enunciado o **sube una foto del problema** para generar una tarjeta con explicación paso a paso, fórmulas MathJax y diagramas opcionales.
 - **Vista previa en vivo, edición directa y reescritura con IA** — Voltea anverso/reverso y alterna entre modo claro/oscuro antes de guardar. Edita cualquier campo directamente, pide a la IA que reescriba una explicación STEM o corrige fórmulas LaTeX rotas en un clic (con deshacer).
 - **Temas visuales cuidados** — Elige entre **Rosé Pine**, **Kanagawa**, **Tokyo Night** y **Gruvbox** (modos claro y oscuro), adaptados a escritorio y móvil.
-- **App Web + CLI** — Una moderna interfaz web en Svelte (`ankinote-web`) para el día a día, más una CLI y TUI (`ankinote`) para lotes y scripts.
+- **Funciona con tu agente de IA** — Con la CLI `ankinote`, Claude Code, Codex o cualquier agente que pueda ejecutar comandos convierte lo que estás leyendo en tarjetas.
 
 ---
 
@@ -117,18 +120,25 @@ Si ya ejecutas Anki Desktop con AnkiConnect, usa `deploy/standard`. Consulta [`d
 
 ---
 
-## ⌨️ CLI y modo por lotes
+## ⌨️ Desde la terminal o un agente de IA
 
-La CLI (`ankinote`) comparte el mismo archivo `settings.json` (`~/.config/ankinote/settings.json`) que la aplicación web:
+El comando `ankinote` crea tarjetas sin abrir el navegador y usa los mismos ajustes que la app web. Por eso cualquier agente de IA que pueda ejecutar comandos (Claude Code, Codex, …) puede usarlo por ti.
+
+**Desde una foto de lo que estás leyendo.** Fotografía una página donde subrayaste palabras nuevas y dile a tu agente: *«Haz tarjetas de Anki con las palabras subrayadas.»* Lee la imagen, extrae las palabras y ejecuta:
 
 ```bash
-ankinote                  # abre el menú interactivo en terminal (TUI)
-ankinote word ephemeral   # genera una tarjeta de vocabulario
-ankinote stem "..."       # genera una tarjeta STEM
-ankinote profiles list    # consulta los perfiles configurados
+ankinote word batch serendipity ephemeral eloquent
 ```
 
-Consulta la [Guía de uso de la CLI](docs/cli-usage.md) para listas por lotes y automatización.
+**Desde una lista que ya tienes.** Una palabra por línea:
+
+```bash
+ankinote word batch --file words.txt --rpm 30
+```
+
+Las tarjetas de la CLI van directamente a Anki, sin vista previa. Para revisar cada una antes de guardarla, pega la misma lista en la página Generar de la app web.
+
+Ejecuta `ankinote` solo para abrir un menú en la terminal. La [Guía de uso de la CLI](docs/cli-usage.md) cubre frases, oraciones, STEM y todas las opciones.
 
 ---
 
@@ -140,7 +150,7 @@ Consulta la [Guía de uso de la CLI](docs/cli-usage.md) para listas por lotes y 
 | **Generación de imágenes** | Gemini, OpenAI (`gpt-image`), fal.ai |
 | **Texto a voz (TTS)** | Gemini TTS, OpenAI TTS, Google Cloud TTS |
 
-Todas las claves y ajustes se guardan localmente (`~/.config/ankinote/settings.json`) y pueden exportarse/importarse en un archivo cifrado (`scrypt` + `AES-256-GCM`) desde **Ajustes**.
+Todas las claves y ajustes se quedan en tu equipo, en `~/.config/ankinote/settings.json`.
 
 ---
 

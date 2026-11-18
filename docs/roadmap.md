@@ -179,6 +179,32 @@ directly.)
      migration (field changes force a full AnkiWeb sync), and 1.0 imports a
      0.x `settings.json`.
 
+## The CLI as an agent's tool (idea, 2026-11-18)
+
+The workflow: a user photographs a page they're reading with new words
+underlined and asks an AI agent (Claude Code, Codex, …) to make cards. The
+agent reads the picture, extracts the underlined words, and calls
+`ankinote word batch …`. This works today and is how the README presents the
+CLI; batch generation for people who want to review each card is the web
+app's job (one item per line on the Generate page).
+
+What would make the CLI a better agent tool, in rough order of value:
+
+- **Context with each item.** Pass the sentence the word was underlined in,
+  so the card explains the sense used there and can use that sentence as an
+  example (the agent has it from the photo anyway).
+- **Machine-readable results.** `--json` on `add`/`batch`: one result per item
+  (saved note id, or the error), and a non-zero exit when any item failed, so
+  the agent can retry or report exactly what didn't make it.
+- **Input from stdin** (`--file -`) and one-item-per-line files, so phrases
+  and sentences batch as cleanly as words.
+- **A ready-made agent skill** in the docs (a `SKILL.md` / AGENTS.md snippet):
+  when to call which command, the language flags, and to ask before making
+  more than a few dozen cards.
+- **Review later.** Optionally send CLI-made cards to the web app's queue
+  instead of straight to Anki, for users who want the agent to collect and
+  themselves to approve.
+
 ## 2.0 candidate: custom card types with AI-assisted authoring
 
 Idea raised 2026-11-14; not scheduled. 1.0 (languages, themes, launch) comes
@@ -271,7 +297,7 @@ AnkiWeb shared decks, which doubles as a promotion channel.
 
 ## Future major version: deployable web service
 
-Explore evolving ankinote from a local CLI/NiceGUI application into a web
+Explore evolving ankinote from a local CLI/web application into a web
 service that can be deployed to the public internet.
 
 The web version must include user identity and access management as a
