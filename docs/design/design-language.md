@@ -262,6 +262,10 @@ preview; below 1000px the preview follows them.
 
 Five steps. Desktop and tablet show a step list on the left (done steps can
 be revisited); phone shows "Step 2 of 5" with a segmented progress bar.
+Each step ends in a footer pinned to the bottom of the pane: Back, the
+step's main button, then the hint for what's still missing, all
+left-aligned like the step's content, so the buttons stay under it on a
+wide screen and the hint sits beside the button it explains.
 
 1. **Connect an AI model.** Recommends one setup: Google Gemini for text,
    images and audio with a single AI Studio key (decided 2026-11-13). The

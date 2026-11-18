@@ -24,7 +24,6 @@
 </script>
 
 <nav class="nav">
-  {#if hint}<p class="hint">{hint}</p>{/if}
   <button class="secondary" disabled={!onback} onclick={() => onback?.()}>{t("wizard.back")}</button>
   {#if onskip}
     <button class="secondary" onclick={onskip}>{t("wizard.skip")}</button>
@@ -32,10 +31,13 @@
   <button class="primary" disabled={nextDisabled || busy} onclick={onnext}>
     {busy ? t("wizard.saving") : (nextLabel ?? (last ? t("wizard.finish") : t("wizard.next")))}
   </button>
+  {#if hint}<p class="hint">{hint}</p>{/if}
 </nav>
 
 <style>
-  /* Stays in view at the bottom of the wizard pane, however long the step. */
+  /* Stays in view at the bottom of the wizard pane, however long the step.
+   * Left-aligned like the step's content, so on a wide pane the buttons
+   * stay under it, and the hint follows the button it explains. */
   .nav {
     position: sticky;
     bottom: 0;
@@ -43,7 +45,7 @@
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: flex-start;
     gap: 10px;
     margin-top: 24px;
     padding: 12px 0 2px;
@@ -53,7 +55,7 @@
 
   .hint {
     flex: 1 1 200px;
-    margin: 0;
+    margin: 0 0 0 6px;
     color: var(--muted);
   }
 
