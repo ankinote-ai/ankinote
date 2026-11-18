@@ -9,7 +9,9 @@ could reach it on localhost:
   are served.
 - Cross-site writes: a page can POST without a CORS preflight. Browsers send
   ``Origin`` with every such request, so a write from another origin is
-  refused. Clients that send no ``Origin`` (the CLI, curl) pass.
+  refused. Clients that send no ``Origin`` (the CLI, curl) pass. A reverse
+  proxy may forward to the backend's IP, so an ``Origin`` naming one of the
+  ``ANKINOTE_ALLOWED_HOSTS`` names also passes: the user vouched for it.
 """
 
 import ipaddress
@@ -41,18 +43,19 @@ def _is_ip(name: str) -> bool:
     return True
 
 
-def allowed_host_names() -> frozenset[str]:
-    """``localhost`` plus the comma-separated names in ``ANKINOTE_ALLOWED_HOSTS``."""
+def configured_host_names() -> frozenset[str]:
+    """The comma-separated names in ``ANKINOTE_ALLOWED_HOSTS``."""
     extra = os.environ.get(ALLOWED_HOSTS_ENV, "").split(",")
-    return frozenset({"localhost"} | {_host_name(h) for h in extra if h.strip()})
+    return frozenset(_host_name(h) for h in extra if h.strip())
 
 
 class LocalAccessGuard:
     """ASGI middleware enforcing the Host and Origin rules above."""
 
-    def __init__(self, app: ASGIApp, allowed_hosts: frozenset[str]) -> None:
+    def __init__(self, app: ASGIApp, configured_hosts: frozenset[str]) -> None:
         self.app = app
-        self.allowed_hosts = allowed_hosts
+        self.configured_hosts = configured_hosts
+        self.allowed_hosts = configured_hosts | {"localhost"}
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http":
@@ -73,7 +76,7 @@ class LocalAccessGuard:
         if (
             scope["method"] not in _SAFE_METHODS
             and origin is not None
-            and urlsplit(origin).netloc.lower() != host.lower()
+            and not self._trusted_origin(origin, host)
         ):
             response = PlainTextResponse(
                 "Cross-origin request refused.\n", status_code=403
@@ -81,3 +84,9 @@ class LocalAccessGuard:
             await response(scope, receive, send)
             return
         await self.app(scope, receive, send)
+
+    def _trusted_origin(self, origin: str, host: str) -> bool:
+        parts = urlsplit(origin)
+        if parts.netloc.lower() == host.lower():
+            return True
+        return parts.hostname is not None and parts.hostname in self.configured_hosts

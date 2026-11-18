@@ -24,7 +24,7 @@ from ankinote.web import (
     note_types_api,
     settings_api,
 )
-from ankinote.web.guard import LocalAccessGuard, allowed_host_names
+from ankinote.web.guard import LocalAccessGuard, configured_host_names
 
 DIST_DIR = Path(__file__).parent / "dist"
 API_DOCS_ENV = "ANKINOTE_API_DOCS"
@@ -103,7 +103,7 @@ def create_app(dist_dir: Path = DIST_DIR) -> FastAPI:
         openapi_url="/api/openapi.json" if docs else None,
         lifespan=_lifespan,
     )
-    app.add_middleware(LocalAccessGuard, allowed_hosts=allowed_host_names())
+    app.add_middleware(LocalAccessGuard, configured_hosts=configured_host_names())
     app.include_router(settings_api.router)
     app.include_router(anki_api.router)
     app.include_router(cards_api.router)

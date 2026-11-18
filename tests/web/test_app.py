@@ -198,6 +198,18 @@ def test_same_origin_and_non_browser_writes_pass(dist: Path) -> None:
     assert no_origin.status_code == 404
 
 
+def test_writes_from_an_allowed_host_pass_behind_a_proxy(
+    dist: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # The proxy forwards to the backend's IP, so Host no longer names the page.
+    monkeypatch.setenv("ANKINOTE_ALLOWED_HOSTS", "anki.example.com")
+    client = TestClient(create_app(dist), base_url="http://192.168.1.20:1019")
+
+    response = client.post("/api/nope", headers={"Origin": "https://anki.example.com"})
+
+    assert response.status_code == 404
+
+
 def test_cross_origin_reads_are_not_blocked(dist: Path) -> None:
     # Reads are guarded by the browser's same-origin policy, not by us.
     client = TestClient(create_app(dist), base_url="http://localhost:8080")

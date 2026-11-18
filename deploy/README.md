@@ -56,7 +56,9 @@ AnkiNote answers only to `localhost` and IP addresses, so that a web page can't
 reach it through a DNS name it controls. If you open it by name (the proxy's
 `ankinote.example.com`, a Tailscale MagicDNS name, `mybox.local`), add that
 name to `ANKINOTE_ALLOWED_HOSTS`; otherwise every request gets a
-"does not answer to the host name" error.
+"does not answer to the host name" error. Add it even when the proxy forwards
+to an IP address (as NAS and home-server portals often do): writes from a page
+on that name are refused with 403 until the name is listed.
 
 ## `headless/`
 
