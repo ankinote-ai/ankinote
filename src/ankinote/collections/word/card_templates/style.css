@@ -310,3 +310,13 @@ rt {
   height: 1rem;
   vertical-align: middle;
 }
+
+/* The prompt on a Recall/Spelling front is the thing being asked about:
+   make it the headline, with the "→ language" cue kept quiet beneath. */
+.recall-card .meaning-native,
+.spelling-card .meaning-native {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--an-fg);
+  line-height: 1.35;
+}
