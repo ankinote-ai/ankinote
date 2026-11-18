@@ -238,3 +238,6 @@ sentences.txt
 # anki
 data/
 collection.anki2
+
+# promotion drafts (local only)
+docs/launch-kit.md
