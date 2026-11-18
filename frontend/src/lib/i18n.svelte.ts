@@ -33,12 +33,15 @@ class I18n {
     });
   }
 
-  toggle() {
-    this.locale = this.locale === "en" ? "zh-CN" : "en";
-  }
 }
 
 export const i18n = new I18n();
+
+/** The interface languages, each named in itself so anyone can find their own. */
+export const locales: { id: Locale; name: string }[] = [
+  { id: "en", name: "English" },
+  { id: "zh-CN", name: "简体中文" },
+];
 
 /** Translate `key`, replacing `{name}` placeholders from `vars`. */
 export function t(key: MessageKey, vars: Record<string, string | number> = {}): string {

@@ -8,7 +8,7 @@
   "bar.mode.system": "Follow system",
   "bar.mode.light": "Light",
   "bar.mode.dark": "Dark",
-  "bar.lang": "中文",
+  "bar.lang": "Interface language",
   "generate.input": "Input",
   "generate.queue": "This session",
   "generate.preview": "Preview",

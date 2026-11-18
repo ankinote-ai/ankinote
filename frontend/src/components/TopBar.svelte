@@ -1,8 +1,9 @@
 <script lang="ts">
   import { api } from "../lib/api";
-  import { i18n, t, type MessageKey } from "../lib/i18n.svelte";
+  import { t, type MessageKey } from "../lib/i18n.svelte";
   import { link, router } from "../lib/router.svelte";
   import { palettes, theme, type Mode } from "../lib/theme.svelte";
+  import LanguageMenu from "./LanguageMenu.svelte";
 
   const workspaces: { n: number; path: string; key: MessageKey }[] = [
     { n: 1, path: "/", key: "nav.generate" },
@@ -65,7 +66,7 @@
     >
       {t(`bar.mode.${theme.mode}`)}
     </button>
-    <button class="chip" onclick={() => i18n.toggle()}>{t("bar.lang")}</button>
+    <LanguageMenu />
   </div>
 </header>
 

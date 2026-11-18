@@ -8,7 +8,7 @@
   "bar.mode.system": "跟随系统",
   "bar.mode.light": "亮色",
   "bar.mode.dark": "暗色",
-  "bar.lang": "EN",
+  "bar.lang": "界面语言",
   "generate.input": "输入",
   "generate.queue": "本次生成",
   "generate.preview": "预览",
