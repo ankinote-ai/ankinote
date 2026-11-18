@@ -5,6 +5,7 @@
   import FirstCardStep from "./wizard/FirstCardStep.svelte";
   import LanguageStep from "./wizard/LanguageStep.svelte";
   import ModelStep from "./wizard/ModelStep.svelte";
+  import { FirstCard } from "../lib/firstCard.svelte";
   import { t, type MessageKey } from "../lib/i18n.svelte";
   import { router } from "../lib/router.svelte";
 
@@ -16,19 +17,38 @@
     { key: "wizard.step.first" },
   ];
 
+  const ANKI = 1;
+  const FIRST = steps.length - 1;
+
   let current = $state(0);
   let done = $state(0);
+  /** Set when the first card sent the user to fix Anki: Next returns there. */
+  let returnTo = $state<number | null>(null);
   const step = $derived(steps[current]!);
   const last = $derived(current === steps.length - 1);
+
+  // Kept here, not in the step, so going back to another step keeps the card.
+  const firstCard = new FirstCard();
+
+  function go(i: number) {
+    current = i;
+    if (i === returnTo) returnTo = null;
+  }
 
   function next() {
     done = Math.max(done, current + 1);
     if (last) router.go("/");
+    else if (returnTo !== null) go(returnTo);
     else current += 1;
   }
 
   function back() {
     current -= 1;
+  }
+
+  function fixAnki() {
+    returnTo = FIRST;
+    current = ANKI;
   }
 </script>
 
@@ -41,7 +61,7 @@
             class:on={i === current}
             disabled={i > done}
             aria-current={i === current ? "step" : undefined}
-            onclick={() => (current = i)}
+            onclick={() => go(i)}
           >
             <span class="n">{i < done ? "✓" : i + 1}</span>
             {t(s.key)}
@@ -51,7 +71,7 @@
     </ol>
   </Pane>
 
-  <Pane title={t("wizard.title")} area="body">
+  <Pane title={t("wizard.title")} area="body" fill>
     <div class="body">
       <p class="progress">{t("wizard.stepOf", { n: current + 1, total: steps.length })}</p>
       <div class="bars" aria-hidden="true">
@@ -61,13 +81,17 @@
       {#if current === 0}
         <ModelStep onnext={next} />
       {:else if current === 1}
-        <AnkiStep onback={back} onnext={next} />
+        <AnkiStep
+          onback={back}
+          onnext={next}
+          nextLabel={returnTo === null ? undefined : t("wizard.returnTo", { step: t(steps[returnTo]!.key) })}
+        />
       {:else if current === 2}
         <LanguageStep onback={back} onnext={next} />
       {:else if current === 3}
         <AppearanceStep onback={back} onnext={next} />
       {:else}
-        <FirstCardStep onback={back} onnext={next} />
+        <FirstCardStep card={firstCard} onback={back} onnext={next} onanki={fixAnki} />
       {/if}
     </div>
   </Pane>
@@ -153,9 +177,11 @@
     line-height: 1.3;
   }
 
-  /* The pane title overlaps the border, so scroll inside, not on the pane. */
+  /* Scroll inside the pane, under its title; the step's footer sticks to
+   * the bottom (StepNav), so it never ends up below the pane's edge. */
   .body {
-    height: 100%;
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
     margin: -4px -8px 0;
     padding: 4px 8px 0;

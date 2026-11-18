@@ -32,6 +32,11 @@ export class AnkiSetup {
   action = $state<Action>("load");
   failure = $state<Failure | null>(null);
   noteTypes = $state<NoteTypeItem[] | null>(null);
+  /**
+   * Setting up the note types added fields, which Anki can only send to
+   * AnkiWeb as a full upload; downloading instead would undo the setup.
+   */
+  upgraded = $state(false);
 
   private disposed = false;
   private polling = false;
@@ -54,6 +59,7 @@ export class AnkiSetup {
   readonly ready = $derived(
     this.live &&
       this.action === "" &&
+      (this.choice === "connect" || !!this.status?.writable) &&
       this.noteTypes !== null &&
       this.noteTypes.every((n) => n.state === "synced"),
   );
@@ -152,6 +158,7 @@ export class AnkiSetup {
       this.status = await api.ankiFullSync(direction);
     });
     this.direction = "";
+    if (!this.sync?.full_sync_required) this.upgraded = false;
     await this.afterSync();
   }
 
@@ -201,8 +208,15 @@ export class AnkiSetup {
   }
 
   async prepare() {
+    const blocked = !!this.sync?.full_sync_required;
     await this.run("types", "types", async () => {
       this.noteTypes = await api.prepareNoteTypes();
     });
+    if (this.choice !== "collection" || !this.live) return;
+    // Saving the note types ran a sync, which a field change turns into a
+    // full-sync choice; the step has to show that, not the old status.
+    this.status = await api.anki().catch(() => this.status);
+    if (this.syncing) await this.poll();
+    if (!blocked && this.sync?.full_sync_required) this.upgraded = true;
   }
 }

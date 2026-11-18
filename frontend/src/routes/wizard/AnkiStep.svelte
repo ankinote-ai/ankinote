@@ -11,7 +11,8 @@
     onback,
     onnext = () => {},
     settings = false,
-  }: { onback?: () => void; onnext?: () => void; settings?: boolean } = $props();
+    nextLabel,
+  }: { onback?: () => void; onnext?: () => void; settings?: boolean; nextLabel?: string } = $props();
 
   const setup = new AnkiSetup();
   void setup.load();
@@ -24,8 +25,17 @@
   const builtin = $derived(setup.choice === "collection");
   const managed = $derived(builtin && !!status?.account_managed && setup.live);
   const directions = $derived(sync?.full_sync_required ? sync.directions : []);
-  /** One direction means Anki found one side empty: nothing gets replaced. */
-  const oneWay = $derived(directions.length === 1 ? directions[0]! : null);
+  /**
+   * One direction means Anki found one side empty: nothing gets replaced.
+   * After AnkiNote's own field change, only uploading keeps that change.
+   */
+  const oneWay = $derived(
+    setup.upgraded && directions.includes("upload")
+      ? "upload"
+      : directions.length === 1
+        ? directions[0]!
+        : null,
+  );
   const choosing = $derived(
     setup.live && builtin && sync?.state === "needs_full_sync_choice" && !setup.syncing,
   );
@@ -57,7 +67,7 @@
     if (setup.syncing) return { glyph: "…", tone: "warn", text: t("anki.sync.syncing") };
     if (sync.error === "credentials") return { glyph: "✗", tone: "err", text: t("anki.sync.credentials") };
     if (sync.state === "needs_full_sync_choice") {
-      return { glyph: "!", tone: "warn", text: t("anki.sync.choice") };
+      return { glyph: "!", tone: "warn", text: t(setup.upgraded ? "anki.sync.upgrade" : "anki.sync.choice") };
     }
     if (sync.error === "backup") return { glyph: "✗", tone: "err", text: t("anki.sync.backup") };
     if (sync.error === "media") {
@@ -91,6 +101,7 @@
     if (setup.ready) return "";
     if (setup.action === "types") return t("anki.types.working");
     if (!builtin) return t("anki.hint.desktop");
+    if (choosing) return t(oneWay ? `anki.hint.go.${oneWay}` as MessageKey : "anki.hint.choice");
     return t(setup.loggedIn || managed ? "anki.hint.sync" : "anki.hint.builtin");
   });
 
@@ -240,22 +251,32 @@
 
       {#if choosing}
         <div class="full" role="group" aria-labelledby="full-title">
-          <h2 id="full-title" class="label">{t("anki.full.title")}</h2>
           {#if oneWay}
-            <p>{t(`anki.full.only.${oneWay}` as MessageKey)}</p>
+            {@const kind = setup.upgraded ? "upgrade" : `only.${oneWay}`}
+            <h2 id="full-title" class="full-title">{t(`anki.full.title.${kind}` as MessageKey)}</h2>
+            <p>{t(`anki.full.${kind}` as MessageKey)}</p>
+            {#if oneWay === "upload"}<p class="note">{t("anki.full.backup")}</p>{/if}
             <div class="actions">
               <button class="primary" onclick={() => confirmFull(oneWay)} disabled={!!setup.action}>
-                {t(`anki.full.go.${oneWay}` as MessageKey)}
+                {setup.action === "full" ? t("anki.syncing") : t(`anki.full.go.${oneWay}` as MessageKey)}
               </button>
             </div>
           {:else}
+            <h2 id="full-title" class="full-title">{t("anki.full.title.both")}</h2>
             <p>{t("anki.full.both")}</p>
             <div class="options">
               {#each directions as d (d)}
-                <label class="option">
+                <label class="option" class:on={setup.direction === d}>
                   <input type="radio" name="direction" value={d} bind:group={setup.direction} />
-                  <span>
+                  <span class="option-body">
                     <strong>{t(`anki.full.keep.${d}` as MessageKey)}</strong>
+                    <span class="flow mono" aria-hidden="true">
+                      {#if d === "upload"}
+                        <span>{t("anki.builtin")}</span> → <span class="replaced">AnkiWeb</span>
+                      {:else}
+                        <span>AnkiWeb</span> → <span class="replaced">{t("anki.builtin")}</span>
+                      {/if}
+                    </span>
                     <span class="note">{t(`anki.full.keepText.${d}` as MessageKey)}</span>
                   </span>
                 </label>
@@ -269,7 +290,9 @@
                   onclick={() => confirmFull(setup.direction as Direction)}
                   disabled={!!setup.action}
                 >
-                  {t(`anki.full.replace.${setup.direction}` as MessageKey)}
+                  {setup.action === "full"
+                    ? t("anki.syncing")
+                    : t(`anki.full.replace.${setup.direction}` as MessageKey)}
                 </button>
               </div>
             {/if}
@@ -336,7 +359,7 @@
 {/if}
 
 {#if !settings}
-  <StepNav {hint} {onback} {onnext} nextDisabled={!setup.ready} />
+  <StepNav {hint} {onback} {onnext} {nextLabel} nextDisabled={!setup.ready} />
 {/if}
 
 <style>
@@ -518,6 +541,12 @@
     margin: 0 0 10px;
   }
 
+  .full-title {
+    margin: 0 0 6px;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
   .options {
     display: flex;
     flex-direction: column;
@@ -530,7 +559,15 @@
     gap: 10px;
     align-items: flex-start;
     min-height: 36px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
     cursor: pointer;
+  }
+
+  .option.on {
+    border-color: var(--accent);
+    background: var(--sel);
   }
 
   .option input {
@@ -538,9 +575,20 @@
     accent-color: var(--accent);
   }
 
-  .option > span {
+  .option-body {
     display: flex;
     flex-direction: column;
+    gap: 2px;
+  }
+
+  /* Which way the copy goes; the side that gets replaced is struck out. */
+  .flow {
+    color: var(--muted);
+  }
+
+  .flow .replaced {
+    color: var(--err);
+    text-decoration: line-through;
   }
 
   .danger {

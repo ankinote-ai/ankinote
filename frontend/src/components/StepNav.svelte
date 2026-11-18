@@ -9,6 +9,7 @@
     nextDisabled = false,
     busy = false,
     hint = "",
+    nextLabel,
   }: {
     onback?: () => void;
     onskip?: () => void;
@@ -17,6 +18,8 @@
     nextDisabled?: boolean;
     busy?: boolean;
     hint?: string;
+    /** Instead of Next / Start using AnkiNote. */
+    nextLabel?: string;
   } = $props();
 </script>
 
@@ -27,20 +30,25 @@
     <button class="secondary" onclick={onskip}>{t("wizard.skip")}</button>
   {/if}
   <button class="primary" disabled={nextDisabled || busy} onclick={onnext}>
-    {busy ? t("wizard.saving") : last ? t("wizard.finish") : t("wizard.next")}
+    {busy ? t("wizard.saving") : (nextLabel ?? (last ? t("wizard.finish") : t("wizard.next")))}
   </button>
 </nav>
 
 <style>
+  /* Stays in view at the bottom of the wizard pane, however long the step. */
   .nav {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: flex-end;
     gap: 10px;
     margin-top: 24px;
-    padding-top: 12px;
+    padding: 12px 0 2px;
     border-top: 1px solid var(--border);
+    background: var(--tile);
   }
 
   .hint {

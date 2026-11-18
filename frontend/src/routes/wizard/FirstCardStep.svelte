@@ -1,16 +1,33 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import CardPreview from "../../components/CardPreview.svelte";
   import StepNav from "../../components/StepNav.svelte";
   import type { MediaGap, SavedNote } from "../../lib/api";
-  import { FirstCard } from "../../lib/firstCard.svelte";
+  import type { FirstCard } from "../../lib/firstCard.svelte";
   import { t, type MessageKey } from "../../lib/i18n.svelte";
   import { LANG_TAG } from "../../lib/languages";
   import en from "../../lib/locales/en.json";
 
-  let { onback, onnext }: { onback: () => void; onnext: () => void } = $props();
+  let {
+    card,
+    onback,
+    onnext,
+    onanki,
+  }: {
+    /** Owned by the wizard, so leaving this step doesn't lose the card. */
+    card: FirstCard;
+    onback: () => void;
+    onnext: () => void;
+    /** Go to Connect Anki, coming back here afterwards. */
+    onanki: () => void;
+  } = $props();
 
-  const card = new FirstCard();
-  void card.load();
+  // The target language may have changed since the card was last shown.
+  onMount(() => {
+    // A save error sent the user to fix Anki; back here, it no longer applies.
+    if (card.failure?.during === "save") card.failure = null;
+    void card.load();
+  });
 
   const note = $derived(card.note);
 
@@ -77,7 +94,14 @@
         </div>
       {/if}
 
-      {#if errorText}<p class="error" role="alert">{errorText}</p>{/if}
+      {#if errorText}
+        <div class="failed">
+          <p class="error" role="alert">{errorText}</p>
+          {#if card.failure?.during === "save" && (card.failure.code === "write_blocked" || card.failure.code === "not_open")}
+            <button class="secondary" onclick={onanki}>{t("first.toAnki")}</button>
+          {/if}
+        </div>
+      {/if}
 
       {#if note && !card.generating}
         {#if card.notes.length > 1}
@@ -118,26 +142,23 @@
             <p class="note">{syncText(card.saved)}</p>
           </div>
         {:else}
-          <div class="save">
-            <button class="primary" onclick={() => card.save()} disabled={card.saving}>
-              {card.saving ? t("first.saving") : t("first.save")}
-            </button>
-            <p class="note">
-              {t("first.where", { deck: note.deck, type: note.note_type })}
-            </p>
-          </div>
+          <p class="note where">{t("first.where", { deck: note.deck, type: note.note_type })}</p>
         {/if}
       {/if}
     </div>
   </div>
 </div>
 
+<!-- Until the card is saved, the footer's main button saves it: the one
+     thing left to do sits where the step's next action always is. -->
 <StepNav
   {onback}
-  {onnext}
+  onnext={card.saved ? onnext : () => void card.save()}
   last
-  nextDisabled={!card.saved}
-  hint={card.saved ? "" : t("first.hint")}
+  nextLabel={card.saved ? undefined : t("first.save")}
+  nextDisabled={!card.saved && (!note || card.generating)}
+  busy={card.saving}
+  hint={card.saved ? "" : note && !card.generating ? t("first.hint") : t("first.hintEmpty")}
 />
 
 <style>
@@ -203,7 +224,7 @@
 
   .working p,
   .saved p,
-  .save p {
+  .where {
     margin: 0;
   }
 
@@ -212,9 +233,15 @@
   }
 
   .working .note,
-  .saved .note,
-  .save .note {
+  .saved .note {
     margin-top: 4px;
+  }
+
+  .failed {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
   }
 
   .pos {
