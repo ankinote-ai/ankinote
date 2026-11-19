@@ -286,21 +286,29 @@ wide screen and the hint sits beside the button it explains.
    OpenAI, FAL.AI or OpenAI-compatible; audio from Gemini, OpenAI or Google
    Cloud TTS. It opens by itself when a saved setup differs from the default,
    and its intro points users who can't reach Google to DeepSeek.
-2. **Connect Anki.** Built-in Anki with AnkiWeb login (recommended) or Anki
-   Desktop via AnkiConnect. The password is used once to log in; only the
+2. **Connect Anki.** Anki Desktop via AnkiConnect (first and preselected) or
+   built-in Anki with AnkiWeb login, described as the choice for an
+   always-on server or NAS. The password is used once to log in; only the
    login token AnkiWeb returns is stored (`anki_sync_driver.py` keeps the
    hkey and endpoint). After connecting, note types and decks are created
    automatically and the step shows the list with "Your existing cards are
    not changed."
-   Built 2026-11-13: Built-in is preselected unless Anki Desktop was saved
-   before. The first AnkiWeb sync of a fresh collection usually needs a full
+   Built 2026-11-13; preselection changed 2026-11-19 (see roadmap, "One
+   recommended path per place"): Anki Desktop is preselected unless a
+   choice was saved or the deployment set `ANKI_BACKEND` (headless Docker
+   sets `collection`). Nothing is set up in Anki until the user connects.
+   The step looks for AnkiConnect on load and every 3 s while Desktop is
+   selected and not answering, tags Desktop "Found" when it answers, and
+   warns on the Built-in panel that a second collection would be kept when
+   it does. The first AnkiWeb sync of a fresh collection usually needs a full
    sync: when Anki offers one direction (the other side is empty) the step
    explains it and offers a single "Download from AnkiWeb" / "Upload to
    AnkiWeb" button; when both directions are possible it asks which
    collection to keep, with nothing preselected, and the button names what
    gets replaced. A deployment-set AnkiWeb account (`ANKIWEB_USERNAME`)
-   hides the login form. Anki Desktop shows the AnkiConnect setup steps
-   (add-on code `2055492159`) and the address it uses.
+   hides the login form. Anki Desktop shows whether AnkiConnect answers and
+   at which address, and, until it does, the setup steps (add-on code
+   `2055492159`).
 3. **Languages.** Native ("Language you know best") and target ("Language
    you're learning") as two radio-tile grids, each language named in itself
    (`日本語`, `Français`) with its name in the interface language below.

@@ -120,32 +120,35 @@
     <button
       class="choice"
       role="radio"
-      aria-checked={builtin}
-      disabled={!status.builtin_available || !!setup.action}
-      onclick={() => pick("collection")}
-    >
-      <span class="choice-title">
-        <span class="dot" aria-hidden="true"></span>{t("anki.builtin")}
-        <span class="tag">{t("anki.recommended")}</span>
-      </span>
-      <span class="choice-text">
-        {status.builtin_available ? t("anki.builtin.text") : t("anki.builtin.unavailable")}
-      </span>
-    </button>
-    <button
-      class="choice"
-      role="radio"
       aria-checked={!builtin}
       disabled={!!setup.action}
       onclick={() => pick("connect")}
     >
-      <span class="choice-title"><span class="dot" aria-hidden="true"></span>{t("anki.desktop")}</span>
+      <span class="choice-title">
+        <span class="dot" aria-hidden="true"></span>{t("anki.desktop")}
+        {#if setup.desktopFound}<span class="tag found">{t("anki.desktop.found")}</span>{/if}
+      </span>
       <span class="choice-text">{t("anki.desktop.text")}</span>
+    </button>
+    <button
+      class="choice"
+      role="radio"
+      aria-checked={builtin}
+      disabled={!status.builtin_available || !!setup.action}
+      onclick={() => pick("collection")}
+    >
+      <span class="choice-title"><span class="dot" aria-hidden="true"></span>{t("anki.builtin")}</span>
+      <span class="choice-text">
+        {status.builtin_available ? t("anki.builtin.text") : t("anki.builtin.unavailable")}
+      </span>
     </button>
   </div>
 
   {#if builtin}
     <section class="panel" aria-label={t("anki.builtin")}>
+      {#if setup.desktopFound && !setup.live}
+        <p class="warn-box" role="note">{t("anki.builtin.second")}</p>
+      {/if}
       {#if openError}<p class="error" role="alert">{openError}</p>{/if}
 
       {#if managed}
@@ -302,15 +305,25 @@
     </section>
   {:else}
     <section class="panel" aria-label={t("anki.desktop")}>
-      <ol class="howto">
-        <li>
-          {t("anki.desktop.install")}
-          <a href="https://apps.ankiweb.net" target="_blank" rel="noreferrer">apps.ankiweb.net ↗</a>
-        </li>
-        <li>{t("anki.desktop.addon")} <code class="mono">2055492159</code></li>
-        <li>{t("anki.desktop.open")}</li>
-      </ol>
-      <p class="note">{t("anki.desktop.url")} <span class="mono">{status.connect_url}</span></p>
+      {#if setup.desktopFound}
+        <p class="sync ok" role="status">
+          <span class="glyph" aria-hidden="true">✓</span>
+          <span>{t("anki.desktop.detected")} <span class="mono url">{setup.desktop?.url}</span></span>
+        </p>
+      {:else}
+        <p class="sync warn" role="status" aria-live="polite">
+          <span class="glyph" aria-hidden="true">…</span>
+          <span>{t("anki.desktop.missing")} <span class="mono url">{setup.desktop?.url ?? status.connect_url}</span></span>
+        </p>
+        <ol class="howto">
+          <li>
+            {t("anki.desktop.install")}
+            <a href="https://apps.ankiweb.net" target="_blank" rel="noreferrer">apps.ankiweb.net ↗</a>
+          </li>
+          <li>{t("anki.desktop.addon")} <code class="mono">2055492159</code></li>
+          <li>{t("anki.desktop.open")}</li>
+        </ol>
+      {/if}
       <div class="actions">
         <button
           class={setup.live && setup.noteTypes ? "secondary" : "primary"}
@@ -447,6 +460,10 @@
     border: 1px solid currentColor;
   }
 
+  .tag.found {
+    color: var(--ok);
+  }
+
   .choice-text {
     color: var(--muted);
     font-size: 14px;
@@ -527,6 +544,18 @@
 
   .sync.err .glyph {
     color: var(--err);
+  }
+
+  .url {
+    overflow-wrap: anywhere;
+  }
+
+  .warn-box {
+    margin: 0 0 12px;
+    padding: 10px 14px;
+    border: 1px solid var(--warn);
+    border-radius: 8px;
+    background: var(--outer);
   }
 
   .full {

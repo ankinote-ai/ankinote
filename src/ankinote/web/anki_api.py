@@ -169,9 +169,20 @@ async def _local_cards(runtime: CollectionRuntime) -> int | None:
     return await runtime.submit(lambda col: col.card_count())
 
 
-def _choice(backend: str) -> Backend:
-    """The option the step preselects: what's in use, else the recommendation."""
-    if backend == COLLECTION_BACKEND or saved_anki_backend() != CONNECT_BACKEND:
+def _chosen() -> str:
+    """The backend the user saved or the deployment set; ``""`` if neither."""
+    return saved_anki_backend() or envs.ANKI_BACKEND.strip().lower()
+
+
+def _choice() -> Backend:
+    """The option the step preselects: what was chosen, else Anki Desktop.
+
+    Most people run AnkiNote on the computer that has Anki, where AnkiConnect
+    writes into that collection directly. Built-in Anki keeps a second copy,
+    which the headless Docker stack chooses through ``ANKI_BACKEND``.
+    """
+    chosen = _chosen()
+    if chosen == COLLECTION_BACKEND and _builtin_available():
         return COLLECTION_BACKEND
     return CONNECT_BACKEND
 
@@ -186,7 +197,8 @@ async def _status() -> dict:
     driver = runtime.sync_driver if runtime else None
     return {
         "backend": backend,
-        "choice": _choice(backend),
+        "choice": _choice(),
+        "chosen": bool(_chosen()),
         "builtin_available": _builtin_available(),
         "connect_url": envs.ANKI_CONNECT_URL,
         "collection_path": runtime.path
@@ -239,6 +251,23 @@ router = APIRouter(prefix="/api/anki")
 @router.get("")
 async def get_status() -> dict:
     return await _status()
+
+
+@router.get("/desktop")
+async def detect_desktop() -> dict:
+    """Whether AnkiConnect answers, without choosing it.
+
+    ``version`` is AnkiConnect's API version, or null with ``error`` saying
+    why not (the codes of :func:`probe_anki_connect`).
+    """
+    url = envs.ANKI_CONNECT_URL
+    try:
+        version = await probe_anki_connect(url)
+    except HTTPException as exc:
+        detail = exc.detail
+        code = detail["code"] if isinstance(detail, dict) else "error"
+        return {"url": url, "version": None, "error": code}
+    return {"url": url, "version": version, "error": None}
 
 
 @router.put("/backend")

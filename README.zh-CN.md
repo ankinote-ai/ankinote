@@ -28,7 +28,7 @@
   <img src="docs/img/demo-hero.gif" width="860" alt="AnkiNote 演示：输入单词、生成卡片、翻到背面">
 </p>
 
-制卡不该比背卡还累。**AnkiNote** 是一款由 AI 驱动的 Anki 制卡工作台，只需输入一个单词、短语、句子或理工科（STEM）题目，即可自动生成包含释义、例句、助记、AI 配图与自然语音的精美卡片，并直接同步到你的 AnkiWeb 账号。
+制卡不该比背卡还累。**AnkiNote** 是一款由 AI 驱动的 Anki 制卡工作台，只需输入一个单词、短语、句子或理工科（STEM）题目，即可自动生成包含释义、例句、助记、AI 配图与自然语音的精美卡片，并直接存进你的 Anki。
 
 告别手动排版，告别在 ChatGPT 和 Anki 之间反复复制粘贴。自带 API Key 即可随时随地运行，在手机、平板和电脑上无缝复习。
 
@@ -36,7 +36,7 @@
 
 ## ✨ 核心亮点
 
-- **内置 Anki 引擎与 AnkiWeb 自动同步** — 无需安装桌面端 Anki，也无需配置 AnkiConnect。AnkiNote 内置 Anki 核心库并自动与 AnkiWeb 同步，在浏览器或 NAS 上添加的卡片会自动出现在你的所有设备上。*（如果你习惯使用桌面端，同样支持 AnkiConnect。）*
+- **配合你已有的 Anki** — 在你平时学习的电脑上，卡片通过 AnkiConnect 插件直接存进 Anki 桌面版：不多一份资料库，不用先下载，Anki 照常同步。在常开的家用服务器或 NAS 上，AnkiNote 也可以用内置的 Anki 直接同步 AnkiWeb，电脑关着也能用手机浏览器加卡片。
 - **一个 Key 搞定全部配置** — 首次启动提供 5 步引导向导：只需粘贴一个 Gemini AI Studio Key，即可同时驱动文本、配图和语音合成；也支持自由混搭 OpenAI、Claude、DeepSeek、fal.ai、Google Cloud TTS 及任意 OpenAI 兼容接口。
 - **四种制卡模式：单词、短语、句子与 STEM**
   - **语言学习**：自动生成精准释义、地道例句、记忆技巧、AI 场景配图与真人感发音。支持 **英语、法语、西班牙语、德语、日语、中文（简/繁体，带注音/拼音）与韩语（Beta）** 任意互译学习。
@@ -82,7 +82,7 @@ uvx --from ankinote-ai ankinote-web
 在浏览器打开 **<http://127.0.0.1:8000>**。首次启动时，**配置向导**会带你完成：
 
 1. **AI 服务** — 粘贴 Gemini API Key（一站式覆盖文本、配图、语音），或展开**高级选项**配置 OpenAI、Claude、DeepSeek、fal.ai 等。
-2. **Anki 连接** — 选择**内置 Anki** 并登录 AnkiWeb*（若桌面端常驻运行，也可选择 **AnkiConnect**）*。
+2. **Anki 连接** — 打开装好 [AnkiConnect](https://ankiweb.net/shared/info/2055492159) 插件的 Anki 桌面版，向导会自动找到它并建好笔记类型。*（服务器上没有 Anki 桌面版时，选择**内置 Anki** 并登录 AnkiWeb。）*
 3. **语言** — 选择母语与目标语言。
 4. **外观** — 选择配色方案与浅色/深色模式，Anki 卡片也会使用同一套配色。
 5. **首张卡片** — 在向导中直接生成并保存你的第一张卡片。
@@ -107,16 +107,16 @@ ankinote-web
 
 ## 🐳 Docker 自部署（NAS / 服务器）
 
-将 AnkiNote 部署在服务器、VPS 或 NAS 上，随时用手机浏览器打开就能制卡。Docker Hub 与 GHCR 均已提供多架构镜像（`amd64` + `arm64`）：`ghcr.io/ankinote-ai/ankinote` 与 `ignity21/ankinote-ai`。
+将 AnkiNote 常驻在家用服务器或 NAS 上，电脑关着也能随时用手机浏览器制卡。在你平时用 Anki 的电脑上不需要 Docker，上面的快速上手就够了。Docker Hub 与 GHCR 均已提供多架构镜像（`amd64` + `arm64`）：`ghcr.io/ankinote-ai/ankinote` 与 `ignity21/ankinote-ai`。
 
 ```bash
-# 独立运行模式（推荐：内置 Anki + AnkiWeb 同步，无需桌面端）
+# 内置 Anki + AnkiWeb 同步，无需桌面端
 cd deploy/headless
 cp .env.example .env      # 可选：配置 ANKIWEB_USERNAME / ANKIWEB_PASSWORD、端口等
 docker compose up -d      # 访问 http://localhost:8080
 ```
 
-如果你已经在宿主机运行了带 AnkiConnect 的 Anki 桌面端，可使用 `deploy/standard`。完整部署说明与迁移指南请见 [`deploy/README.md`](deploy/README.md)。
+如果想让容器改用带 AnkiConnect 的 Anki 桌面版，请使用 `deploy/standard`。AnkiNote 没有登录功能，请只在家庭内网或 Tailscale 这类私有网络里使用；要暴露到公网，必须放在要求登录的反向代理之后。完整部署说明与迁移指南请见 [`deploy/README.md`](deploy/README.md)。
 
 ---
 

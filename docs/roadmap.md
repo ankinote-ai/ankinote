@@ -107,10 +107,22 @@ Principles:
 - **Show the result before the install** — sample deck, GIF, Chinese README.
 - **One key is enough** — a single Gemini or OpenAI key covers text, image,
   and audio; a text-only key still produces cards, without media.
-- **One recommended path** — the headless `collection` backend with AnkiWeb
-  sync ("add a word from the phone browser, it shows up on every Anki
-  client"). `connect` stays as the alternative for existing Anki Desktop
-  users.
+- **One recommended path per place** (revised 2026-11-19; until then the
+  built-in `collection` backend was the single recommendation):
+  - *On the computer the user studies on* (the `uvx` install, the CLI an
+    agent runs): AnkiConnect into Anki Desktop. Most Anki users have
+    Desktop; writing into it avoids a second collection, the first full
+    download (slow for large collections), and the full-sync conflicts two
+    collections on one AnkiWeb account can cause. The wizard preselects it.
+  - *On an always-on home server or NAS* ("add a word from the phone
+    browser while the computer is off"): built-in `collection` with
+    AnkiWeb sync, via the headless Docker stack.
+  - *Not the public internet.* AnkiNote is single-user without a login; the
+    local-access guard stops other web pages from driving it, nothing more.
+    Use a home network, Tailscale, or a reverse proxy that asks for a login
+    (`ankinote-web` warns at startup when it listens beyond loopback). A
+    built-in password was considered and deferred until users ask; accounts
+    belong to "Future major version: deployable web service" below.
 - **Curated over configurable** — a few good themes and language pairs
   rather than open-ended editors.
 

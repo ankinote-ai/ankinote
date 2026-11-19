@@ -28,7 +28,7 @@
   <img src="docs/img/demo-hero.gif" width="860" alt="Démo d'AnkiNote : saisir un mot, générer la carte, la retourner">
 </p>
 
-Créer de bonnes cartes Anki ne devrait pas prendre plus de temps que de les réviser. **AnkiNote** est un studio de cartes Anki propulsé par l'IA qui transforme un mot, une expression, une phrase ou un problème STEM en une carte complète et soignée — avec définitions, exemples, moyens mnémotechniques, illustrations et audio naturel — puis la synchronise directement avec votre compte AnkiWeb.
+Créer de bonnes cartes Anki ne devrait pas prendre plus de temps que de les réviser. **AnkiNote** est un studio de cartes Anki propulsé par l'IA qui transforme un mot, une expression, une phrase ou un problème STEM en une carte complète et soignée — avec définitions, exemples, moyens mnémotechniques, illustrations et audio naturel — puis l'enregistre directement dans votre Anki.
 
 Fini la mise en forme manuelle et les copier-coller entre ChatGPT et Anki. Utilisez votre propre clé API, hébergez-le où vous voulez et révisez sur téléphone, tablette ou ordinateur.
 
@@ -36,7 +36,7 @@ Fini la mise en forme manuelle et les copier-coller entre ChatGPT et Anki. Utili
 
 ## ✨ Pourquoi AnkiNote ?
 
-- **Anki intégré & synchronisation AnkiWeb** — Aucun besoin d'ouvrir Anki Desktop ni AnkiConnect. AnkiNote embarque le moteur Anki et se synchronise automatiquement avec AnkiWeb : les cartes créées depuis un navigateur ou un NAS apparaissent sur tous vos appareils. *(AnkiConnect reste pris en charge si vous utilisez déjà Anki Desktop.)*
+- **Fonctionne avec votre Anki** — Sur l'ordinateur où vous révisez, les cartes arrivent directement dans Anki Desktop grâce au module AnkiConnect : pas de seconde collection, rien à télécharger d'abord, et Anki les synchronise comme d'habitude. Sur un serveur domestique ou un NAS toujours allumé, AnkiNote peut utiliser son Anki intégré et se synchroniser avec AnkiWeb, pour ajouter des cartes depuis le navigateur du téléphone même ordinateur éteint.
 - **Configuration en une seule clé** — Collez une clé Gemini AI Studio et l'assistant en 5 étapes configure automatiquement le texte, les images et la voix. Vous pouvez aussi combiner OpenAI, Claude, DeepSeek, fal.ai, Google Cloud TTS ou tout endpoint compatible OpenAI.
 - **4 modes de cartes : Mot, Expression, Phrase et STEM**
   - **Apprentissage des langues** : Définitions, exemples authentiques, astuces mnémotechniques, illustrations générées par IA et audio TTS. Prend en charge **l'anglais, le français, l'espagnol, l'allemand, le japonais, le chinois (simplifié et traditionnel, avec annotations ruby/pinyin) et le coréen (bêta)**.
@@ -82,7 +82,7 @@ uvx --from ankinote-ai ankinote-web
 Ouvrez **<http://127.0.0.1:8000>** dans votre navigateur. Au premier lancement, **l'assistant de configuration** vous guide :
 
 1. **Fournisseur IA** — Collez une clé Gemini (texte, image et voix inclus) ou ouvrez **Avancé** pour OpenAI, Claude, DeepSeek, fal.ai ou des endpoints personnalisés.
-2. **Connexion Anki** — Choisissez **Anki intégré** et connectez-vous à AnkiWeb *(ou choisissez **AnkiConnect** avec Anki Desktop)*.
+2. **Connexion Anki** — Ouvrez Anki Desktop avec le module [AnkiConnect](https://ankiweb.net/shared/info/2055492159) installé ; l'assistant le détecte et crée les types de notes. *(Sur un serveur sans Anki Desktop, choisissez **Anki intégré** et connectez-vous à AnkiWeb.)*
 3. **Langues** — Sélectionnez votre langue maternelle et la langue cible.
 4. **Apparence** — Choisissez la palette de couleurs et le mode clair ou sombre ; vos cartes Anki adoptent la même palette.
 5. **Première carte** — Générez et enregistrez votre première carte directement depuis l'assistant.
@@ -107,16 +107,16 @@ ankinote-web
 
 ## 🐳 Auto-hébergement avec Docker
 
-Hébergez AnkiNote 24h/24 sur un serveur, VPS ou NAS pour créer des cartes depuis votre téléphone à tout moment. Images multi-arch (`amd64` + `arm64`) publiées sur `ghcr.io/ankinote-ai/ankinote` et `ignity21/ankinote-ai`.
+Hébergez AnkiNote 24h/24 sur un serveur domestique ou un NAS pour créer des cartes depuis votre téléphone à tout moment, même ordinateur éteint. Sur l'ordinateur où vous utilisez Anki, Docker est inutile : le Démarrage rapide ci-dessus suffit. Images multi-arch (`amd64` + `arm64`) publiées sur `ghcr.io/ankinote-ai/ankinote` et `ignity21/ankinote-ai`.
 
 ```bash
-# Mode autonome (recommandé : Anki intégré + synchro AnkiWeb)
+# Anki intégré + synchro AnkiWeb, sans application de bureau
 cd deploy/headless
 cp .env.example .env      # optionnel : ANKIWEB_USERNAME / ANKIWEB_PASSWORD, port, etc.
 docker compose up -d      # ouvrez http://localhost:8080
 ```
 
-Si vous utilisez déjà Anki Desktop avec AnkiConnect, utilisez `deploy/standard`. Consultez [`deploy/README.md`](deploy/README.md) pour tous les détails.
+Pour que le conteneur utilise un Anki Desktop avec AnkiConnect, utilisez `deploy/standard`. AnkiNote n'a pas de connexion : gardez-le sur votre réseau domestique ou un réseau privé comme Tailscale, et ne l'exposez à Internet que derrière un proxy inverse qui demande une connexion. Consultez [`deploy/README.md`](deploy/README.md) pour tous les détails.
 
 ---
 

@@ -6,11 +6,16 @@ Published images (multi-arch `amd64` + `arm64`), tags `latest`, `<major>.<minor>
 - `ghcr.io/ankinote-ai/ankinote`
 - `ignity21/ankinote-ai` (Docker Hub, same image)
 
+Docker is for an always-on home server or NAS, where you add cards from your
+phone's browser while your computer is off. On the computer where you use
+Anki you don't need it: run `uvx --from ankinote-ai ankinote-web` and choose
+Anki Desktop in the setup wizard (see the main README).
+
 Two ready-made stacks:
 
 | Directory | Use it when |
 | --- | --- |
-| [`headless/`](headless/) (recommended) | You want a self-contained stack: no Anki desktop app, no AnkiConnect. AnkiNote keeps its own Anki collection and syncs it straight with AnkiWeb. |
+| [`headless/`](headless/) (recommended for a server) | You want a self-contained stack: no Anki desktop app, no AnkiConnect. AnkiNote keeps its own Anki collection and syncs it straight with AnkiWeb. |
 | [`standard/`](standard/) | You already run AnkiConnect — the Anki desktop app on the host, or one elsewhere. |
 
 Each directory is standalone:

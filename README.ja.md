@@ -28,7 +28,7 @@
   <img src="docs/img/demo-hero.gif" width="860" alt="AnkiNote のデモ：単語を入力し、カードを生成して、裏面へ">
 </p>
 
-カード作りが、復習そのものより大変であってはいけません。**AnkiNote** は、単語・フレーズ・例文・STEM（数学・理科・プログラミング）問題を入力するだけで、解説・例文・語呂合わせ（記憶フック）・AI イラスト・自然な音声を備えた完成品カードを自動生成し、そのまま AnkiWeb に同期できる AI カードスタジオです。
+カード作りが、復習そのものより大変であってはいけません。**AnkiNote** は、単語・フレーズ・例文・STEM（数学・理科・プログラミング）問題を入力するだけで、解説・例文・語呂合わせ（記憶フック）・AI イラスト・自然な音声を備えた完成品カードを自動生成し、そのまま Anki に保存できる AI カードスタジオです。
 
 手作業のレイアウト調整も、ChatGPT と Anki の間のコピペも不要。自分の API キーでどこでも動かせ、スマホ・タブレット・PC からすぐに復習できます。
 
@@ -36,7 +36,7 @@
 
 ## ✨ AnkiNote の特長
 
-- **Anki エンジン内蔵 ＆ AnkiWeb 自動同期** — デスクトップ版 Anki や AnkiConnect は不要です。Anki 本体のライブラリを内蔵し、AnkiWeb と自動で同期するため、ブラウザや NAS から追加したカードが全端末に届きます。*（既存の AnkiConnect 環境にも対応しています。）*
+- **いつもの Anki とそのまま連携** — 普段学習しているパソコンでは、カードが AnkiConnect アドオン経由でデスクトップ版 Anki に直接入ります。コレクションが二重になることも、最初のダウンロードもなく、同期はいつもどおり Anki が行います。常時稼働の自宅サーバーや NAS では、AnkiNote 内蔵の Anki が AnkiWeb と直接同期するので、パソコンを切っていてもスマホのブラウザからカードを追加できます。
 - **API キー 1 つで簡単セットアップ** — 初回起動時の 5 ステップウィザードに Gemini AI Studio のキーを貼るだけで、テキスト・画像・音声（TTS）のルートを一括設定。OpenAI、Claude、DeepSeek、fal.ai、Google Cloud TTS、OpenAI 互換エンドポイントの組み合わせも自由です。
 - **4 つのカードモード：単語・フレーズ・例文・STEM**
   - **語学学習**：意味・自然な例文・記憶のヒント・AI 生成イラスト・TTS 音声を作成。**英語・フランス語・スペイン語・ドイツ語・日本語・中国語（簡体字/繁体字・ルビ/ピンイン対応）・韓国語（Beta）** をどの言語からでも相互に学習できます。
@@ -82,7 +82,7 @@ uvx --from ankinote-ai ankinote-web
 ブラウザで **<http://127.0.0.1:8000>** を開くと、初回**セットアップウィザード**が案内してくれます：
 
 1. **AI プロバイダー** — Gemini API キーを貼り付けるだけ（テキスト・画像・音声すべてに対応）。**詳細設定**を開けば OpenAI、Claude、DeepSeek、fal.ai なども選択できます。
-2. **Anki 連携** — **内蔵 Anki** を選んで AnkiWeb にログインします*（デスクトップ版を使う場合は **AnkiConnect** を選択）*。
+2. **Anki 連携** — [AnkiConnect](https://ankiweb.net/shared/info/2055492159) アドオンを入れたデスクトップ版 Anki を開いておくと、ウィザードが自動で見つけてノートタイプを作成します。*（デスクトップ版のないサーバーでは **内蔵 Anki** を選んで AnkiWeb にログインします。）*
 3. **言語** — 母語と学習言語を選択します。
 4. **外観** — カラーパレットとライト／ダークモードを選択します。Anki のカードにも同じパレットが適用されます。
 5. **最初のカード** — ウィザード内で最初のカードを生成して保存できます。
@@ -107,16 +107,16 @@ ankinote-web
 
 ## 🐳 Docker でのセルフホスト
 
-サーバー・VPS・NAS に常駐させれば、外出先からスマホのブラウザでいつでもカードを追加できます。マルチアーキテクチャ（`amd64` + `arm64`）イメージを `ghcr.io/ankinote-ai/ankinote` と `ignity21/ankinote-ai` で公開しています。
+自宅サーバーや NAS に常駐させれば、パソコンを切っていてもスマホのブラウザでいつでもカードを追加できます。普段 Anki を使うパソコンでは Docker は不要で、上のクイックスタートだけで十分です。マルチアーキテクチャ（`amd64` + `arm64`）イメージを `ghcr.io/ankinote-ai/ankinote` と `ignity21/ankinote-ai` で公開しています。
 
 ```bash
-# スタンドアロン構成（推奨：Anki 内蔵 ＋ AnkiWeb 同期）
+# Anki 内蔵 ＋ AnkiWeb 同期（デスクトップ版不要）
 cd deploy/headless
 cp .env.example .env      # 任意：ANKIWEB_USERNAME / ANKIWEB_PASSWORD、ポート等を設定
 docker compose up -d      # http://localhost:8080 にアクセス
 ```
 
-すでに AnkiConnect を起動している場合は `deploy/standard` を利用してください。詳細は [`deploy/README.md`](deploy/README.md) をご覧ください。
+コンテナから AnkiConnect 付きのデスクトップ版 Anki を使う場合は `deploy/standard` を利用してください。AnkiNote にはログイン機能がないため、自宅のネットワークや Tailscale などのプライベートネットワーク内で使い、インターネットに公開する場合は必ずログイン付きのリバースプロキシを挟んでください。詳細は [`deploy/README.md`](deploy/README.md) をご覧ください。
 
 ---
 

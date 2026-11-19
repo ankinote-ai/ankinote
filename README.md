@@ -28,7 +28,7 @@
   <img src="https://raw.githubusercontent.com/ankinote-ai/ankinote/main/docs/img/demo-hero.gif" width="860" alt="AnkiNote demo: type a word, generate the card, flip to the back">
 </p>
 
-Making great Anki cards shouldn't take longer than reviewing them. **AnkiNote** is an AI-powered Anki card studio that turns a single word, phrase, sentence, or STEM problem into a complete, styled flashcard — with explanations, examples, memory hooks, custom illustrations, and native-sounding audio — and syncs it straight to your AnkiWeb account.
+Making great Anki cards shouldn't take longer than reviewing them. **AnkiNote** is an AI-powered Anki card studio that turns a single word, phrase, sentence, or STEM problem into a complete, styled flashcard — with explanations, examples, memory hooks, custom illustrations, and native-sounding audio — and saves it straight into your Anki.
 
 No manual formatting. No copy-pasting between ChatGPT and Anki. Bring your own API key, run it anywhere, and review on your phone, tablet, or desktop.
 
@@ -36,7 +36,7 @@ No manual formatting. No copy-pasting between ChatGPT and Anki. Bring your own A
 
 ## ✨ Why AnkiNote?
 
-- **Built-in Anki & AnkiWeb Sync** — No Anki Desktop or AnkiConnect required. AnkiNote embeds the Anki engine directly and syncs with AnkiWeb automatically, so cards added from a browser or NAS appear on every device. *(Already use Anki Desktop? AnkiConnect is supported too.)*
+- **Works with the Anki You Already Have** — On the computer you study on, cards go straight into Anki Desktop through the AnkiConnect add-on: no second collection, nothing to download first, and Anki syncs them as usual. On an always-on home server or NAS, AnkiNote can run its own built-in Anki and sync with AnkiWeb instead, so you can add cards from your phone's browser while your computer is off.
 - **One-Key Setup Wizard** — Paste a single Gemini AI Studio key and the 5-step onboarding wizard configures text, image, and speech routes for you. Or mix and match OpenAI, Claude, DeepSeek, fal.ai, Google Cloud TTS, and any OpenAI-compatible endpoint.
 - **4 Card Modes: Word, Phrase, Sentence & STEM**
   - **Language Learning**: Definitions, natural examples, memory hooks/mnemonics, AI-generated illustrations, and TTS audio. Supports **English, French, Spanish, German, Japanese, Chinese (Simplified & Traditional, with ruby/pinyin), and Korean (beta)** — learn any of them, explained in any other.
@@ -82,7 +82,7 @@ uvx --from ankinote-ai ankinote-web
 Then open **<http://127.0.0.1:8000>** in your browser. On first launch, the **Setup Wizard** walks you through:
 
 1. **AI Provider** — Paste a Gemini API key (covers text, image, and speech) or expand **Advanced** for OpenAI, Claude, DeepSeek, fal.ai, or custom endpoints.
-2. **Anki Connection** — Choose **Built-in Anki** and sign in to AnkiWeb *(or choose **AnkiConnect** if you keep Anki Desktop open)*.
+2. **Anki Connection** — Open Anki Desktop with the [AnkiConnect](https://ankiweb.net/shared/info/2055492159) add-on installed; the wizard finds it and sets up the note types. *(On a server without Anki Desktop, choose **Built-in Anki** and sign in to AnkiWeb.)*
 3. **Languages** — Pick your native and target languages.
 4. **Appearance** — Choose a color palette and light or dark mode; your Anki cards get the same palette.
 5. **First Card** — Generate and save your first card right inside the wizard.
@@ -107,18 +107,18 @@ ankinote-web
 
 ## 🐳 Self-Hosting with Docker
 
-Run AnkiNote 24/7 on a server, VPS, or NAS so you can create cards from your phone's browser anytime. Multi-arch images (`amd64` + `arm64`) are published to `ghcr.io/ankinote-ai/ankinote` and `ignity21/ankinote-ai`.
+Run AnkiNote 24/7 on a home server or NAS so you can create cards from your phone's browser anytime, even with your computer off. On the computer where you use Anki you don't need Docker: the Quick Start above is all it takes. Multi-arch images (`amd64` + `arm64`) are published to `ghcr.io/ankinote-ai/ankinote` and `ignity21/ankinote-ai`.
 
 ```bash
-# Standalone mode (recommended — built-in Anki + AnkiWeb sync, no desktop app needed)
+# Built-in Anki + AnkiWeb sync, no desktop app needed
 cd deploy/headless
 cp .env.example .env      # optional: set ANKIWEB_USERNAME / ANKIWEB_PASSWORD, port, etc.
 docker compose up -d      # open http://localhost:8080
 ```
 
-Already running Anki Desktop with AnkiConnect? Use `deploy/standard` instead. See [`deploy/README.md`](deploy/README.md) for full deployment options, reverse-proxy tips, and migration guides.
+To have the container use an Anki Desktop with AnkiConnect instead, use `deploy/standard`. See [`deploy/README.md`](deploy/README.md) for full deployment options, reverse-proxy tips, and migration guides.
 
-AnkiNote answers only to `localhost` and IP addresses. To open it by a host name (a reverse proxy, a Tailscale name), list that name in `ANKINOTE_ALLOWED_HOSTS`, comma-separated. This also applies when a proxy forwards to an IP address: without the name, saving, syncing and model lists fail with 403.
+AnkiNote has no login, so keep it on your home network or a private network such as Tailscale; don't expose it to the internet except behind a reverse proxy that asks for a login. It answers only to `localhost` and IP addresses. To open it by a host name (a reverse proxy, a Tailscale name), list that name in `ANKINOTE_ALLOWED_HOSTS`, comma-separated. This also applies when a proxy forwards to an IP address: without the name, saving, syncing and model lists fail with 403.
 
 ---
 

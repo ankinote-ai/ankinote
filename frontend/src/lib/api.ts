@@ -79,11 +79,22 @@ export type SyncView = {
   result: { collection_ok: boolean; media_ok: boolean } | null;
 };
 
+/** Whether AnkiConnect answers at `url`; detecting doesn't choose it. */
+export type DesktopProbe = {
+  url: string;
+  /** AnkiConnect's API version; null when it didn't answer. */
+  version: number | null;
+  /** unreachable, not_ankiconnect, ankiconnect */
+  error: string | null;
+};
+
 export type AnkiStatus = {
   /** The backend in use now. */
   backend: AnkiBackend;
-  /** What the step preselects: the backend in use, else the recommendation. */
+  /** What the step preselects: the backend chosen, else Anki Desktop. */
   choice: AnkiBackend;
+  /** The user saved a choice, or the deployment set one (headless Docker). */
+  chosen: boolean;
   builtin_available: boolean;
   connect_url: string;
   collection_path: string;
@@ -248,6 +259,7 @@ export const api = {
   listModels: (route: Route, target: RouteIn) =>
     request<ModelList>("POST", "/api/models/list", { route, target }),
   anki: () => request<AnkiStatus>("GET", "/api/anki"),
+  ankiDesktop: () => request<DesktopProbe>("GET", "/api/anki/desktop"),
   setAnkiBackend: (backend: AnkiBackend) =>
     request<AnkiStatus>("PUT", "/api/anki/backend", { backend }),
   ankiLogin: (email: string, password: string) =>

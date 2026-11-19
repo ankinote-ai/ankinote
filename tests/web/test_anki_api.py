@@ -22,22 +22,34 @@ from tests.services.fake_anki_connect_server import fake_anki_connect_server
 from tests.web.anki_fakes import PASSWORD, TOKEN, builtin, login
 
 
-async def test_fresh_install_recommends_builtin(api: httpx.AsyncClient) -> None:
+async def test_fresh_install_recommends_anki_desktop(api: httpx.AsyncClient) -> None:
+    """On the computer Anki runs on, AnkiConnect avoids a second collection."""
     status = (await api.get("/api/anki")).json()
     assert status["backend"] == "connect"
-    assert status["choice"] == "collection"
+    assert status["choice"] == "connect"
+    assert status["chosen"] is False
     assert status["builtin_available"] is True
     assert status["sync"] is None
 
 
-async def test_saving_other_settings_keeps_recommending_builtin(
+async def test_saving_other_settings_is_not_a_backend_choice(
     api: httpx.AsyncClient,
 ) -> None:
     """Saving step 1 mustn't record AnkiConnect as if the user had chosen it."""
     save_settings(load_settings())
     status = (await api.get("/api/anki")).json()
     assert saved_anki_backend() == ""
+    assert status["chosen"] is False
+
+
+async def test_deployment_backend_is_preselected(
+    api: httpx.AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The headless Docker stack sets ANKI_BACKEND=collection."""
+    monkeypatch.setattr(envs, "ANKI_BACKEND", "collection")
+    status = (await api.get("/api/anki")).json()
     assert status["choice"] == "collection"
+    assert status["chosen"] is True
 
 
 async def test_choosing_builtin_creates_collection_and_waits_for_login(
@@ -46,6 +58,7 @@ async def test_choosing_builtin_creates_collection_and_waits_for_login(
     status = await builtin(api)
     expected = tmp_path / "data" / "ankinote" / "collection.anki2"
     assert status["backend"] == status["choice"] == "collection"
+    assert status["chosen"] is True
     assert status["collection_path"] == str(expected)
     assert expected.exists()
     assert status["sync"]["state"] == "not_logged_in"
@@ -175,6 +188,34 @@ async def test_anki_desktop_is_probed_and_set_up(
     assert saved_anki_backend() == "connect"
 
 
+async def test_anki_desktop_is_detected(
+    api: httpx.AsyncClient, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    desktop = CollectionRuntime(str(tmp_path / "desktop.anki2"))
+    await desktop.open()
+    try:
+        async with fake_anki_connect_server(desktop) as url:
+            monkeypatch.setattr(envs, "ANKI_CONNECT_URL", url)
+            found = (await api.get("/api/anki/desktop")).json()
+    finally:
+        await desktop.close()
+    assert found == {"url": url, "version": 6, "error": None}
+    # Detecting isn't choosing.
+    assert saved_anki_backend() == ""
+
+
+async def test_anki_desktop_not_detected(
+    api: httpx.AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(envs, "ANKI_CONNECT_URL", "http://127.0.0.1:9")
+    found = (await api.get("/api/anki/desktop")).json()
+    assert found == {
+        "url": "http://127.0.0.1:9",
+        "version": None,
+        "error": "unreachable",
+    }
+
+
 async def test_anki_desktop_not_running_is_unreachable(
     api: httpx.AsyncClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -183,7 +224,9 @@ async def test_anki_desktop_not_running_is_unreachable(
     assert response.status_code == 503
     assert response.json()["detail"]["code"] == "unreachable"
     # The choice is kept, so retrying only retries the connection.
-    assert (await api.get("/api/anki")).json()["choice"] == "connect"
+    status = (await api.get("/api/anki")).json()
+    assert status["choice"] == "connect"
+    assert status["chosen"] is True
 
 
 async def test_deployment_account_hides_login(

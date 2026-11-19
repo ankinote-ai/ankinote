@@ -1,14 +1,15 @@
 /**
- * State for "Connect Anki": built-in Anki synced with AnkiWeb (recommended)
- * or Anki Desktop through AnkiConnect. Once connected and writable, the
- * note types and decks are set up automatically. Shared by the wizard and,
- * later, Settings → Anki.
+ * State for "Connect Anki": Anki Desktop through AnkiConnect (preselected
+ * unless a choice was made) or built-in Anki synced with AnkiWeb, for an
+ * always-on server. Once connected and writable, the note types and decks
+ * are set up automatically. Shared by the wizard and Settings → Anki.
  */
 import {
   api,
   ApiError,
   type AnkiBackend,
   type AnkiStatus,
+  type DesktopProbe,
   type Direction,
   type NoteTypeItem,
 } from "./api";
@@ -19,11 +20,15 @@ export type Action = "" | "load" | "connect" | "login" | "logout" | "sync" | "fu
 export type Failure = { scope: "connect" | "login" | "sync" | "types"; code: string; detail: string };
 
 const POLL_MS = 1000;
+/** How often to look again for Anki Desktop while it isn't answering. */
+const DETECT_MS = 3000;
 
 export class AnkiSetup {
   status = $state<AnkiStatus | null>(null);
   loadError = $state(false);
-  choice = $state<AnkiBackend>("collection");
+  choice = $state<AnkiBackend>("connect");
+  /** Whether Anki Desktop answers; null until the first look. */
+  desktop = $state<DesktopProbe | null>(null);
 
   email = $state("");
   password = $state("");
@@ -40,11 +45,16 @@ export class AnkiSetup {
 
   private disposed = false;
   private polling = false;
+  private detectTimer: ReturnType<typeof setTimeout> | undefined;
 
   readonly sync = $derived(this.status?.sync ?? null);
-  /** The chosen backend is the one in use (and, built-in, it's open). */
+  /**
+   * The selected backend was chosen and is the one in use (and, built-in,
+   * it's open). Nothing is set up in Anki before the user chooses.
+   */
   readonly live = $derived(
     this.status !== null &&
+      this.status.chosen &&
       this.status.backend === this.choice &&
       (this.choice === "connect" || this.status.open),
   );
@@ -52,6 +62,7 @@ export class AnkiSetup {
   readonly syncing = $derived(
     !!this.status?.busy || this.sync?.state === "syncing" || this.sync?.state === "initializing",
   );
+  readonly desktopFound = $derived(this.desktop?.version != null);
   readonly loggedIn = $derived(
     this.live && this.choice === "collection" && !!this.status?.account &&
       this.sync?.state !== "not_logged_in" && this.sync?.error !== "credentials",
@@ -74,6 +85,7 @@ export class AnkiSetup {
       this.action = "";
     }
     this.choice = this.status.builtin_available ? this.status.choice : "connect";
+    void this.detect();
     if (!this.live) return;
     if (this.syncing) void this.poll();
     else if (this.choice === "collection" ? this.status.writable : true) await this.listNoteTypes();
@@ -84,10 +96,38 @@ export class AnkiSetup {
     this.choice = choice;
     this.failure = null;
     this.noteTypes = null;
+    if (choice === "connect" && !this.desktopFound && this.detectTimer === undefined) {
+      void this.detect();
+    }
+    // Back on the backend in use: show its note types again.
+    if (this.live && !this.syncing && (choice === "connect" || this.status?.writable)) {
+      void this.listNoteTypes();
+    }
   }
 
   dispose() {
     this.disposed = true;
+    clearTimeout(this.detectTimer);
+  }
+
+  /**
+   * Look for Anki Desktop, and keep looking every few seconds while it's
+   * selected but not answering, so installing the add-on and restarting
+   * Anki shows up without a click.
+   */
+  async detect() {
+    clearTimeout(this.detectTimer);
+    this.detectTimer = undefined;
+    try {
+      this.desktop = await api.ankiDesktop();
+    } catch {
+      // Server hiccup: keep the last answer.
+    }
+    if (this.disposed || this.desktopFound) return;
+    this.detectTimer = setTimeout(() => {
+      if (this.choice === "connect" && !this.live) void this.detect();
+      else this.detectTimer = undefined;
+    }, DETECT_MS);
   }
 
   private async run(action: Action, scope: Failure["scope"], work: () => Promise<void>) {
@@ -170,8 +210,10 @@ export class AnkiSetup {
     if (this.failure) {
       // The choice was saved even though Anki didn't answer.
       this.status = await api.anki().catch(() => this.status);
+      void this.detect();
       return;
     }
+    if (!this.desktopFound) void this.detect();
     await this.prepare();
   }
 
