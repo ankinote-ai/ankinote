@@ -14,7 +14,7 @@ produces every one of them; this file covers what the script can't do.
 | `demo-hero.gif` | Generate: type a word, Ctrl+Enter, card front, Back, scroll, Front (960×600) |
 | `showcase-word.png`, `showcase-stem.png` | The `.preview` block on the Back side, whole card |
 | `themes-light.png`, `themes-dark.png` | Settings → Appearance, the Palette fieldset |
-| `wizard-api.png`, `wizard-anki-account.png` | Wizard steps 1–2, 1280×1000 |
+| `wizard-api.png`, `wizard-anki-account.png` | Wizard steps 1–2, 1280×1000; step 2 with Anki Desktop found, not yet connected |
 
 ## Run an isolated server
 
@@ -32,6 +32,12 @@ Never point the capture at the user's own config or their compose stacks.
    .agents/skills/readme-media/scripts/capture.py --out <scratch dir>`.
    Run `wizard` first (it saves and tests the key); pass target names to
    redo only some images.
+4. `anki` (step 2) needs AnkiConnect answering at the server's
+   `ANKI_CONNECT_URL` (default `localhost:8765`). Unless the user's own Anki
+   is there, run `uv run python .agents/skills/readme-media/scripts/fake_desktop.py
+   <scratch dir>` in the background first: a throwaway collection behind the
+   test suite's AnkiConnect fake. Any saved key gets past step 1, so `anki`
+   alone needs no real key.
 
 ## Check before copying
 
@@ -49,7 +55,7 @@ push.
 
 ## Clean up
 
-Stop the server by its background task or PID: `pkill -f ankinote-web`
+Stop the server (and `fake_desktop.py`) by its background task or PID: `pkill -f ankinote-web`
 also matches your own shell command, which kills it before the next step
 runs, and the user's containers run `ankinote-web` too. Then delete the key
 file and the scratch `settings.json` (it now holds the key).

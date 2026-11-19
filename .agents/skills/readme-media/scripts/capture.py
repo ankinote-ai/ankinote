@@ -4,9 +4,10 @@ Run against an isolated server (see ../SKILL.md), with the UI in English:
 
     uv run --with playwright python capture.py --base http://127.0.0.1:8931 --out OUT [targets...]
 
-Targets (default: all, in this order): wizard themes word stem gif.
+Targets (default: all, in this order): wizard anki themes word stem gif.
 `wizard` saves and tests the Gemini key from GEMINI_KEY_FILE, which the
 other targets need; `word`, `stem` and `gif` each spend one real generation.
+`anki` needs AnkiConnect answering (fake_desktop.py) and any saved key.
 Files land in OUT under their docs/img names; review them before copying.
 """
 
@@ -76,8 +77,16 @@ async def wizard(browser, base, out):
         "() => [...document.querySelectorAll('button')].some(b => b.textContent.trim()==='Next' && !b.disabled)",
         timeout=60_000,
     )
+    await pg.close()
+
+
+async def anki(browser, base, out):
+    # Step 2 as a first-time user on the computer Anki runs on sees it:
+    # Anki Desktop found, not connected yet.
+    pg = await page(browser, base, "/wizard", height=1000)
     await pg.get_by_role("button", name="Next").click()
-    await pg.wait_for_timeout(1500)
+    await pg.locator(".tag.found").wait_for(timeout=15_000)
+    await pg.wait_for_timeout(500)
     await pg.mouse.move(0, 0)
     await pg.screenshot(path=str(out / "wizard-anki-account.png"))
     await pg.close()
@@ -206,6 +215,7 @@ async def gif(browser, base, out):
 
 TARGETS = {
     "wizard": wizard,
+    "anki": anki,
     "themes": themes,
     "word": lambda b, base, out: showcase(b, base, out, "word"),
     "stem": lambda b, base, out: showcase(b, base, out, "stem"),
