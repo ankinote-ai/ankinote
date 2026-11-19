@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <strong>输入一个单词、句子或 STEM 题目，几秒钟生成可直接复习的精美观 Anki 卡片。</strong>
+  <strong>输入一个单词、句子或 STEM 题目，几秒钟生成可直接复习的精美 Anki 卡片。</strong>
 </p>
 
 <p align="center">
@@ -19,7 +19,7 @@
 </p>
 
 <p align="center">
-  <a href="README.md">English</a> | <strong>简体中文</strong> | <a href="README.ja.md">日本語</a> | <a href="README.es.md">Español</a> | <a href="README.fr.md">Français</a>
+  <a href="README.md">English</a> | <strong>简体中文</strong> | <a href="README.zh-Hant.md">繁體中文</a> | <a href="README.ja.md">日本語</a> | <a href="README.es.md">Español</a> | <a href="README.fr.md">Français</a>
 </p>
 
 ---

@@ -5,7 +5,7 @@ description: Recapture the README screenshots and demo GIF in docs/img from the 
 
 # README media
 
-`docs/img` holds the README images; all five READMEs reference them by
+`docs/img` holds the README images; all six READMEs reference them by
 filename, so replacing the files is enough. [`scripts/capture.py`](scripts/capture.py)
 produces every one of them; this file covers what the script can't do.
 
@@ -49,7 +49,7 @@ If a selector times out, the UI changed: read the current labels in
 that a shot frames the wrong thing, change the script, not just the image.
 
 Copy the files into `docs/img` under the same names. If the content changed
-meaningfully, update the alt text in all five READMEs. `README.md` loads the
+meaningfully, update the alt text in all six READMEs. `README.md` loads the
 images from `raw.githubusercontent.com/.../main`, so they appear only after a
 push.
 
