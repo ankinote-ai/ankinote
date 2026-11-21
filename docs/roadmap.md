@@ -208,19 +208,21 @@ cards explain in.
 - Adding a language: a new catalog, one line in `i18n.svelte.ts`, and its
   card-language entries in `languages.ts`.
 
-## Customizing the built-in card types (Advanced; planned 2026-11-18)
+## Customizing the built-in card types (Advanced; waiting for demand)
+
+Planned 2026-11-18. Scoped 2026-11-21 and deferred until users ask for it;
+Comparison stays the next feature.
 
 For each built-in card type, an Advanced section lets the user change:
 
 - the card templates (front/back of each card),
 - the styling (CSS),
-- the generation prompt,
-- possibly the deck it is saved to (undecided: changing it moves where new
-  cards go, and the Anki-step setup creates decks by name; decide when
-  building this).
+- the generation prompt.
 
-The fields can't be changed. Notes already in the collection depend on them,
-and a field change forces a full AnkiWeb sync on every user.
+Nothing else is customizable in this step: not the fields, not the deck, and
+not new card types (those are 2.0). The fields can't be changed. Notes already
+in the collection depend on them, and a field change forces a full AnkiWeb
+sync on every user.
 
 The principle: **anything editable can be reset to the built-in default**,
 per item (one template, the CSS, the prompt) and per card type. That is what
@@ -236,6 +238,35 @@ the user's CSS.
 
 This is the first, bounded step toward the 2.0 custom card types below: same
 editing surfaces (template, style, prompt, preview), but on fixed fields.
+
+Findings from scoping (2026-11-21), for whoever builds it:
+
+- **Two steps.** Templates and CSS first (S–M), prompts second (M).
+- **Templates and CSS.** Every write to Anki goes through each collection's
+  `_ensure_note_type_exists()` and `note_types.restyle()`, which read the
+  packaged files via `load_template` / `load_card_style`. One resolver ("the
+  user's version if edited, else the default") in front of those loaders,
+  also used by the preview (`card_css`, the Note types sample) and by
+  `load_status`, covers it. `load_status` compares only template names
+  today; it would need to compare their contents too.
+- **Edits made in Anki are overwritten today.** The CLI rewrites templates
+  and styling on every run (`__aenter__`), so ankinote's copy is the source
+  of truth. Keep it that way and say so in the UI and docs.
+- **Prompts carry the output contract.** The language prompts embed the JSON
+  shape their parsers validate (e.g. `WordModel`); an edit there breaks
+  generation. Split each prompt into editable guidance and a fixed,
+  code-owned output section (STEM already injects its schema from code).
+  Prompts are per script family (four each for word, phrase, sentence), so
+  edits and resets are per file.
+- **Preview limits.** `card_render.py` covers only the syntax the built-in
+  templates use; warn when a user template uses more (e.g. `{{hint:}}`,
+  `{{tts}}`), and show Anki's own error when it rejects a template.
+- **Baked HTML.** Some markup is written into fields at generation time
+  (`meaning-row`, ruby), so templates can't restyle that structure, only its
+  CSS.
+- **"A newer default exists"** needs the hash of the default each edit was
+  based on, stored with the edit. Store edits as files under the config
+  directory rather than in `settings.json`.
 
 ## The CLI as an agent's tool (idea, 2026-11-18)
 
