@@ -178,6 +178,10 @@ make check                # 代码检查与类型检查（ruff + ty）
 - [笔记模板说明](docs/NoteType.org)
 - [Agent Skill](.agents/skills/ankinote-cli/SKILL.md) — 配合 AI 编程助手使用 AnkiNote
 
+## 🌐 社区
+
+- [LINUX DO](https://linux.do/)
+
 ## 📄 开源协议
 
 MIT License — 详见 [LICENSE](LICENSE)。

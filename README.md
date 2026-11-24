@@ -181,6 +181,10 @@ make check                # lint & type-check (ruff + ty)
 - [Note Types Reference](docs/NoteType.org)
 - [Agent Skill](.agents/skills/ankinote-cli/SKILL.md) — for using AnkiNote with AI coding assistants
 
+## 🌐 Community
+
+- [LINUX DO](https://linux.do/)
+
 ## 📄 License
 
 MIT License — see [LICENSE](LICENSE) for details.
