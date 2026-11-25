@@ -33,8 +33,8 @@ instead.
 ## Running it
 
 Use whichever works: `ankinote` (installed with `uv tool install ankinote-ai`),
-`uvx --from ankinote-ai ankinote`, or `uv run ankinote` inside a checkout of
-the ankinote repository.
+`uvx --from ankinote-ai@latest ankinote`, or `uv run ankinote` inside a
+checkout of the ankinote repository.
 
 Before the first run in a session, check what is configured:
 
