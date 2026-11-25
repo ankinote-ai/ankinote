@@ -82,6 +82,16 @@ I'll [pick] you [up] at six.
 
 Une ligne sans crochets est simplement le mot : mots seuls et phrases peuvent aller dans le même lot.
 
+### Faire une carte d'un exercice raté
+
+Un exercice de maths ou de physique raté dans un devoir ou une annale ? Prenez-le en photo, passez la page Générer sur **STEM** et collez ou déposez l'image ; inutile de recopier l'énoncé. Choisissez **Problème** comme type de carte, ou laissez **Auto** :
+
+- **L'exercice que vous avez vraiment raté.** Le recto reprend cet exercice, rédigé pour se comprendre sans l'image, avec la réponse finale au verso. Vous révisez votre exercice, pas un autre tiré d'un manuel.
+- **La solution, et comment la trouver.** Une solution étape par étape, plus quelques lignes sur la façon dont vous auriez pu trouver la méthode vous-même : l'indice de l'énoncé qui y mène, souvent ce qui vous a échappé.
+- **Vérifiez avant d'enregistrer.** L'aperçu affiche les formules mises en forme. Corrigez une étape avec **Modifier les champs**, ou utilisez **Corriger avec l’IA** sur les formules qui ne s'affichent pas, puis enregistrez dans Anki.
+
+Pour lire l'image, le modèle principal doit accepter les images ; c'est le cas du modèle Gemini recommandé.
+
 ---
 
 ## 🚀 Démarrage rapide (1 minute)

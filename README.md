@@ -82,6 +82,16 @@ I'll [pick] you [up] at six.
 
 A line without brackets is just the word, so single words and sentences can go in the same batch.
 
+### Turn a problem you got wrong into a card
+
+Missed a math or physics problem on homework or a past paper? Take a photo of it, switch the Generate page to **STEM**, and paste or drop the picture in; there's no need to type it out. Choose **Problem** as the card type, or leave it on **Auto**:
+
+- **The problem you actually missed.** The front is that problem, written out so it makes sense without the picture, with the final answer on the back. You review that problem, not one picked from a textbook.
+- **The solution, and how to find it.** A step-by-step solution, plus a few lines on how you could have found the method yourself: the clue in the problem that points to it, which is often the part you missed.
+- **Check it before it's saved.** The preview shows the math typeset. Fix a step with **Edit fields**, or use **Fix with AI** on formulas that don't render, then save to Anki.
+
+Reading the picture needs a main model that accepts images; the recommended Gemini model does.
+
 ---
 
 ## 🚀 Quick Start (1 Minute)

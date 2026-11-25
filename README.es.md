@@ -82,6 +82,16 @@ I'll [pick] you [up] at six.
 
 Una línea sin corchetes es simplemente la palabra, así que palabras sueltas y frases pueden ir en el mismo lote.
 
+### Convierte un problema que fallaste en una tarjeta
+
+¿Fallaste un problema de matemáticas o física en los deberes o en un examen de práctica? Hazle una foto, cambia la página Generar a **STEM** y pega o arrastra la imagen; no hace falta escribir el enunciado. Elige **Problema** como tipo de tarjeta, o déjalo en **Auto**:
+
+- **El problema que de verdad fallaste.** El anverso es ese problema, redactado para entenderse sin la imagen, con la respuesta final en el reverso. Repasas tu problema, no otro sacado de un libro de texto.
+- **La solución, y cómo llegar a ella.** Una solución paso a paso, y unas líneas sobre cómo podrías haber encontrado el método por tu cuenta: la pista del enunciado que lleva a él, que a menudo es lo que se te escapó.
+- **Revísala antes de guardarla.** La vista previa muestra las fórmulas compuestas. Corrige un paso con **Editar campos**, o usa **Corregir con IA** en las fórmulas que no se muestran, y luego guarda en Anki.
+
+Para leer la imagen, el modelo principal debe aceptar imágenes; el modelo Gemini recomendado lo hace.
+
 ---
 
 ## 🚀 Inicio rápido (1 minuto)

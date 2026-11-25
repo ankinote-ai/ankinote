@@ -228,12 +228,11 @@ six languages.
    actually read stays on the card as its first example, which helps it
    stick. Present it through the web app; the CLI stays low-key.
 
-## Later: the "photograph a wrong answer" workflow in the README
+## Later: the "photograph a wrong answer" workflow in the README, done
 
-Already works (STEM, a picture of the question on the Generate page, the
-Example type). Add it to the README's workflow section once that exists:
-the card is the problem you actually got wrong, with a step-by-step solution
-you can check and edit before saving. Not scheduled.
+Added 2026-11-25 to "How People Use It" in all six READMEs: a photo of the
+problem on the Generate page (STEM, Problem type), the worked solution and
+how to find the method, checked in the preview before saving.
 
 ## After this plan
 
