@@ -1,11 +1,11 @@
-"""Shared behavior of the language card commands' ``add`` and ``batch``."""
+"""Shared behavior of the card commands' ``add`` and ``batch``."""
 
 import importlib
 
 import pytest
 from click.testing import CliRunner
 
-KINDS = ["word", "phrase", "sentence"]
+KINDS = ["word", "phrase", "sentence", "stem"]
 
 
 def _group(kind: str):

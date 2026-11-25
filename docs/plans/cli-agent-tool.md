@@ -87,7 +87,13 @@ no limit. Progress and summary still print to stdout; step 3 moves them.
 Done when: the new tests pass, the existing `tests/cli/` suite passes, and
 `ankinote word|phrase|sentence batch --help` reads consistently.
 
-## Step 2: STEM on the shared runner (S)
+## Step 2: STEM on the shared runner (S), done
+
+Done 2026-11-25. `stem` is in `KINDS` for every shared test;
+`tests/cli/test_stem_cli.py` covers `--image` and the help. `stem add
+--image` wraps the collection in `_WithReferenceImage` inside `stem._scope`,
+so `batch.py` is unchanged. `stem batch` now runs up to `MAX_CONCURRENCY`
+topics at once (was one at a time); `--rpm` still defaults to 10.
 
 1. Tests first: `stem batch` with no input exits 2; a failed item exits 1
    and its reason shows in the summary.

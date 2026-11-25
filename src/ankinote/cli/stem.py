@@ -1,75 +1,34 @@
 """CLI commands for STEM card generation."""
 
-import asyncio
 import mimetypes
+from collections.abc import Awaitable
+from contextlib import asynccontextmanager
+from dataclasses import dataclass
 from pathlib import Path
 
 import click
-from loguru import logger
-from rich.console import Console
-from rich.progress import Progress, SpinnerColumn, TextColumn
 
+from ankinote.cli.batch import add_many, add_one, batch_options, read_items, run
 from ankinote.cli.factory import (
-    THINKING_CHOICES,
     StemCollectionOptions,
     anki_client_scope,
     build_stem_collection,
+    model_options,
     resolve_thinking,
 )
-from ankinote.collections.stem import CardType
-from ankinote.services.ai import DEFAULT_AI_SERVICE_CONFIG
-
-console = Console()
+from ankinote.collections.stem import CardType, StemCollection
 
 
-def collection_options(f):
-    """Decorator for common collection options."""
-    f = click.option(
-        "--llm",
-        default=None,
-        show_default=DEFAULT_AI_SERVICE_CONFIG.text_model,
-        help="LLM model ID for content generation",
-    )(f)
-    f = click.option(
-        "--image-model",
-        default=None,
-        show_default=DEFAULT_AI_SERVICE_CONFIG.image_model,
-        help="Image model ID for diagram generation",
-    )(f)
-    f = click.option(
-        "--image-size",
-        default=None,
-        show_default=DEFAULT_AI_SERVICE_CONFIG.image_size,
-        type=int,
-        help="Image size in pixels (square)",
-    )(f)
-    f = click.option(
-        "--profile",
-        default=None,
-        help="Named text provider profile (default: the active one in settings).",
-    )(f)
-    f = click.option(
-        "--image-profile",
-        default=None,
-        help="Named image provider profile (default: the active one in settings).",
-    )(f)
-    f = click.option(
-        "--thinking",
-        default=None,
-        type=click.Choice(THINKING_CHOICES),
-        help=(
-            "Override the model's extended-thinking level for this run "
-            "(default: high, for STEM cards)."
-        ),
-    )(f)
-    f = click.option(
+def collection_options(cmd):
+    cmd = click.option(
         "--type",
         "card_type",
         type=click.Choice(["auto", *(str(kind) for kind in CardType)]),
         default="auto",
         show_default=True,
-    )(f)
-    return f
+        help="Card type; auto lets the AI choose per topic.",
+    )(cmd)
+    return model_options(thinking_default="high for STEM cards", images=True)(cmd)
 
 
 def build_options(
@@ -93,6 +52,39 @@ def build_options(
     )
 
 
+@dataclass(frozen=True, slots=True)
+class _WithReferenceImage:
+    """Makes every card from the topic plus one reference image."""
+
+    collection: StemCollection
+    image: bytes
+    mime: str
+
+    def generate_and_add_note(self, text: str, /) -> Awaitable[int]:
+        return self.collection.generate_and_add_note(
+            text, reference_image=self.image, reference_image_mime=self.mime
+        )
+
+
+def _scope(options: StemCollectionOptions, image_path: Path | None = None):
+    @asynccontextmanager
+    async def scope():
+        async with (
+            anki_client_scope() as client,
+            build_stem_collection(client, options) as collection,
+        ):
+            if image_path is None:
+                yield collection
+            else:
+                mime = mimetypes.guess_type(image_path.name)[0] or "image/png"
+                yield _WithReferenceImage(collection, image_path.read_bytes(), mime)
+
+    return scope
+
+
+# -- stem group ---------------------------------------------------------------
+
+
 @click.group("stem")
 def stem():
     """STEM knowledge cards (Math, CS, Finance, ML, ...)."""
@@ -100,22 +92,18 @@ def stem():
 
 @stem.command("init")
 @collection_options
-def init(llm, image_model, image_size, profile, image_profile, thinking, card_type):
-    """Create note type and deck in Anki."""
+def init(llm, profile, thinking, image_model, image_size, image_profile, card_type):
+    """Create note types and deck in Anki (only --type's note type if given)."""
+    options = build_options(
+        llm, image_model, image_size, profile, image_profile, thinking, card_type
+    )
 
     async def _run():
-        options = build_options(
-            llm, image_model, image_size, profile, image_profile, thinking, card_type
-        )
-        async with (
-            anki_client_scope() as client,
-            build_stem_collection(client, options) as collection,
-        ):
-            console.print(
-                f"[green]\u2713[/green] Initialized STEM collection: {collection.deck_name}"
-            )
+        async with _scope(options)() as collection:
+            return collection.deck_name
 
-    asyncio.run(_run())
+    deck_name = run(_run())
+    click.echo(f"✓ Ready (STEM collection: {deck_name})")
 
 
 @stem.command("add")
@@ -133,13 +121,13 @@ def init(llm, image_model, image_size, profile, image_profile, thinking, card_ty
 @collection_options
 def add(
     topic,
-    image_path,
+    image_path: Path | None,
     llm,
+    profile,
+    thinking,
     image_model,
     image_size,
-    profile,
     image_profile,
-    thinking,
     card_type,
 ):
     """Generate and push a single STEM card.
@@ -147,121 +135,45 @@ def add(
     TOPIC is any question or concept (e.g. "What is a derivative?",
     "请解释平行线的概念", "State Bayes' theorem").
     """
-    reference_image = image_path.read_bytes() if image_path else None
-    reference_image_mime = (
-        image_path and mimetypes.guess_type(image_path.name)[0]
-    ) or "image/png"
-
-    async def _run():
-        options = build_options(
-            llm, image_model, image_size, profile, image_profile, thinking, card_type
-        )
-        async with (
-            anki_client_scope() as client,
-            build_stem_collection(client, options) as collection,
-        ):
-            with Progress(
-                SpinnerColumn(),
-                TextColumn("[progress.description]{task.description}"),
-                console=console,
-            ) as progress:
-                task = progress.add_task(
-                    f"Generating STEM card for: {topic[:50]}...", total=None
-                )
-                note_id = await collection.generate_and_add_note(
-                    topic,
-                    reference_image=reference_image,
-                    reference_image_mime=reference_image_mime,
-                )
-                progress.update(task, completed=True)
-
-            console.print(f"[green]\u2713[/green] Created/updated note {note_id}")
-
-    asyncio.run(_run())
+    options = build_options(
+        llm, image_model, image_size, profile, image_profile, thinking, card_type
+    )
+    add_one(_scope(options, image_path), topic)
 
 
 @stem.command("batch")
-@click.argument("topics", nargs=-1)
-@click.option(
-    "--file",
-    type=click.Path(exists=True, path_type=Path),
-    help="File containing topics (one per line)",
+@click.argument("topics", nargs=-1, metavar="[TOPIC ...]")
+@batch_options(
+    rpm_default=10,
+    rpm_note="STEM cards default lower: each thinks at high and may draw a diagram.",
 )
 @collection_options
-@click.option(
-    "--rpm",
-    default=10,
-    type=int,
-    help="Requests per minute limit",
-)
 def batch(
-    topics,
-    file,
+    topics: tuple[str, ...],
+    file: Path | None,
+    rpm: int,
     llm,
+    profile,
+    thinking,
     image_model,
     image_size,
-    rpm,
-    profile,
     image_profile,
-    thinking,
     card_type,
 ):
     """Generate and push multiple STEM cards.
 
+    \b
     Topics can be passed as arguments, read from a file (one per line),
     or both at the same time.
 
+    \b
     Examples:
-      anki stem add "What is a derivative?"
-      anki stem batch --file topics.txt
-      anki stem batch "What is entropy?" --file more_topics.txt
+      ankinote stem batch "What is entropy?" "State Bayes' theorem"
+      ankinote stem batch --file topics.txt
+      ankinote stem batch --file problems.txt --type example
     """
-    all_topics = list(topics)
-    if file:
-        all_topics.extend(
-            line.strip()
-            for line in file.read_text(encoding="utf-8").splitlines()
-            if line.strip()
-        )
-
-    if not all_topics:
-        console.print("[red]Error:[/red] No topics provided")
-        return
-
-    console.print(f"[cyan]Processing {len(all_topics)} topic(s)...[/cyan]")
-
-    success = 0
-
-    async def _run():
-        nonlocal success
-        options = build_options(
-            llm, image_model, image_size, profile, image_profile, thinking, card_type
-        )
-
-        async with (
-            anki_client_scope() as client,
-            build_stem_collection(client, options) as collection,
-        ):
-            delay = 60.0 / rpm if rpm > 0 else 0
-
-            async def _process(q: str):
-                nonlocal success
-                try:
-                    with console.status(f"[bold cyan]Generating: {q[:50]}..."):
-                        note_id = await collection.generate_and_add_note(q)
-                    console.print(f"[green]\u2713[/green] Note {note_id}: {q[:60]}...")
-                    success += 1
-                except Exception as e:
-                    logger.error(f"Failed to process '{q}': {e}")
-                    console.print(f"[red]\u2717[/red] Failed: {q[:60]}...")
-
-            for i, topic in enumerate(all_topics):
-                await _process(topic)
-                if delay > 0 and i < len(all_topics) - 1:
-                    await asyncio.sleep(delay)
-
-    asyncio.run(_run())
-
-    console.print(
-        f"\n[bold]Summary:[/bold] {success}/{len(all_topics)} cards successfully created"
+    items = read_items(topics, file, noun="topics")
+    options = build_options(
+        llm, image_model, image_size, profile, image_profile, thinking, card_type
     )
+    add_many(_scope(options), items, noun="topics", rpm=rpm)

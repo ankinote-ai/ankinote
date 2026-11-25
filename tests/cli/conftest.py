@@ -12,7 +12,8 @@ def capture_options(monkeypatch):
 
     Call it with the CLI module; it returns a dict whose ``"options"`` key holds
     the typed collection options after the command runs, and whose ``"items"``
-    key lists the inputs the collection was asked to generate, in order.
+    key lists the inputs the collection was asked to generate, in order;
+    ``"note_kwargs"`` holds the keyword arguments of the last call.
     Inputs listed in ``fail`` raise ``RuntimeError("boom: <input>")``; the
     others are saved as note ``1``, or ``note_ids`` when a list is given.
     """
@@ -39,6 +40,7 @@ def capture_options(monkeypatch):
 
             async def generate_and_add_note(self, text, *args, **kwargs):
                 items.append(text)
+                captured["note_kwargs"] = kwargs
                 if text in failing:
                     raise RuntimeError(f"boom: {text}")
                 return 1 if note_ids is None else note_ids
