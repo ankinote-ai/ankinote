@@ -1,111 +1,27 @@
 # Roadmap
 
-Unscheduled product directions. Nothing here is a commitment to a date,
-framework, or API.
+Product directions, grouped by status. Nothing here is a commitment to a date,
+framework, or API. Last reorganized 2026-11-25.
 
-## STEM architecture (shipped)
+- **Next**: [Customizing the built-in card types](#next-customizing-the-built-in-card-types).
+- **Small follow-ups**: [unscheduled, independent of each other](#small-follow-ups).
+- **Waiting for demand**: [built only once users ask](#waiting-for-demand).
+- **Later ideas**: [CLI as an agent's tool](#the-cli-as-an-agents-tool),
+  [2.0 custom card types](#20-candidate-custom-card-types-with-ai-assisted-authoring),
+  [deployable web service](#future-major-version-deployable-web-service).
+- **Dropped or out of scope**: [what isn't planned](#dropped-or-out-of-scope).
+- **Shipped**: [history and settled decisions](#shipped).
 
-The unified STEM schema has been replaced by four independent generation models,
-prompts, field sets, and Anki note types:
-
-- `AINote STEM Concept`: front, brief answer, detailed explanation, image.
-- `AINote STEM Formula`: front, formula, meaning, variables, conditions, derivation, image.
-- `AINote STEM Procedure`: front, summary, steps, conditions, image.
-- `AINote STEM Example`: front, answer, solution steps, explanation, image.
-
-All use `front` as the first field (Anki's default sort field), native Anki
-tags, and the shared `AINote::STEM` deck and paper-card visual theme.
-Structured variable/step lists render into their own storage fields.
-There is no stored `card_type` field and no V2 suffix.
-
-The common STEM entrypoint accepts automatic classification or an explicit type.
-Automatic mode classifies first and then loads the selected type's prompt/schema;
-explicit selection skips classification. All four GUI flows offer editable
-previews before saving. Reference-image input and optional generated diagrams
-remain available. Upserts are scoped by note type as well as front and deck.
-
-The legacy `AINote STEM` is no longer created or updated. Existing legacy notes
-are left alone; there is no automatic migration or deletion.
-
-## STEM in the 1.0 web app (shipped 2026-11-13; follow-ups)
-
-Generate → MathJax preview → live edit → rewrite with an instruction → save,
-on `feat/1.0`; see the design language's Generate page notes. Decided to
-leave for later:
-
-- **Fix LaTeX**: shipped 2026-11-13 ("Fix with AI" under the preview's
-  formula errors; not yet inside the live editor).
-- Per-field rewrite / simplify buttons: only if users keep wanting to change
-  one field.
-- "Explain" (tutoring) is out of scope for 1.0: it makes the app a learning
-  companion rather than a card maker.
-- Not yet in the web app, but in 0.x: a reference image (a photographed
-  problem) as input, and the thinking level.
-
-## Comparison card type (next)
-
-Add `AINote STEM Comparison` with its own model, prompt, field set, and templates.
-Contrast pairs such as L1 vs L2 regularization, bias vs variance, or TCP vs UDP.
-
-- Structured `items` (name + definition) and `aspects` (aspect + per-item values).
-- Render an aspect-by-aspect table, stacking vertically on narrow screens.
-- Register the type in classification, CLI selection, and GUI management/preview.
-- Reuse shared styling with `--badge-comparison-*` tokens.
-
-## Progressive disclosure and rendering polish
-
-- Allow detailed explanations/derivations to expand on demand. Verify
-  `<details>` on Anki desktop and AnkiDroid before shipping; keep a visible
-  fallback where unsupported.
-- Shared MathJax macro configuration for common notation.
-- Optional `common_mistakes` callout where appropriate, added to the relevant
-  type's schema and template rather than a new card type.
-
-Comparison is the next feature; rendering polish can be delivered independently.
-
-## Thinking control (shipped; follow-ups)
-
-`TextGenerationService.generate_text` now takes `reasoning_effort`. The language
-generators (`word`, `phrase`, `sentence`) pass `DISABLE_REASONING`, which the
-service turns into DeepSeek's OpenAI-format `extra_body={"thinking": {"type":
-"disabled"}}` (DeepSeek enables thinking by default and its LiteLLM routing
-discards a plain `reasoning_effort`). `stem` keeps thinking on.
-
-All CLI commands now take `--thinking [off|low|medium|high|default]` to override
-the per-collection default for a single run. `services.ai.resolve_thinking`
-(with `THINKING_CHOICES`) maps the choice to a `reasoning_effort` value; it is
-shared by the CLI (`cli/factory` re-exports it) and the STEM generation page in
-the GUI, which exposes the same five levels as a dropdown.
-
-Open items:
-
-- DeepSeek ignores `temperature` while thinking is on, so `stem`'s
-  `temperature=0.3` is currently a no-op. Decide whether `stem` should also
-  disable thinking (regaining temperature control) or drop the unused argument.
-- The `extra_body` thinking field is DeepSeek-specific. If another text
-  provider is adopted, translate `DISABLE_REASONING` per provider instead.
-- Disabling thinking made the model less consistent about the output contract
-  (`word` occasionally returns a bare record instead of a JSON array; now
-  tolerated in `generate_word_data`). Watch for similar contract slips in the
-  other language generators and tighten prompts or parsing as needed.
-
-Status: minor follow-ups; not scheduled.
-
-## 1.0: shorter path to the first card
-
-Direction agreed 2026-11-12; work breakdown in [plans/v1.md](plans/v1.md).
+## Product principles
 
 Positioning: a free, open, bring-your-own-key card maker for self-hosters and
 heavy Anki users, not a general-purpose toolkit. The fixed prompts and note
-types are the product. What holds adoption back is the distance between
-hearing about the project and holding a first good card: three model routes
-to configure, Google-Cloud-only TTS, several pieces of software to wire
-together, and no way to see card quality before installing.
+types are the product (bounded editing comes with
+[customization](#next-customizing-the-built-in-card-types); fully custom types
+are a [2.0 question](#20-candidate-custom-card-types-with-ai-assisted-authoring)).
 
-Principles:
-
-- **Show the result before the install** — sample deck, GIF, Chinese README.
-- **One key is enough** — a single Gemini or OpenAI key covers text, image,
+- **Show the result before the install**: sample cards, GIF, translated READMEs.
+- **One key is enough**: a single Gemini or OpenAI key covers text, image,
   and audio; a text-only key still produces cards, without media.
 - **One recommended path per place** (revised 2026-11-19; until then the
   built-in `collection` backend was the single recommendation):
@@ -120,98 +36,16 @@ Principles:
   - *Not the public internet.* AnkiNote is single-user without a login; the
     local-access guard stops other web pages from driving it, nothing more.
     Use a home network, Tailscale, or a reverse proxy that asks for a login
-    (`ankinote-web` warns at startup when it listens beyond loopback). A
-    built-in password was considered and deferred until users ask; accounts
-    belong to "Future major version: deployable web service" below.
-- **Curated over configurable** — a few good themes and language pairs
+    (`ankinote-web` warns at startup when it listens beyond loopback).
+- **Curated over configurable**: a few good themes and language pairs
   rather than open-ended editors.
+- **Never break existing cards**: note type names and fields stay or get a
+  migration (field changes force a full AnkiWeb sync).
 
-Workstreams, in order (reordered 2026-11-12 for the 1.0 rewrite below):
+## Next: Customizing the built-in card types
 
-1. README fixes and a one-line install (done, shipped in v0.6.5).
-2. Design language: one token set (palettes, fonts) shared by the Web UI and
-   the cards, plus mocks of the first-run wizard and the generate page.
-   Direction chosen 2026-11-12; see [Design Language](design/design-language.md).
-3. 1.0 rewrite: an API layer and the new frontend (wizard and generate pages
-   first), alongside the backend one-key work — one-key presets, additional
-   TTS providers, graceful degradation.
-4. Languages: add Chinese and Korean as targets so English, Spanish, French,
-   German, Japanese, Chinese, and Korean work in any native/target pairing.
-5. Card themes: a small set of palettes, light and dark chosen independently,
-   applied to the UI and the cards together.
-6. Showcase and launch: sample deck, GIF, Chinese README, deploy templates.
-
-Confirmed 2026-11-12 for workstreams 4 and 5:
-
-- **Languages.** Any-pair support is a smaller step than it sounds: every
-  language is already selectable as the native language and has a TTS code,
-  so only Chinese and Korean are missing as targets. Chinese as a target has
-  the most value — it widens the audience from "Chinese speakers learning a
-  language" to "anyone learning Chinese", which is what makes the project
-  promotable in English-speaking Anki communities. Korean ships as beta until
-  a competent reader has reviewed its output. Existing prompts were tuned for
-  Chinese natives and need one review pass with English as the native
-  language.
-- **Themes.** Light and dark are already supported through CSS tokens under
-  `body` and `body.nightMode`; multi-theme means extracting those palettes
-  and letting the light and dark one be picked separately. Scope is three or
-  four curated palettes plus fonts — no layout variants and no in-app CSS
-  editor.
-
-Not planned: HyperTTS-level provider coverage, a hosted multi-user service,
-an Anki add-on rewrite. (Editing the built-in types' prompts and templates was
-listed here until 2026-11-18; it is now planned under "Customizing the
-built-in card types" below, bounded by reset-to-default.)
-
-Earlier questions, now settled: the CLI stays and shares `settings.json` with
-the Web UI (shipped 2026-09-22); the Anki backend, collection path, and
-storage secret no longer need env vars (shipped 2026-09-22).
-
-### 1.0 rewrite (decided 2026-11-12)
-
-0.x is frozen at v0.6.5; the `release/0.x` branch takes critical fixes only.
-The 1.0 rewrite lives on the long-lived `feat/1.0` branch and
-merges into `main` once its acceptance checks are green; until then `main`
-stays at 0.x and runnable. (Changed 2026-11-12 from rewriting on `main`
-directly.)
-
-- **Frontend.** Product taste is part of the product, and the wizard, theme
-  preview, and launch screenshots are the first impression. The NiceGUI UI is
-  replaced by a JS/TS single-page app (Vite; framework chosen after the design
-  mocks). It is built in CI and bundled into the wheel, so the `uvx` install
-  needs no Node. The CLI/TUI stay and keep sharing `settings.json`.
-- **Bold restructuring.** Backend structure and tests may change freely, and
-  intermediate states need not run — only the finished 1.0 must.
-- **Guardrails.**
-  1. Before deleting a test, decide whether the behavior it guards still
-     matters in 1.0; port it if so.
-  2. Keep three to five end-to-end acceptance checks (fake LLM → temporary
-     collection → word and STEM cards, plus the sync flow). They may go red
-     briefly but must be green at every milestone.
-  3. Never break existing cards: note type names and fields stay or get a
-     migration (field changes force a full AnkiWeb sync), and 1.0 imports a
-     0.x `settings.json`.
-
-## Interface languages (done, 2026-11-18)
-
-The language menu in the top bar offers every language the cards support:
-English, Simplified and Traditional Chinese, Japanese, Korean, French,
-Spanish and German, so the interface can be read in the same languages the
-cards explain in.
-
-- Catalogs live in `frontend/src/lib/locales/`, one JSON per language; the
-  first visit picks the closest to the browser language (`zh-TW`, `zh-HK` and
-  `zh-Hant` get Traditional).
-- Each catalog has the same keys and `{placeholders}` as `en.json`
-  (`tests/test_locale_catalogs.py` checks it). A missing key still falls back
-  to English rather than showing the key.
-- Adding a language: a new catalog, one line in `i18n.svelte.ts`, and its
-  card-language entries in `languages.ts`.
-
-## Customizing the built-in card types (Advanced; waiting for demand)
-
-Planned 2026-11-18. Scoped 2026-11-21 and deferred until users ask for it;
-Comparison stays the next feature.
+Planned 2026-11-18, scoped 2026-11-21, made the next feature 2026-11-25
+(replacing Comparison, which was dropped).
 
 For each built-in card type, an Advanced section lets the user change:
 
@@ -268,36 +102,103 @@ Findings from scoping (2026-11-21), for whoever builds it:
   based on, stored with the edit. Store edits as files under the config
   directory rather than in `settings.json`.
 
-## The CLI as an agent's tool (idea, 2026-11-18)
+## Small follow-ups
 
-The workflow: a user photographs a page they're reading with new words
-underlined and asks an AI agent (Claude Code, Codex, …) to make cards. The
-agent reads the picture, extracts the underlined words, and calls
+Unscheduled; each can ship on its own.
+
+### Fix with AI inside the live editor
+
+Today "Fix with AI" sits under the preview's formula errors and works on the
+applied card. In the STEM live editor the same error list only says "fix them
+in the form, or apply the edit and use Fix with AI", which is two steps.
+
+Proposed 2026-11-25 (UI not yet confirmed):
+
+- Show the same button in the live editor's error list, with the same label.
+  It is a targeted, no-input action triggered by detected errors, so the
+  label names what changes (the formulas), not a generic "edit further";
+  open-ended requests stay in the "Rewrite with AI" box.
+- It sends the current, unapplied form plus the errors, and writes the fixed
+  fields back into the form rather than applying them, marking the fields
+  that changed. The editor's contract stays "nothing changes until Apply";
+  Cancel still discards everything.
+- Backend: the fix-latex route needs to accept form contents, not only a
+  draft id.
+
+### STEM in the web app
+
+- Reference image (a photographed problem) as input: in 0.x, not yet in the
+  web app.
+- Thinking level on the Generate page: in 0.x, not yet in the web app.
+
+### Rendering polish
+
+- Let detailed explanations/derivations expand on demand. Verify `<details>`
+  on Anki desktop and AnkiDroid before shipping; keep a visible fallback where
+  unsupported.
+- Shared MathJax macro configuration for common notation.
+- Optional `common_mistakes` callout where appropriate, added to the relevant
+  type's schema and template rather than a new card type.
+
+### Thinking control
+
+How it works today is under [Shipped](#thinking-control-shipped). Open items:
+
+- DeepSeek ignores `temperature` while thinking is on, so `stem`'s
+  `temperature=0.3` is currently a no-op. Decide whether `stem` should also
+  disable thinking (regaining temperature control) or drop the unused argument.
+- The `extra_body` thinking field is DeepSeek-specific. If another text
+  provider is adopted, translate `DISABLE_REASONING` per provider instead.
+- Disabling thinking made the model less consistent about the output contract
+  (`word` occasionally returns a bare record instead of a JSON array; now
+  tolerated in `generate_word_data`). Watch for similar contract slips in the
+  other language generators and tighten prompts or parsing as needed.
+
+### Launch
+
+- A downloadable sample deck (`.apkg`), so people can judge cards before
+  installing. The README shows screenshots and a GIF; no deck yet.
+- Promotion channels and their status are tracked outside the repo.
+
+## Waiting for demand
+
+Designed or discussed; built only once users ask.
+
+- **A built-in password** for the web app. Until then, a reverse proxy that
+  asks for a login (see the principles above). Accounts belong to the
+  [deployable web service](#future-major-version-deployable-web-service).
+- **Per-field rewrite / simplify buttons** on STEM cards: only if users keep
+  wanting to change one field rather than the whole card.
+
+## The CLI as an agent's tool
+
+Idea, 2026-11-18. The workflow: a user photographs a page they're reading with
+new words underlined and asks an AI agent (Claude Code, Codex, …) to make
+cards. The agent reads the picture, extracts the underlined words, and calls
 `ankinote word batch …`. This works today and is how the README presents the
 CLI; batch generation for people who want to review each card is the web
 app's job (one item per line on the Generate page).
 
 What would make the CLI a better agent tool, in rough order of value:
 
-- **Context with each item.** Pass the sentence the word was underlined in,
-  so the card explains the sense used there and can use that sentence as an
-  example (the agent has it from the photo anyway).
-- **Machine-readable results.** `--json` on `add`/`batch`: one result per item
-  (saved note id, or the error), and a non-zero exit when any item failed, so
-  the agent can retry or report exactly what didn't make it.
-- **Input from stdin** (`--file -`) and one-item-per-line files, so phrases
-  and sentences batch as cleanly as words.
-- **A ready-made agent skill** in the docs (a `SKILL.md` / AGENTS.md snippet):
-  when to call which command, the language flags, and to ask before making
-  more than a few dozen cards.
-- **Review later.** Optionally send CLI-made cards to the web app's queue
-  instead of straight to Anki, for users who want the agent to collect and
-  themselves to approve.
+1. **Context with each item.** Pass the sentence the word was underlined in,
+   so the card explains the sense used there and can use that sentence as an
+   example (the agent has it from the photo anyway).
+2. **Machine-readable results.** `--json` on `add`/`batch`: one result per
+   item (saved note id, or the error), and a non-zero exit when any item
+   failed, so the agent can retry or report exactly what didn't make it.
+3. **Input from stdin** (`--file -`) and one-item-per-line files, so phrases
+   and sentences batch as cleanly as words.
+4. **A ready-made agent skill** in the docs (a `SKILL.md` / AGENTS.md
+   snippet): when to call which command, the language flags, and to ask
+   before making more than a few dozen cards.
+5. **Review later.** Optionally send CLI-made cards to the web app's queue
+   instead of straight to Anki, for users who want the agent to collect and
+   themselves to approve.
 
 ## 2.0 candidate: custom card types with AI-assisted authoring
 
-Idea raised 2026-11-14; not scheduled. 1.0 (languages, themes, launch) comes
-first and is not to be derailed by it.
+Idea raised 2026-11-14; not scheduled.
 
 Users define their own card types — fields, templates, style — plus the
 instructions used to generate them, and AI helps write and tune them. This
@@ -305,12 +206,12 @@ widens the audience from language and STEM learners to any domain (medicine,
 law, programming, certifications) and to heavy Anki users who already have
 their own note types.
 
-It reverses a 1.0 position ("the fixed prompts and note types are the
-product"). Taking it on means repositioning 2.0 from "good cards out of the
+It reverses the position that the fixed prompts and note types are the
+product. Taking it on means repositioning 2.0 from "good cards out of the
 box" to "a card generation platform", decided deliberately. Editing the
 built-in types' templates, styling and prompts with reset-to-default (see
-"Customizing the built-in card types" above) comes first; 2.0 adds what that
-leaves out: user-defined fields and new types.
+[Next](#next-customizing-the-built-in-card-types)) comes first; 2.0 adds what
+that leaves out: user-defined fields and new types.
 
 ### Card type spec
 
@@ -345,7 +246,7 @@ css: ...                        # or references to theme tokens only
 - Fields hold content only; presentation belongs to the template. Built-in
   collections today bake HTML into fields at generation time (`meaning-row`,
   `*-chip`, ruby conversion), which a user-defined type can't rely on.
-- Test of the design: re-express the four built-in kinds as specs. What can't
+- Test of the design: re-express the built-in kinds as specs. What can't
   be expressed (ruby text, highlighted example sentences, several records per
   query) shows which field `kind`s are missing. Ideally built-ins end up as
   spec files too.
@@ -379,7 +280,7 @@ AnkiWeb shared decks, which doubles as a promotion channel.
   editor must say so before applying.
 - User templates and CSS run in the preview; keep it sandboxed as today.
 
-### Preparation during 1.0
+### Preparation now
 
 - New collection code should keep content and presentation apart where it
   costs little, to ease the move.
@@ -389,7 +290,10 @@ AnkiWeb shared decks, which doubles as a promotion channel.
 ## Future major version: deployable web service
 
 Explore evolving ankinote from a local CLI/web application into a web
-service that can be deployed to the public internet.
+service that can be deployed to the public internet. A maybe-later if the
+single-user product gains traction (set aside, then back on the table
+2026-09-15); no architecture work started, and no commitment to a framework
+or authentication provider.
 
 The web version must include user identity and access management as a
 foundational concern, rather than an afterthought. Initial planning should
@@ -405,9 +309,99 @@ cover:
 - how web users create and synchronize cards with Anki, without assuming a
   publicly reachable AnkiConnect instance.
 
-2026-09-15: previously set aside to keep the product single-user; back on the
-table as a maybe-later if the single-user product gains traction (see
-"1.0: shorter path to the first card" above). Still no architecture work started.
+## Dropped or out of scope
 
-Status: idea only; not scheduled and not a commitment to a specific framework
-or authentication provider.
+- **Comparison card type** (`AINote STEM Comparison`, contrast pairs such as
+  L1 vs L2 regularization): dropped 2026-11-25 in favor of customization.
+- **"Explain" (tutoring)**: makes the app a learning companion rather than a
+  card maker.
+- **HyperTTS-level provider coverage**, an **Anki add-on rewrite**, and a
+  **hosted multi-user service** run by the project (a self-deployable one is
+  the [later idea](#future-major-version-deployable-web-service) above).
+- **Open-ended editors**: no layout variants for themes, no in-app CSS editor
+  beyond the bounded, resettable customization above.
+
+## Shipped
+
+### 1.0: shorter path to the first card (2026-11)
+
+Direction agreed 2026-11-12 (work breakdown in [plans/v1.md](plans/v1.md));
+released as 1.0.0. The rewrite replaced the NiceGUI UI with a Svelte
+single-page app bundled into the wheel, so the `uvx` install needs no Node;
+the CLI/TUI stay and share `settings.json` with the web app.
+
+- README fixes and a one-line install (v0.6.5).
+- Design language: one token set shared by the web UI and the cards; see
+  [Design Language](design/design-language.md).
+- API layer and the new frontend (wizard and Generate pages), one-key
+  presets, additional TTS providers, graceful degradation without media.
+- Languages: Chinese and Korean (beta) as targets, so English, Spanish,
+  French, German, Japanese, Chinese, and Korean work in any native/target
+  pairing.
+- Card themes: a few curated palettes, light and dark chosen independently,
+  applied to the UI and the cards together.
+- Showcase: GIF, screenshots, READMEs in six languages, Docker deploy
+  templates (`deploy/headless`, `deploy/standard`).
+
+### STEM architecture
+
+The unified STEM schema was replaced by four independent generation models,
+prompts, field sets, and Anki note types:
+
+- `AINote STEM Concept`: front, brief answer, detailed explanation, image.
+- `AINote STEM Formula`: front, formula, meaning, variables, conditions, derivation, image.
+- `AINote STEM Procedure`: front, summary, steps, conditions, image.
+- `AINote STEM Example`: front, answer, solution steps, explanation, image.
+
+All use `front` as the first field (Anki's default sort field), native Anki
+tags, and the shared `AINote::STEM` deck and paper-card visual theme.
+Structured variable/step lists render into their own storage fields.
+There is no stored `card_type` field and no V2 suffix.
+
+The common STEM entrypoint accepts automatic classification or an explicit type.
+Automatic mode classifies first and then loads the selected type's prompt/schema;
+explicit selection skips classification. Upserts are scoped by note type as
+well as front and deck.
+
+The legacy `AINote STEM` is no longer created or updated. Existing legacy notes
+are left alone; there is no automatic migration or deletion.
+
+### STEM in the web app (2026-11-13)
+
+Generate → MathJax preview → live edit → rewrite with an instruction → save;
+see the design language's Generate page notes. "Fix with AI" under the
+preview's formula errors shipped the same day.
+
+### Thinking control (shipped)
+
+`TextGenerationService.generate_text` takes `reasoning_effort`. The language
+generators (`word`, `phrase`, `sentence`) pass `DISABLE_REASONING`, which the
+service turns into DeepSeek's OpenAI-format `extra_body={"thinking": {"type":
+"disabled"}}` (DeepSeek enables thinking by default and its LiteLLM routing
+discards a plain `reasoning_effort`). `stem` keeps thinking on.
+
+All CLI commands take `--thinking [off|low|medium|high|default]` to override
+the per-collection default for a single run. `services.ai.resolve_thinking`
+(with `THINKING_CHOICES`) maps the choice to a `reasoning_effort` value; it is
+shared by the CLI (`cli/factory` re-exports it).
+
+### Interface languages (2026-11-18)
+
+The language menu in the top bar offers every language the cards support:
+English, Simplified and Traditional Chinese, Japanese, Korean, French,
+Spanish and German.
+
+- Catalogs live in `frontend/src/lib/locales/`, one JSON per language; the
+  first visit picks the closest to the browser language (`zh-TW`, `zh-HK` and
+  `zh-Hant` get Traditional).
+- Each catalog has the same keys and `{placeholders}` as `en.json`
+  (`tests/test_locale_catalogs.py` checks it). A missing key still falls back
+  to English rather than showing the key.
+- Adding a language: a new catalog, one line in `i18n.svelte.ts`, and its
+  card-language entries in `languages.ts`.
+
+### Settled earlier
+
+The CLI stays and shares `settings.json` with the web app (2026-09-22); the
+Anki backend, collection path, and storage secret no longer need env vars
+(2026-09-22).
