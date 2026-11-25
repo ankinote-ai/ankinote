@@ -3,7 +3,12 @@
   import { t, type MessageKey } from "../lib/i18n.svelte";
   import type { ModelSetup } from "../lib/modelSetup.svelte";
 
-  let { setup, results }: { setup: ModelSetup; results: Record<Route, RouteCheck> } = $props();
+  /** `settings`: already on Settings → Models, so "change it later there" is left out. */
+  let { setup, results, settings = false }: {
+    setup: ModelSetup;
+    results: Record<Route, RouteCheck>;
+    settings?: boolean;
+  } = $props();
 
   const GLYPH = { ok: "✓", failed: "✗", unverified: "?", off: "–" } as const;
 
@@ -47,7 +52,7 @@
   {/each}
 </ul>
 {#if anyListed}<p class="note">{t("model.listedNote")}</p>{/if}
-<p class="note">{t("model.changeLater")}</p>
+{#if !settings}<p class="note">{t("model.changeLater")}</p>{/if}
 
 <style>
   .results {

@@ -200,7 +200,7 @@
   {#if errorText}<p class="error" role="alert">{errorText}</p>{/if}
 
   {#if setup.current && setup.results}
-    <ConnectionResults {setup} results={setup.results} />
+    <ConnectionResults {setup} results={setup.results} {settings} />
   {/if}
 {/if}
 

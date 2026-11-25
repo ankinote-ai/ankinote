@@ -178,7 +178,6 @@
             </li>
           {/each}
         </ol>
-        <p class="note">{t("model.gtts.notAiStudio")}</p>
       {:else if keyUrl}
         <a class="note key-link" href={keyUrl} target="_blank" rel="noreferrer">
           {t("model.getKey", { name: setup.label(r.provider) })} ↗
