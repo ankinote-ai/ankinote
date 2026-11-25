@@ -3,8 +3,7 @@
 Product directions, grouped by status. Nothing here is a commitment to a date,
 framework, or API. Last reorganized 2026-11-25.
 
-- **Next**: [grammar cards](#1-grammar-cards),
-  [scene cards with image occlusion](#2-scene-cards-with-image-occlusion).
+- **Next**: [scene cards with image occlusion](#scene-cards-with-image-occlusion).
 - **Small follow-ups**: [unscheduled, independent of each other](#small-follow-ups).
 - **Waiting for demand**: [built only once users ask](#waiting-for-demand).
 - **Later ideas**: [CLI as an agent's tool](#the-cli-as-an-agents-tool),
@@ -45,19 +44,10 @@ types are the product (in-app editing of them was
 
 ## Next
 
-Raised 2026-11-25, in this order; each gets its own session, started on the
-user's go.
+Started in its own session, on the user's go. (Grammar cards were next too
+until 2026-11-25; now [waiting for demand](#waiting-for-demand).)
 
-### 1. Grammar cards
-
-Raised 2026-11-25. A grammar point: pattern, meaning, how it is formed,
-examples, contrast with look-alike patterns, common mistakes. The STEM
-Concept card can't stand in: it has no language pair, audio or ruby. Build it
-as a language card type next to Word/Phrase/Sentence, with fill-in-the-blank
-on its examples, not as a fifth STEM type. Decide the scope with the user
-first (M–L: prompts per script family, templates, web UI).
-
-### 2. Scene cards with image occlusion
+### Scene cards with image occlusion
 
 Raised 2026-11-25; explore before planning. A scene picture (a kitchen, a
 station) with its everyday objects; each object's name is hidden and the
@@ -80,6 +70,25 @@ follow-up.
 ## Small follow-ups
 
 Unscheduled; each can ship on its own.
+
+### Flag problem input on language cards
+
+Agreed 2026-11-25. Today the prompts mirror the input exactly: a line with
+several sentences becomes one long card, a cut-off sentence is translated as
+it stands, and a typo stays on the card (on a production card the learner
+then memorizes it). Nothing tells the user.
+
+- Keep "one line, one card". The model also returns the problems it sees
+  (several sentences, a fragment, a likely typo with its correction, the
+  wrong language); they are not stored, so the note types don't change.
+- Neither fix silently nor mirror silently. The web app shows them on the
+  row with actions (split into lines, use the correction, keep as is); the
+  CLI reports them, ideally in the `--json` results of
+  [the agent's tool](#the-cli-as-an-agents-tool).
+- Never split automatically: a short exchange ("How are you? — Fine.") is
+  one item on purpose.
+- Start with tests that reproduce the kept typo and the unflagged
+  several-sentence line.
 
 ### Fix with AI inside the live editor
 
@@ -138,6 +147,24 @@ How it works today is under [Shipped](#thinking-control-shipped). Open items:
 ## Waiting for demand
 
 Designed or discussed; built only once users ask.
+
+- **Grammar cards** (raised and deferred 2026-11-25). No user has asked;
+  sentence cards already explain grammar in context; LLMs are least reliable
+  on exactly these fields (contrasts, common mistakes), and learners can't
+  catch the errors; the cost is M–L. If built:
+  - English as the target first (beta, hidden for other targets), since
+    English grammar is where models are most reliable and Chinese speakers
+    learning English are the likely audience. Fields stay language-neutral
+    so other targets can follow without a note type change.
+  - A language card type next to Word/Phrase/Sentence, not a fifth STEM
+    type (STEM Concept has no language pair, audio or ruby), with
+    fill-in-the-blank on its examples.
+  - Input: the pattern as a textbook writes it (`〜ばかりだ`, `ser vs
+    estar`), optionally with the sentence it was met in as context. The
+    front is the model's normalized pattern, so spellings of one pattern
+    land on one card. One point per card: too broad a topic returns
+    narrower points to pick from; "A vs B" is one card about A with B under
+    the contrast. Native-language "how do I say…" queries are left out.
 
 - **A built-in password** for the web app. Until then, a reverse proxy that
   asks for a login (see the principles above). Accounts belong to the
@@ -307,6 +334,11 @@ cover:
   [Waiting for demand](#waiting-for-demand) (extra instructions, keeping
   template edits made in Anki). The scoping notes are in git history
   (commit 918cbe6).
+- **Photo input for language cards** (2026-11-25): an agent reading the
+  photo and calling the CLI covers it.
+- **Stronger grammar notes on sentence cards** (2026-11-25): which grammar
+  is worth explaining depends on the learner's level, which AnkiNote doesn't
+  know.
 - **"Explain" (tutoring)**: makes the app a learning companion rather than a
   card maker.
 - **HyperTTS-level provider coverage**, an **Anki add-on rewrite**, and a
