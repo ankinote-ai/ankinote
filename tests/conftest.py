@@ -22,6 +22,8 @@ def _isolate_env_vars(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(envs, "ANKIWEB_USERNAME", "")
     monkeypatch.setattr(envs, "ANKIWEB_PASSWORD", "")
     monkeypatch.setattr(envs, "GOOGLE_TTS_KEY", "")
+    # The web app checks PyPI for a new release at startup; tests stay offline.
+    monkeypatch.setenv("ANKINOTE_UPDATE_CHECK", "0")
 
 
 @pytest.fixture(autouse=True)

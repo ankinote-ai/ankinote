@@ -118,7 +118,9 @@ device type.
 
 The top bar holds the brand, workspaces (`1 Generate`, `2 Note types`,
 `3 Settings`, switchable with the number keys), connection status and the
-palette / mode / language switches. Palette and mode chips name the current
+palette / mode / language switches. When a new release is out, an accent
+`↑ 1.3.0` chip before the status links to Settings → About, which shows the
+upgrade command; it goes away once About has shown that version. Palette and mode chips name the current
 state. Language is a globe icon that opens a menu of interface languages,
 each named in itself (`English`, `简体中文`, `Français`) with a check on the current one:
 a label in a language you can't read was misread as the current state.

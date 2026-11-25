@@ -9,6 +9,7 @@
   "bar.mode.light": "淺色",
   "bar.mode.dark": "深色",
   "bar.lang": "介面語言",
+  "bar.update": "新版本 {version}",
   "generate.input": "輸入",
   "generate.queue": "本次工作階段",
   "generate.preview": "預覽",
@@ -539,5 +540,13 @@
   "about.diagnosticsNote": "貼到你的 issue 裡。其中只有版本資訊，不含金鑰、卡片或檔案路徑。",
   "about.copyDiagnostics": "複製診斷資訊",
   "about.copyFailed": "無法複製。請選取文字後手動複製。",
-  "about.loadError": "無法從伺服器讀取版本號。請重新整理頁面再試。"
+  "about.loadError": "無法從伺服器讀取版本號。請重新整理頁面再試。",
+  "about.update.title": "新版本：{version}",
+  "about.update.how.docker": "在 compose.yaml 所在的資料夾裡執行：",
+  "about.update.how.uv_tool": "執行下面的指令，然後重新啟動 AnkiNote：",
+  "about.update.how.uvx": "關閉 AnkiNote，再用這條指令啟動。它總是執行最新版本：",
+  "about.update.how.pip": "執行下面的指令，然後重新啟動 AnkiNote：",
+  "about.update.how.unknown": "依你安裝 AnkiNote 的方式執行對應的指令，然後重新啟動：",
+  "about.update.notes": "更新內容",
+  "about.update.latest": "已是最新版本。"
 }

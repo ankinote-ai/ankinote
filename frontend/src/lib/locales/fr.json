@@ -9,6 +9,7 @@
   "bar.mode.light": "Clair",
   "bar.mode.dark": "Sombre",
   "bar.lang": "Langue de l’interface",
+  "bar.update": "Nouvelle version {version}",
   "generate.input": "Saisie",
   "generate.queue": "Cette session",
   "generate.preview": "Aperçu",
@@ -539,5 +540,13 @@
   "about.diagnosticsNote": "Collez ceci dans votre ticket. Il ne contient que des versions : ni clés, ni cartes, ni chemins de fichiers.",
   "about.copyDiagnostics": "Copier le diagnostic",
   "about.copyFailed": "Copie impossible. Sélectionnez le texte et copiez-le vous-même.",
-  "about.loadError": "Impossible de lire la version depuis le serveur. Rechargez la page pour réessayer."
+  "about.loadError": "Impossible de lire la version depuis le serveur. Rechargez la page pour réessayer.",
+  "about.update.title": "Nouvelle version : {version}",
+  "about.update.how.docker": "Lancez ceci dans le dossier de votre compose.yaml :",
+  "about.update.how.uv_tool": "Lancez ceci, puis redémarrez AnkiNote :",
+  "about.update.how.uvx": "Arrêtez AnkiNote et relancez-le avec cette commande. Elle lance toujours la dernière version :",
+  "about.update.how.pip": "Lancez ceci, puis redémarrez AnkiNote :",
+  "about.update.how.unknown": "Lancez la commande qui correspond à votre installation d’AnkiNote, puis redémarrez-le :",
+  "about.update.notes": "Nouveautés",
+  "about.update.latest": "C’est la dernière version."
 }

@@ -3,6 +3,7 @@
   import { t, type MessageKey } from "../lib/i18n.svelte";
   import { link, router } from "../lib/router.svelte";
   import { palettes, theme, type Mode } from "../lib/theme.svelte";
+  import { update } from "../lib/update.svelte";
   import LanguageMenu from "./LanguageMenu.svelte";
 
   const workspaces: { n: number; path: string; key: MessageKey }[] = [
@@ -59,6 +60,17 @@
     {/each}
   </nav>
   <div class="right">
+    {#if update.marked && update.status?.latest}
+      <a
+        class="chip update"
+        href="/settings/about"
+        onclick={link}
+        title={t("bar.update", { version: update.status.latest })}
+        aria-label={t("bar.update", { version: update.status.latest })}
+      >
+        <span aria-hidden="true">↑</span> {update.status.latest}
+      </a>
+    {/if}
     {#if online !== null}
       <span class="status" class:off={!online}>
         <span aria-hidden="true">●</span>
@@ -166,6 +178,16 @@
 
   .chip:hover {
     border-color: var(--accent);
+  }
+
+  /* A new release: the one chip that is a link, in the accent colour. */
+  .update {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border-color: var(--accent);
+    color: var(--accent);
+    text-decoration: none;
   }
 
   @container app (max-width: 1000px) {

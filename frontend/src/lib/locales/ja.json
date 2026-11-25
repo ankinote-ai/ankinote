@@ -9,6 +9,7 @@
   "bar.mode.light": "ライト",
   "bar.mode.dark": "ダーク",
   "bar.lang": "表示言語",
+  "bar.update": "新しいバージョン {version}",
   "generate.input": "入力",
   "generate.queue": "このセッション",
   "generate.preview": "プレビュー",
@@ -539,5 +540,13 @@
   "about.diagnosticsNote": "issue に貼り付けてください。含まれるのはバージョン情報のみで、キー、カード、ファイルパスは含まれません。",
   "about.copyDiagnostics": "診断情報をコピー",
   "about.copyFailed": "コピーできませんでした。テキストを選択して手動でコピーしてください。",
-  "about.loadError": "サーバーからバージョンを読み取れませんでした。ページを再読み込みしてください。"
+  "about.loadError": "サーバーからバージョンを読み取れませんでした。ページを再読み込みしてください。",
+  "about.update.title": "新しいバージョン: {version}",
+  "about.update.how.docker": "compose.yaml のあるフォルダで実行します:",
+  "about.update.how.uv_tool": "これを実行してから AnkiNote を再起動します:",
+  "about.update.how.uvx": "AnkiNote を止めて、このコマンドで起動し直します。常に最新版が動きます:",
+  "about.update.how.pip": "これを実行してから AnkiNote を再起動します:",
+  "about.update.how.unknown": "AnkiNote をインストールした方法に合うコマンドを実行し、再起動します:",
+  "about.update.notes": "変更内容",
+  "about.update.latest": "最新版です。"
 }

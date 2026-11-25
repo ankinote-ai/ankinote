@@ -9,6 +9,7 @@
   "bar.mode.light": "Hell",
   "bar.mode.dark": "Dunkel",
   "bar.lang": "Sprache der Oberfläche",
+  "bar.update": "Neue Version {version}",
   "generate.input": "Eingabe",
   "generate.queue": "Diese Sitzung",
   "generate.preview": "Vorschau",
@@ -539,5 +540,13 @@
   "about.diagnosticsNote": "Füge das in dein Issue ein. Es enthält nur Versionen: keine Schlüssel, Karten oder Dateipfade.",
   "about.copyDiagnostics": "Diagnose kopieren",
   "about.copyFailed": "Kopieren nicht möglich. Markiere den Text und kopiere ihn selbst.",
-  "about.loadError": "Die Version konnte nicht vom Server gelesen werden. Lade die Seite neu und versuche es erneut."
+  "about.loadError": "Die Version konnte nicht vom Server gelesen werden. Lade die Seite neu und versuche es erneut.",
+  "about.update.title": "Neue Version: {version}",
+  "about.update.how.docker": "Im Ordner mit deiner compose.yaml ausführen:",
+  "about.update.how.uv_tool": "Das ausführen, dann AnkiNote neu starten:",
+  "about.update.how.uvx": "AnkiNote beenden und mit diesem Befehl neu starten. Er startet immer die neueste Version:",
+  "about.update.how.pip": "Das ausführen, dann AnkiNote neu starten:",
+  "about.update.how.unknown": "Den Befehl für deine Installationsart ausführen, dann AnkiNote neu starten:",
+  "about.update.notes": "Neuerungen",
+  "about.update.latest": "Das ist die neueste Version."
 }

@@ -1,5 +1,19 @@
 export type Health = { status: "ok"; version: string; python: string; platform: string };
 
+export type InstallMethod = "docker" | "uv_tool" | "uvx" | "pip" | "unknown";
+
+/** GET /api/update: the latest release PyPI reported and how to upgrade. */
+export type UpdateStatus = {
+  enabled: boolean;
+  current: string;
+  latest: string | null;
+  available: boolean;
+  install: InstallMethod;
+  /** The detected install path's command, or every one when it's unknown. */
+  commands: { install: InstallMethod; command: string }[];
+  notes_url: string | null;
+};
+
 export type Route = "text" | "image" | "speech";
 export const ROUTES: Route[] = ["text", "image", "speech"];
 
@@ -251,6 +265,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 
 export const api = {
   health: () => request<Health>("GET", "/api/health"),
+  update: () => request<UpdateStatus>("GET", "/api/update"),
   settings: () => request<Settings>("GET", "/api/settings"),
   patchSettings: (patch: Partial<Settings["defaults"]> & { ui_language?: string }) =>
     request<Settings>("PATCH", "/api/settings", patch),

@@ -3,6 +3,7 @@
   import { api, type Health } from "../lib/api";
   import { i18n, t } from "../lib/i18n.svelte";
   import { REPO_URL } from "../lib/settings";
+  import { update } from "../lib/update.svelte";
 
   let health = $state<Health | null>(null);
   let failed = $state(false);
@@ -28,14 +29,27 @@
       : "",
   );
 
-  type Copied = "version" | "diagnostics" | "failed" | null;
+  // Seeing the new version here answers the top bar's marker.
+  $effect(() => {
+    if (update.status?.available) update.markSeen();
+  });
+
+  const LABELS = { docker: "Docker", uv_tool: "uv tool", uvx: "uvx", pip: "pip", unknown: "" } as const;
+
+  type Copied = "version" | "diagnostics" | `command-${number}` | "failed" | null;
   let copied = $state<Copied>(null);
   let timer: ReturnType<typeof setTimeout> | undefined;
 
-  async function copy(what: "version" | "diagnostics") {
+  function textFor(what: Exclude<Copied, "failed" | null>): string {
+    if (what === "version") return health?.version ?? "";
+    if (what === "diagnostics") return diagnostics;
+    return update.status?.commands[Number(what.slice("command-".length))]?.command ?? "";
+  }
+
+  async function copy(what: Exclude<Copied, "failed" | null>) {
     clearTimeout(timer);
     try {
-      await navigator.clipboard.writeText(what === "version" ? (health?.version ?? "") : diagnostics);
+      await navigator.clipboard.writeText(textFor(what));
       copied = what;
     } catch {
       copied = "failed";
@@ -63,6 +77,27 @@
           {copied === "version" ? t("about.copied") : t("about.copy")}
         </button>
       </p>
+      {#if update.status?.available && update.status.latest}
+        {@const u = update.status}
+        <div class="update" role="status">
+          <h3>{t("about.update.title", { version: u.latest ?? "" })}</h3>
+          <p class="note">{t(`about.update.how.${u.install}`)}</p>
+          {#each u.commands as c, i (c.install)}
+            <div class="command">
+              {#if u.install === "unknown"}<span class="label">{LABELS[c.install]}</span>{/if}
+              <code class="mono">{c.command}</code>
+              <button type="button" class="ghost" onclick={() => copy(`command-${i}`)}>
+                {copied === `command-${i}` ? t("about.copied") : t("about.copy")}
+              </button>
+            </div>
+          {/each}
+          {#if u.notes_url}
+            <a href={u.notes_url} target="_blank" rel="noopener noreferrer">{t("about.update.notes")}</a>
+          {/if}
+        </div>
+      {:else if update.status?.enabled && update.status.latest}
+        <p class="note latest">{t("about.update.latest")}</p>
+      {/if}
     </section>
 
     <dl class="links">
@@ -132,6 +167,48 @@
   .ghost:disabled {
     color: var(--muted);
     cursor: default;
+  }
+
+  /* A new release: boxed in the accent colour under the version number. */
+  .update {
+    margin: 0 0 24px;
+    padding: 12px 14px;
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+  }
+
+  .update h3 {
+    color: var(--fg);
+  }
+
+  .update a {
+    color: var(--accent);
+  }
+
+  .command {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 12px;
+    margin: 0 0 10px;
+  }
+
+  .command .label {
+    min-width: 5em;
+    color: var(--muted);
+  }
+
+  .command code {
+    padding: 4px 8px;
+    border-radius: 4px;
+    background: var(--outer);
+    font-size: 13px;
+    overflow-wrap: anywhere;
+  }
+
+  .latest {
+    margin-top: -16px;
+    margin-bottom: 24px;
   }
 
   .links {

@@ -105,8 +105,10 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 Run AnkiNote directly without installing:
 
 ```bash
-uvx --from ankinote-ai ankinote-web
+uvx --from ankinote-ai@latest ankinote-web
 ```
+
+Run this way, AnkiNote always starts the latest release. However you installed it, it checks PyPI for a new release at startup and once a day, and shows the upgrade command under **Settings → About**; set `ANKINOTE_UPDATE_CHECK=0` to turn the check off.
 
 Then open **<http://127.0.0.1:8000>** in your browser. On first launch, the **Setup Wizard** walks you through:
 

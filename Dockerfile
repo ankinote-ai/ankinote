@@ -12,8 +12,10 @@ FROM python:3.14-slim
 ARG ANKINOTE_VERSION
 RUN test -n "$ANKINOTE_VERSION" || (echo "ANKINOTE_VERSION build-arg is required" && exit 1)
 
+# ANKINOTE_INSTALL tells the update check to suggest `docker compose pull`.
 ENV PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
+    ANKINOTE_INSTALL=docker \
     XDG_CONFIG_HOME=/config \
     ANKI_CONNECT_URL=http://host.docker.internal:8765
 

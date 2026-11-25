@@ -105,8 +105,10 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 无需安装，直接运行：
 
 ```bash
-uvx --from ankinote-ai ankinote-web
+uvx --from ankinote-ai@latest ankinote-web
 ```
+
+这样运行时，AnkiNote 每次启动都是最新版本。不论用哪种方式安装，它都会在启动时和之后每天向 PyPI 查询一次新版本，并在 **设置 → 关于** 里给出升级命令；设置 `ANKINOTE_UPDATE_CHECK=0` 可以关闭检查。
 
 在浏览器打开 **<http://127.0.0.1:8000>**。首次启动时，**配置向导**会带你完成：
 

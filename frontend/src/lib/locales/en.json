@@ -9,6 +9,7 @@
   "bar.mode.light": "Light",
   "bar.mode.dark": "Dark",
   "bar.lang": "Interface language",
+  "bar.update": "New version {version}",
   "generate.input": "Input",
   "generate.queue": "This session",
   "generate.preview": "Preview",
@@ -539,5 +540,13 @@
   "about.diagnosticsNote": "Paste this into your issue. It holds versions only: no keys, cards or file paths.",
   "about.copyDiagnostics": "Copy diagnostics",
   "about.copyFailed": "Couldn't copy. Select the text and copy it yourself.",
-  "about.loadError": "Couldn't read the version from the server. Reload the page to try again."
+  "about.loadError": "Couldn't read the version from the server. Reload the page to try again.",
+  "about.update.title": "New version: {version}",
+  "about.update.how.docker": "Run this in the folder with your compose.yaml:",
+  "about.update.how.uv_tool": "Run this, then restart AnkiNote:",
+  "about.update.how.uvx": "Stop AnkiNote and start it again with this command. It always runs the latest release:",
+  "about.update.how.pip": "Run this, then restart AnkiNote:",
+  "about.update.how.unknown": "Run the command for how you installed AnkiNote, then restart it:",
+  "about.update.notes": "What's new",
+  "about.update.latest": "This is the latest release."
 }

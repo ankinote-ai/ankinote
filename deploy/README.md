@@ -8,7 +8,7 @@ Published images (multi-arch `amd64` + `arm64`), tags `latest`, `<major>.<minor>
 
 Docker is for an always-on home server or NAS, where you add cards from your
 phone's browser while your computer is off. On the computer where you use
-Anki you don't need it: run `uvx --from ankinote-ai ankinote-web` and choose
+Anki you don't need it: run `uvx --from ankinote-ai@latest ankinote-web` and choose
 Anki Desktop in the setup wizard (see the main README).
 
 Two ready-made stacks:
@@ -113,8 +113,12 @@ as well: AnkiConnect has no login, and that opens it to your whole network.
 | `ANKINOTE_IMAGE` | `ghcr.io/ankinote-ai/ankinote:latest` | Image and tag. Pin a minor version (`…:1.1`) to get fixes but not new features. |
 | `ANKIWEB_USERNAME` / `ANKIWEB_PASSWORD` | unset | `headless/` only. Signs in to AnkiWeb; overrides a login made in the app; the password is never written to disk. |
 | `ANKI_CONNECT_URL` | `http://host.docker.internal:8765` | `standard/` only. Where AnkiConnect listens. |
+| `ANKINOTE_UPDATE_CHECK` | on | `0` stops AnkiNote asking PyPI for a new release (at startup and once a day). |
 
 ## Upgrading
+
+When a new release is out, the top bar shows its version and **Settings →
+About** has the command:
 
 ```bash
 docker compose pull && docker compose up -d

@@ -93,6 +93,29 @@ to upgrade; it never upgrades itself.
   executables.
 - **No check in the CLI**: agents read its output, `--json` above all.
 
+**Before releasing it: a forward-compatibility review** (asked for
+2026-11-25, in a fresh session). Whatever a release ships here keeps
+running in every install that never upgrades, and it is the only channel
+to those installs, so get the foundation right first. Questions to settle:
+
+- The upgrade commands, the release-notes URL (`…/releases/tag/vX.Y.Z`) and
+  the install-path markers are frozen into each release. What if the
+  package, repo, image or compose layout changes, or `@latest` stops being
+  the right advice? Should the advice come from something fetched (a small
+  JSON in the repo or on the release) rather than from code?
+- A major release with breaking changes: an old install would offer it
+  like a patch. Does the check need a way to say "read this first" or "stop
+  at 1.x"?
+- What old installs may depend on: PyPI's JSON API and `info.version`,
+  `ANKINOTE_UPDATE_CHECK`, `ANKINOTE_INSTALL=docker` in the image, the
+  `/api/update` shape (the frontend ships in the same wheel, so it only
+  matters if that changes).
+- Beyond the check, what an upgrade must never break: `settings.json` (no
+  schema version today?), note types (field changes force a full AnkiWeb
+  sync), the collection and Docker volumes, env vars, CLI flags and
+  `--json` output that agents script against. List the places without a
+  version or migration path.
+
 ### Flag problem input on language cards
 
 Agreed 2026-11-25. Today the prompts mirror the input exactly: a line with

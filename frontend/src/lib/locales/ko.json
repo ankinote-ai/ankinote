@@ -9,6 +9,7 @@
   "bar.mode.light": "라이트",
   "bar.mode.dark": "다크",
   "bar.lang": "인터페이스 언어",
+  "bar.update": "새 버전 {version}",
   "generate.input": "입력",
   "generate.queue": "이번 세션",
   "generate.preview": "미리보기",
@@ -539,5 +540,13 @@
   "about.diagnosticsNote": "이슈에 붙여 넣으세요. 버전 정보만 들어 있으며 키, 카드, 파일 경로는 포함되지 않습니다.",
   "about.copyDiagnostics": "진단 정보 복사",
   "about.copyFailed": "복사하지 못했습니다. 텍스트를 선택해 직접 복사하세요.",
-  "about.loadError": "서버에서 버전을 읽지 못했습니다. 페이지를 새로고침하세요."
+  "about.loadError": "서버에서 버전을 읽지 못했습니다. 페이지를 새로고침하세요.",
+  "about.update.title": "새 버전: {version}",
+  "about.update.how.docker": "compose.yaml이 있는 폴더에서 실행하세요:",
+  "about.update.how.uv_tool": "이 명령을 실행한 뒤 AnkiNote를 다시 시작하세요:",
+  "about.update.how.uvx": "AnkiNote를 끄고 이 명령으로 다시 시작하세요. 항상 최신 버전이 실행됩니다:",
+  "about.update.how.pip": "이 명령을 실행한 뒤 AnkiNote를 다시 시작하세요:",
+  "about.update.how.unknown": "AnkiNote를 설치한 방법에 맞는 명령을 실행한 뒤 다시 시작하세요:",
+  "about.update.notes": "변경 사항",
+  "about.update.latest": "최신 버전입니다."
 }

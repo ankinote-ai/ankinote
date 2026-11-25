@@ -4,6 +4,8 @@ The frontend lives in ``frontend/`` and builds into ``DIST_DIR``. In
 development, run the Vite dev server instead; it proxies ``/api`` here.
 """
 
+import asyncio
+import contextlib
 import os
 import platform
 from collections.abc import AsyncIterator
@@ -23,8 +25,10 @@ from ankinote.web import (
     cards_api,
     note_types_api,
     settings_api,
+    update_api,
 )
 from ankinote.web.guard import LocalAccessGuard, configured_host_names
+from ankinote.web.update_api import UpdateChecker
 
 DIST_DIR = Path(__file__).parent / "dist"
 API_DOCS_ENV = "ANKINOTE_API_DOCS"
@@ -84,14 +88,23 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
     # One shared HTTP session (AnkiConnect) and one Anki backend per process.
     init_session()
     await anki_api.start_backend()
+    checker: UpdateChecker = app.state.updates
+    # In the background: startup never waits for PyPI.
+    check = asyncio.create_task(checker.run()) if checker.enabled else None
     try:
         yield
     finally:
+        if check is not None:
+            check.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await check
         await stop_anki_backend()
         await close_session()
 
 
-def create_app(dist_dir: Path = DIST_DIR) -> FastAPI:
+def create_app(
+    dist_dir: Path = DIST_DIR, updates: UpdateChecker | None = None
+) -> FastAPI:
     # The interactive docs list every unauthenticated endpoint, so they are
     # opt-in for development.
     docs = os.environ.get(API_DOCS_ENV, "").lower() in {"1", "true", "yes"}
@@ -103,12 +116,14 @@ def create_app(dist_dir: Path = DIST_DIR) -> FastAPI:
         openapi_url="/api/openapi.json" if docs else None,
         lifespan=_lifespan,
     )
+    app.state.updates = updates or UpdateChecker()
     app.add_middleware(LocalAccessGuard, configured_hosts=configured_host_names())
     app.include_router(settings_api.router)
     app.include_router(anki_api.router)
     app.include_router(cards_api.router)
     app.include_router(note_types_api.router)
     app.include_router(card_theme_api.router)
+    app.include_router(update_api.router)
     app.include_router(_api())
 
     index = dist_dir / "index.html"
