@@ -40,6 +40,7 @@ export type FailureCode =
   | ""
   | "auth"
   | "api_disabled"
+  | "key_restricted"
   | "billing"
   | "model_not_found"
   | "quota"

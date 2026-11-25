@@ -38,6 +38,7 @@ type FailureCode = Literal[
     "",
     "auth",
     "api_disabled",
+    "key_restricted",
     "billing",
     "model_not_found",
     "quota",
@@ -88,9 +89,18 @@ def _api_disabled(message: str) -> bool:
     return "service_disabled" in lowered or "has not been used in project" in lowered
 
 
+def _key_restricted(message: str) -> bool:
+    # Google: the key's API restrictions leave this API out, e.g. an AI
+    # Studio key (Gemini API only) used for Cloud Text-to-Speech.
+    return "api_key_service_blocked" in message.lower()
+
+
 def _needs_billing(message: str) -> bool:
-    # Gemini's free tier has a zero quota for some models (images).
     lowered = message.lower()
+    # Cloud Text-to-Speech refuses a project without billing, free quota or not.
+    if "billing_disabled" in lowered:
+        return True
+    # Gemini's free tier has a zero quota for some models (images).
     return "free_tier" in lowered and "limit: 0" in lowered
 
 
@@ -118,6 +128,8 @@ _BY_STATUS: dict[int, FailureCode] = {401: "auth", 403: "auth", 429: "quota"}
 def _code_from_message(message: str) -> FailureCode:
     if _api_disabled(message):
         return "api_disabled"
+    if _key_restricted(message):
+        return "key_restricted"
     if _needs_billing(message):
         return "billing"
     if _looks_like_bad_key(message):
@@ -158,7 +170,8 @@ def classify(exc: BaseException, model: str) -> RouteCheck:
         status, message = exc.response.status_code, exc.response.text
         detail = _error_message(exc.response)
     # The message is more specific than the type: Gemini sends a bad key as
-    # 400, a disabled API as 403 and a free-tier zero quota as 429.
+    # 400, a free-tier zero quota as 429, and Google a disabled API, a key
+    # restricted to other APIs and a project without billing all as 403.
     if code := _code_from_message(message):
         return _failure(model, code, detail)
     for types, code in _BY_TYPE:

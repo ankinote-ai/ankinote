@@ -150,6 +150,8 @@ Lancez `ankinote` seul pour ouvrir un menu dans le terminal. Le [Guide d'utilisa
 | **Génération d'images** | Gemini, OpenAI (`gpt-image`), fal.ai |
 | **Synthèse vocale (TTS)** | Gemini TTS, OpenAI TTS, Google Cloud TTS |
 
+Google Cloud TTS demande sa propre clé Google Cloud, restreinte à l'API Cloud Text-to-Speech, et la facturation activée sur son projet, même dans le quota mensuel gratuit ; une clé AI Studio est limitée à l'API Gemini et ne fonctionne pas. L'assistant détaille les étapes sous *Configurer chaque contenu séparément*.
+
 Toutes vos clés API et réglages restent sur votre machine, dans `~/.config/ankinote/settings.json`.
 
 ---

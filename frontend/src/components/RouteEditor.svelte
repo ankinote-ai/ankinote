@@ -15,6 +15,17 @@
   const id = $derived(`route-${route}`);
   const keyUrl = $derived(r.provider === OFF ? "" : (setup.provider(r.provider)?.key_url ?? ""));
 
+  // Cloud TTS is set up in the Cloud console in three steps; the last one is the key.
+  const GOOGLE_TTS_STEPS = [
+    { text: "model.gtts.billing", link: "model.gtts.billingLink", url: "https://console.cloud.google.com/billing" },
+    {
+      text: "model.gtts.enable",
+      link: "model.gtts.enableLink",
+      url: "https://console.cloud.google.com/apis/library/texttospeech.googleapis.com",
+    },
+    { text: "model.gtts.key", link: "model.gtts.keyLink", url: "" },
+  ] as const;
+
   // The datalist only suggests ids matching what's typed, so a filled-in model
   // hides the rest; this menu lists them all.
   let menuOpen = $state(false);
@@ -156,8 +167,19 @@
           />
         </label>
       </div>
-      {#if r.provider === "google_tts"}<p class="note">{t("model.hint.google_tts")}</p>{/if}
-      {#if keyUrl}
+      {#if r.provider === "google_tts"}
+        <ol class="note steps">
+          {#each GOOGLE_TTS_STEPS as step (step.text)}
+            <li>
+              {t(step.text)}
+              {#if step.url || keyUrl}
+                <a href={step.url || keyUrl} target="_blank" rel="noreferrer">{t(step.link)} ↗</a>
+              {/if}
+            </li>
+          {/each}
+        </ol>
+        <p class="note">{t("model.gtts.notAiStudio")}</p>
+      {:else if keyUrl}
         <a class="note key-link" href={keyUrl} target="_blank" rel="noreferrer">
           {t("model.getKey", { name: setup.label(r.provider) })} ↗
         </a>
@@ -273,9 +295,23 @@
     color: var(--muted);
   }
 
-  .key-link {
+  .key-link,
+  .steps a {
     align-self: flex-start;
     color: var(--accent);
+  }
+
+  .steps {
+    margin: 0;
+    padding-left: 1.4em;
+  }
+
+  .steps li + li {
+    margin-top: 4px;
+  }
+
+  .steps a {
+    white-space: nowrap;
   }
 
   @container app (max-width: 600px) {

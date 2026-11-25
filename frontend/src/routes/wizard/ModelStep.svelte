@@ -130,7 +130,10 @@
         </li>
         {#if isGemini && mainRoutes.includes("image")}<li>{t("model.howTo.billing")}</li>{/if}
       </ol>
-      {#if isGemini}<p class="note">{t("model.howTo.noApis")}</p>{/if}
+      {#if isGemini}
+        <p class="note">{t("model.howTo.noApis")}</p>
+        {#if mainRoutes.includes("speech")}<p class="note">{t("model.howTo.freeLimits")}</p>{/if}
+      {/if}
     </section>
 
     <div class="field key">
@@ -331,6 +334,10 @@
   }
 
   .howto li + li {
+    margin-top: 6px;
+  }
+
+  .howto .note + .note {
     margin-top: 6px;
   }
 

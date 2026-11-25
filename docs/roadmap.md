@@ -3,9 +3,8 @@
 Product directions, grouped by status. Nothing here is a commitment to a date,
 framework, or API. Last reorganized 2026-11-25.
 
-- **Next**: [Google key setup](#1-google-key-setup-in-the-wizard),
-  [grammar cards](#2-grammar-cards),
-  [scene cards with image occlusion](#3-scene-cards-with-image-occlusion).
+- **Next**: [grammar cards](#1-grammar-cards),
+  [scene cards with image occlusion](#2-scene-cards-with-image-occlusion).
 - **Small follow-ups**: [unscheduled, independent of each other](#small-follow-ups).
 - **Waiting for demand**: [built only once users ask](#waiting-for-demand).
 - **Later ideas**: [CLI as an agent's tool](#the-cli-as-an-agents-tool),
@@ -49,23 +48,7 @@ types are the product (in-app editing of them was
 Raised 2026-11-25, in this order; each gets its own session, started on the
 user's go.
 
-### 1. Google key setup in the wizard
-
-Raised 2026-11-25. The wizard should say exactly which Google APIs the key
-needs; with the Gemini preset that is only the Gemini API, which an AI Studio
-key has already. The open question is whether the default audio should move
-from Gemini's speech model to Google Cloud Text-to-Speech:
-
-- For: Cloud TTS is built for short clips (a word card makes several) and
-  its voices and quotas are predictable.
-- Against: it is a second API to enable on the key's project, and as far as
-  is known now it needs billing turned on, which breaks "one key is enough"
-  for free-tier users. Verify both (enabling it on an AI Studio key's
-  project, billing) before deciding.
-- Either way the Cloud TTS preset should list its setup steps: enable the
-  Cloud Text-to-Speech API, billing, and allow the API on a restricted key.
-
-### 2. Grammar cards
+### 1. Grammar cards
 
 Raised 2026-11-25. A grammar point: pattern, meaning, how it is formed,
 examples, contrast with look-alike patterns, common mistakes. The STEM
@@ -74,7 +57,7 @@ as a language card type next to Word/Phrase/Sentence, with fill-in-the-blank
 on its examples, not as a fifth STEM type. Decide the scope with the user
 first (M–L: prompts per script family, templates, web UI).
 
-### 3. Scene cards with image occlusion
+### 2. Scene cards with image occlusion
 
 Raised 2026-11-25; explore before planning. A scene picture (a kitchen, a
 station) with its everyday objects; each object's name is hidden and the
@@ -410,6 +393,27 @@ in settings, never a per-run CLI option, since the note types are shared.
 - Saving a new native language in the web app renames and relabels the
   types Anki has at once; otherwise (TUI, Anki unreachable) the Note types
   page shows the rename as pending, and the next update or CLI run does it.
+
+### Google key setup (2026-11-25)
+
+Default audio stays on Gemini's speech model; Google Cloud Text-to-Speech
+stays an option under "Set up each kind of content separately". Checked
+against Google's docs on 2026-11-25:
+
+- Since 2026-05-28 new AI Studio keys are restricted to the Gemini API, and
+  Google advises against widening a key to other APIs, so Cloud TTS needs a
+  second key from the Cloud console.
+- Cloud TTS needs billing on its project even within the free monthly
+  allowance. Both break "one key is enough".
+- Gemini's speech models are on the free tier; their daily limits aren't
+  published and show per project in AI Studio.
+
+The wizard's Gemini steps note those free-tier limits (a word card makes
+several clips). The Cloud TTS route lists its three steps (billing, enable
+the API, a key restricted to it). The connection test now tells a project
+without billing (`BILLING_DISABLED`) and a key whose restrictions leave the
+API out (`API_KEY_SERVICE_BLOCKED`, e.g. an AI Studio key) apart from a bad
+key.
 
 ### Interface languages (2026-11-18)
 

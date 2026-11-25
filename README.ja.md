@@ -150,6 +150,8 @@ CLI で作ったカードはプレビューなしで Anki に入ります。保�
 | **画像生成** | Gemini、OpenAI（`gpt-image`）、fal.ai |
 | **音声合成（TTS）** | Gemini TTS、OpenAI TTS、Google Cloud TTS |
 
+Google Cloud TTS には、Cloud Text-to-Speech API だけを許可した専用の Google Cloud キーと、毎月の無料枠内でもプロジェクトの課金有効化が必要です。AI Studio のキーは Gemini API 専用なので使えません。手順はウィザードの「内容ごとに個別に設定」に表示されます。
+
 API キーと設定はすべて手元のマシン（`~/.config/ankinote/settings.json`）にだけ保存されます。
 
 ---

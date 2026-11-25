@@ -22,7 +22,9 @@ ROUTES: tuple[Route, ...] = ("text", "image", "speech")
 CUSTOM_VENDOR = "Custom / Other"
 CUSTOM_PRESET = "custom"
 # Google Cloud Text-to-Speech: its own API and key, unlike Gemini's speech
-# models, which take the AI Studio key.
+# models, which take the AI Studio key. An AI Studio key is restricted to the
+# Gemini API, and Cloud TTS needs billing on, so it stays an Advanced option
+# rather than the default (checked 2026-11-25).
 GOOGLE_TTS_VENDOR = "Google Cloud TTS"
 FAL_VENDOR = "Fal"
 
@@ -116,7 +118,9 @@ PRESETS: dict[str, Preset] = {
             litellm_provider="",
             # A voice family; each synthesis picks a random voice in it.
             models={"speech": "Chirp3-HD"},
-            key_url="https://console.cloud.google.com/apis/library/texttospeech.googleapis.com",
+            # A Cloud console key, restricted to Cloud TTS; the wizard lists
+            # the other steps (billing, enabling the API).
+            key_url="https://console.cloud.google.com/apis/credentials",
         ),
         Preset(
             id=CUSTOM_PRESET,

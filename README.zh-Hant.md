@@ -150,6 +150,8 @@ ankinote word batch --file words.txt --rpm 30
 | **圖片生成** | Gemini、OpenAI（`gpt-image`）、fal.ai |
 | **語音合成（TTS）** | Gemini TTS、OpenAI TTS、Google Cloud TTS |
 
+Google Cloud TTS 需要單獨的 Google Cloud 金鑰（只允許 Cloud Text-to-Speech API），而且即使在每月免費額度內，所屬專案也要開啟計費；AI Studio 金鑰僅限呼叫 Gemini API，在這裡無法使用。設定精靈的「依內容分別設定」中列出了詳細步驟。
+
 所有 API 金鑰與設定都只存在你自己的電腦上（`~/.config/ankinote/settings.json`）。
 
 ---

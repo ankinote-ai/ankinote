@@ -679,6 +679,51 @@ def test_google_cloud_tts_with_the_api_disabled(
     assert body["speech"]["code"] == "api_disabled"
 
 
+def _google_403(message: str, reason: str) -> dict:
+    return {
+        "error": {
+            "code": 403,
+            "message": message,
+            "status": "PERMISSION_DENIED",
+            "details": [
+                {"@type": "type.googleapis.com/google.rpc.ErrorInfo", "reason": reason}
+            ],
+        }
+    }
+
+
+def test_google_cloud_tts_without_billing(
+    client: TestClient, provider: dict[str, Any]
+) -> None:
+    # Cloud TTS needs billing on its project even inside the free quota.
+    no_billing = _google_403(
+        "This API method requires billing to be enabled. Please enable billing "
+        "on project #1 then retry.",
+        "BILLING_DISABLED",
+    )
+    provider["routes"]["texttospeech.googleapis.com/v1/voices"] = (403, no_billing)
+
+    body = client.post("/api/models/test", json=_with_text(speech=GOOGLE_TTS)).json()
+
+    assert body["speech"]["code"] == "billing"
+
+
+def test_google_cloud_tts_with_a_key_restricted_to_another_api(
+    client: TestClient, provider: dict[str, Any]
+) -> None:
+    # An AI Studio key is restricted to the Gemini API; Cloud TTS blocks it.
+    blocked = _google_403(
+        "Requests to this API texttospeech.googleapis.com method "
+        "google.cloud.texttospeech.v1.TextToSpeech.ListVoices are blocked.",
+        "API_KEY_SERVICE_BLOCKED",
+    )
+    provider["routes"]["texttospeech.googleapis.com/v1/voices"] = (403, blocked)
+
+    body = client.post("/api/models/test", json=_with_text(speech=GOOGLE_TTS)).json()
+
+    assert body["speech"]["code"] == "key_restricted"
+
+
 def test_google_cloud_tts_lists_voice_families(
     client: TestClient, provider: dict[str, Any]
 ) -> None:
