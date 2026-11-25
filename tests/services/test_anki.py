@@ -243,7 +243,7 @@ class TestModelClient:
             [
                 TemplateUpsert(
                     name="Recognition 2",
-                    previous_name="Recognition",
+                    previous_names=("Recognition",),
                     question_format="{{Word}}",
                     answer_format="{{Answer}}",
                 )

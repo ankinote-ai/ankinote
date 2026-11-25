@@ -299,6 +299,7 @@ def test_convert_to_note_type_renders_ruby_for_japanese():
 
 
 @pytest.mark.asyncio
+@pytest.mark.usefixtures("english_cards")
 async def test_ensure_note_type_exists_registers_v2_templates():
     collection, models = _build_collection(Language.ENGLISH)
 
@@ -364,6 +365,7 @@ async def test_ensure_note_type_exists_updates_existing_model():
     assert models.updated_css is not None
 
 
+@pytest.mark.usefixtures("english_cards")
 def test_card_without_audio_has_empty_audio_fields():
     from ankinote.collections.phrase.collection import PhraseCardData
     from ankinote.collections.phrase.generator import PhraseMediaFiles

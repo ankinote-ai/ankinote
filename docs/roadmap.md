@@ -3,7 +3,9 @@
 Product directions, grouped by status. Nothing here is a commitment to a date,
 framework, or API. Last reorganized 2026-11-25.
 
-- **Next**: [Customizing the built-in card types](#next-customizing-the-built-in-card-types).
+- **Next**: [Google key setup](#1-google-key-setup-in-the-wizard),
+  [grammar cards](#2-grammar-cards),
+  [scene cards with image occlusion](#3-scene-cards-with-image-occlusion).
 - **Small follow-ups**: [unscheduled, independent of each other](#small-follow-ups).
 - **Waiting for demand**: [built only once users ask](#waiting-for-demand).
 - **Later ideas**: [CLI as an agent's tool](#the-cli-as-an-agents-tool),
@@ -16,9 +18,9 @@ framework, or API. Last reorganized 2026-11-25.
 
 Positioning: a free, open, bring-your-own-key card maker for self-hosters and
 heavy Anki users, not a general-purpose toolkit. The fixed prompts and note
-types are the product (bounded editing comes with
-[customization](#next-customizing-the-built-in-card-types); fully custom types
-are a [2.0 question](#20-candidate-custom-card-types-with-ai-assisted-authoring)).
+types are the product (in-app editing of them was
+[dropped](#dropped-or-out-of-scope); fully custom types are a
+[2.0 question](#20-candidate-custom-card-types-with-ai-assisted-authoring)).
 
 - **Show the result before the install**: sample cards, GIF, translated READMEs.
 - **One key is enough**: a single Gemini or OpenAI key covers text, image,
@@ -42,65 +44,55 @@ are a [2.0 question](#20-candidate-custom-card-types-with-ai-assisted-authoring)
 - **Never break existing cards**: note type names and fields stay or get a
   migration (field changes force a full AnkiWeb sync).
 
-## Next: Customizing the built-in card types
+## Next
 
-Planned 2026-11-18, scoped 2026-11-21, made the next feature 2026-11-25
-(replacing Comparison, which was dropped).
+Raised 2026-11-25, in this order; each gets its own session, started on the
+user's go.
 
-For each built-in card type, an Advanced section lets the user change:
+### 1. Google key setup in the wizard
 
-- the card templates (front/back of each card),
-- the styling (CSS),
-- the generation prompt.
+Raised 2026-11-25. The wizard should say exactly which Google APIs the key
+needs; with the Gemini preset that is only the Gemini API, which an AI Studio
+key has already. The open question is whether the default audio should move
+from Gemini's speech model to Google Cloud Text-to-Speech:
 
-Nothing else is customizable in this step: not the fields, not the deck, and
-not new card types (those are 2.0). The fields can't be changed. Notes already
-in the collection depend on them, and a field change forces a full AnkiWeb
-sync on every user.
+- For: Cloud TTS is built for short clips (a word card makes several) and
+  its voices and quotas are predictable.
+- Against: it is a second API to enable on the key's project, and as far as
+  is known now it needs billing turned on, which breaks "one key is enough"
+  for free-tier users. Verify both (enabling it on an AI Studio key's
+  project, billing) before deciding.
+- Either way the Cloud TTS preset should list its setup steps: enable the
+  Cloud Text-to-Speech API, billing, and allow the API on a restricted key.
 
-The principle: **anything editable can be reset to the built-in default**,
-per item (one template, the CSS, the prompt) and per card type. That is what
-makes editing safe to offer, so an editable item without a reset doesn't
-ship. A release that updates a built-in template or prompt updates
-unedited items; edited ones keep the user's version and say that a newer
-default exists.
+### 2. Grammar cards
 
-Template and CSS edits change only the note type's templates and styling
-(no schema change, so a normal sync carries them, as with card themes).
-Card themes keep working on top: the theme's tokens are composed in front of
-the user's CSS.
+Raised 2026-11-25. A grammar point: pattern, meaning, how it is formed,
+examples, contrast with look-alike patterns, common mistakes. The STEM
+Concept card can't stand in: it has no language pair, audio or ruby. Build it
+as a language card type next to Word/Phrase/Sentence, with fill-in-the-blank
+on its examples, not as a fifth STEM type. Decide the scope with the user
+first (M–L: prompts per script family, templates, web UI).
 
-This is the first, bounded step toward the 2.0 custom card types below: same
-editing surfaces (template, style, prompt, preview), but on fixed fields.
+### 3. Scene cards with image occlusion
 
-Findings from scoping (2026-11-21), for whoever builds it:
+Raised 2026-11-25; explore before planning. A scene picture (a kitchen, a
+station) with its everyday objects; each object's name is hidden and the
+user recalls it. Anki has a built-in Image Occlusion note type (since
+23.10); the user picks which objects to hide on each card.
 
-- **Two steps.** Templates and CSS first (S–M), prompts second (M).
-- **Templates and CSS.** Every write to Anki goes through each collection's
-  `_ensure_note_type_exists()` and `note_types.restyle()`, which read the
-  packaged files via `load_template` / `load_card_style`. One resolver ("the
-  user's version if edited, else the default") in front of those loaders,
-  also used by the preview (`card_css`, the Note types sample) and by
-  `load_status`, covers it. `load_status` compares only template names
-  today; it would need to compare their contents too.
-- **Edits made in Anki are overwritten today.** The CLI rewrites templates
-  and styling on every run (`__aenter__`), so ankinote's copy is the source
-  of truth. Keep it that way and say so in the UI and docs.
-- **Prompts carry the output contract.** The language prompts embed the JSON
-  shape their parsers validate (e.g. `WordModel`); an edit there breaks
-  generation. Split each prompt into editable guidance and a fixed,
-  code-owned output section (STEM already injects its schema from code).
-  Prompts are per script family (four each for word, phrase, sentence), so
-  edits and resets are per file.
-- **Preview limits.** `card_render.py` covers only the syntax the built-in
-  templates use; warn when a user template uses more (e.g. `{{hint:}}`,
-  `{{tts}}`), and show Anki's own error when it rejects a template.
-- **Baked HTML.** Some markup is written into fields at generation time
-  (`meaning-row`, ruby), so templates can't restyle that structure, only its
-  CSS.
-- **"A newer default exists"** needs the hash of the default each edit was
-  based on, stored with the edit. Store edits as files under the config
-  directory rather than in `settings.json`.
+What AnkiNote would add is the part Anki can't: draw the scene, find the
+objects in it, and name each one in the target language (with audio), so the
+user only chooses what to hide. A short spike should answer, before any UI:
+
+1. Does the image model draw scenes whose objects are clearly separate?
+2. Does a vision model return usable boxes and names for them?
+3. Can AnkiNote write Anki's own Image Occlusion notes through both
+   backends (the note type, the occlusion field format)?
+
+If all three hold, it is a large feature (an occlusion editor in the web
+app, a new note type, the preview), so a 2.x candidate rather than a small
+follow-up.
 
 ## Small follow-ups
 
@@ -169,6 +161,19 @@ Designed or discussed; built only once users ask.
   [deployable web service](#future-major-version-deployable-web-service).
 - **Per-field rewrite / simplify buttons** on STEM cards: only if users keep
   wanting to change one field rather than the whole card.
+- **Extra instructions per card type** (2026-11-25): one text box per type
+  (Word, Phrase, Sentence, STEM), appended to the built-in prompt as the
+  user's preferences ("examples from business settings", "explanations in two
+  sentences"). The built-in prompt and its output contract stay code-owned;
+  reset is clearing the box. An advanced option on the Note types page only,
+  kept out of the Generate workflow; the CLI uses it too. A "try it" button
+  may compare a sample card before and after.
+- **Keep template edits made in Anki** (2026-11-25): today every run rewrites
+  the card templates. Possible approach: a version marker comment in each
+  default template plus the hashes of all past defaults, so templates still
+  equal to a past default update as now and edited ones are left alone (with
+  "a newer default exists" and a reset on the Note types page). The preview
+  would then have to read the templates from Anki.
 
 ## The CLI as an agent's tool
 
@@ -208,10 +213,9 @@ their own note types.
 
 It reverses the position that the fixed prompts and note types are the
 product. Taking it on means repositioning 2.0 from "good cards out of the
-box" to "a card generation platform", decided deliberately. Editing the
-built-in types' templates, styling and prompts with reset-to-default (see
-[Next](#next-customizing-the-built-in-card-types)) comes first; 2.0 adds what
-that leaves out: user-defined fields and new types.
+box" to "a card generation platform", decided deliberately. (Editing only
+the built-in types' templates, styling and prompts was considered as a first
+step and dropped 2026-11-25; see [Dropped](#dropped-or-out-of-scope).)
 
 ### Card type spec
 
@@ -312,14 +316,21 @@ cover:
 ## Dropped or out of scope
 
 - **Comparison card type** (`AINote STEM Comparison`, contrast pairs such as
-  L1 vs L2 regularization): dropped 2026-11-25 in favor of customization.
+  L1 vs L2 regularization): dropped 2026-11-25.
+- **Editing the built-in card types in the app** (templates, CSS and whole
+  prompts, with reset to default): scoped 2026-11-21, dropped 2026-11-25. No
+  user had asked for it, and an editor, preview, "newer default" tracking and
+  prompt splitting add a lot of product for that. What remains is in
+  [Waiting for demand](#waiting-for-demand) (extra instructions, keeping
+  template edits made in Anki). The scoping notes are in git history
+  (commit 918cbe6).
 - **"Explain" (tutoring)**: makes the app a learning companion rather than a
   card maker.
 - **HyperTTS-level provider coverage**, an **Anki add-on rewrite**, and a
   **hosted multi-user service** run by the project (a self-deployable one is
   the [later idea](#future-major-version-deployable-web-service) above).
-- **Open-ended editors**: no layout variants for themes, no in-app CSS editor
-  beyond the bounded, resettable customization above.
+- **Open-ended editors**: no layout variants for themes, no in-app CSS or
+  template editor.
 
 ## Shipped
 
@@ -384,6 +395,21 @@ All CLI commands take `--thinking [off|low|medium|high|default]` to override
 the per-collection default for a single run. `services.ai.resolve_thinking`
 (with `THINKING_CHOICES`) maps the choice to a `reasoning_effort` value; it is
 shared by the CLI (`cli/factory` re-exports it).
+
+### Cards in the native language (2026-11-25)
+
+Card template names (Recognition, Recall, …, Card 1) and the labels printed
+on the cards (section titles, STEM type badges) follow the native language
+in settings, never a per-run CLI option, since the note types are shared.
+
+- Texts live in `src/ankinote/card_labels.json`; templates mark labels as
+  `[[t:key]]`. English keeps the names cards had before.
+- A template is matched under its name in any language and renamed in
+  place, which keeps its cards and review history and needs no full AnkiWeb
+  sync (a test checks `scm`).
+- Saving a new native language in the web app renames and relabels the
+  types Anki has at once; otherwise (TUI, Anki unreachable) the Note types
+  page shows the rename as pending, and the next update or CLI run does it.
 
 ### Interface languages (2026-11-18)
 

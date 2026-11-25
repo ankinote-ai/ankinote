@@ -121,6 +121,8 @@ export type NoteTypeItem = {
   /** What setting it up would add or change. */
   missing_fields: string[];
   missing_templates: string[];
+  /** Templates Anki has under another language's name; updating renames them. */
+  renamed_templates: string[];
   css_differs: boolean;
   /** Only from setting it up. */
   result?: "created" | "updated" | "unchanged";

@@ -19,6 +19,7 @@ KEYS = [
 ]
 
 
+@pytest.mark.usefixtures("english_cards")
 async def test_note_types_are_listed_without_anki(api: httpx.AsyncClient) -> None:
     listed = (await api.get("/api/note-types")).json()
     assert [item["key"] for item in listed] == KEYS

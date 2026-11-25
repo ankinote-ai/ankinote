@@ -116,6 +116,7 @@ async def _gemini(api: httpx.AsyncClient, *, image: bool = True) -> None:
     assert response.status_code == 200, response.text
 
 
+@pytest.mark.usefixtures("english_cards")
 async def test_generate_returns_a_preview_of_every_card(
     api: httpx.AsyncClient, models: dict[str, Any]
 ) -> None:
@@ -273,6 +274,7 @@ async def test_unknown_draft_is_gone(api: httpx.AsyncClient) -> None:
         ),
     ],
 )
+@pytest.mark.usefixtures("english_cards")
 async def test_phrase_and_sentence_preview_then_save(
     api: httpx.AsyncClient,
     models: dict[str, Any],
@@ -622,6 +624,7 @@ async def _stem(api: httpx.AsyncClient, models: dict[str, Any], **body: Any) -> 
     return note
 
 
+@pytest.mark.usefixtures("english_cards")
 async def test_a_stem_card_previews_its_type_with_math_tags_and_diagram(
     api: httpx.AsyncClient, models: dict[str, Any]
 ) -> None:

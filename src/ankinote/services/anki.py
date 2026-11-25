@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
@@ -88,12 +89,23 @@ class NoteModel:
 
 @dataclass(frozen=True, slots=True)
 class TemplateUpsert:
-    """Template update request keyed by stable template names."""
+    """Template update request keyed by template name.
+
+    A template stored under one of ``previous_names`` instead is renamed to
+    ``name`` (keeping its cards); one found under neither is added.
+    """
 
     name: str
     question_format: str
     answer_format: str
-    previous_name: str | None = None
+    previous_names: tuple[str, ...] = ()
+
+    def match(self, existing: Iterable[str]) -> str | None:
+        """The name this template has in ``existing``, if it is there."""
+        names = set(existing)
+        if self.name in names:
+            return self.name
+        return next((n for n in self.previous_names if n in names), None)
 
 
 class _AnkiInvoker(Protocol):
@@ -427,7 +439,7 @@ class ModelClient:
 
         Args:
             model_name: The name of the note model
-            templates: List of template upserts with stable template names
+            templates: Template upserts; each matches by name or a previous name
 
         Raises:
             ModelNotFound: If the model does not exist
@@ -443,9 +455,9 @@ class ModelClient:
             raise AnkiResponseError("Expected dictionary from modelTemplates response")
         known_template_names = set(existing_templates)
         for tmpl in templates:
-            match_name = tmpl.previous_name or tmpl.name
+            match_name = tmpl.match(known_template_names)
 
-            if match_name not in known_template_names:
+            if match_name is None:
                 await self._client._invoke(
                     "modelTemplateAdd",
                     params={
@@ -460,16 +472,16 @@ class ModelClient:
                 known_template_names.add(tmpl.name)
                 continue
 
-            if tmpl.previous_name is not None and tmpl.name != tmpl.previous_name:
+            if match_name != tmpl.name:
                 await self._client._invoke(
                     "modelTemplateRename",
                     params={
                         "modelName": model_name,
-                        "oldTemplateName": tmpl.previous_name,
+                        "oldTemplateName": match_name,
                         "newTemplateName": tmpl.name,
                     },
                 )
-                known_template_names.discard(tmpl.previous_name)
+                known_template_names.discard(match_name)
                 known_template_names.add(tmpl.name)
 
             await self._client._invoke(

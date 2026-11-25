@@ -67,7 +67,9 @@ class CollectionClientContract:
         await client.models.update_templates(
             "T",
             [
-                TemplateUpsert("Recognition", "{{Front}}?", "{{Back}}!", "Card 1"),
+                TemplateUpsert(
+                    "Recognition", "{{Front}}?", "{{Back}}!", ("Erkennen", "Card 1")
+                ),
                 TemplateUpsert("Recall", "{{Back}}", "{{Front}}"),
             ],
         )

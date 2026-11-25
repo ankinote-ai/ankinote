@@ -10,10 +10,10 @@ from typing import Literal, TypeVar, cast
 from loguru import logger
 from pydantic import BaseModel
 
-from ankinote import card_theme
+from ankinote import card_labels, card_theme
 from ankinote.card_theme import CardTheme
 from ankinote.consts import RUBY_ANNOTATION_LANGUAGES, Language
-from ankinote.services.anki import AnkiCollectionClient
+from ankinote.services.anki import AnkiCollectionClient, TemplateUpsert
 from ankinote.services.tts import SpeechSynthesizer
 
 
@@ -55,23 +55,44 @@ async def store_card_fonts(anki: AnkiCollectionClient) -> None:
         await anki.media.store_file(name, data)
 
 
-def load_template(package: str, filename: str) -> str:
-    """Load an HTML template for cards.
+def load_template(package: str, filename: str, language: Language | None = None) -> str:
+    """Load an HTML template for cards, its labels in the card language.
 
     Args:
         package: The full package path containing card_templates
             (e.g., "ankinote.collections.word").
         filename: The name of the template file to load
             (e.g., "front.html" or "back.html").
+        language: The labels' language; the native language in settings
+            when omitted.
 
     Returns:
         The template content as a string.
     """
-    return (
+    raw = (
         files(f"{package}.card_templates")
         .joinpath(filename)
         .read_text(encoding="utf-8")
     )
+    return card_labels.localize(raw, language)
+
+
+def template_upserts(templates: list[dict[str, str]]) -> list[TemplateUpsert]:
+    """Updates for a note type's card templates, as ``card_templates()`` lists them.
+
+    Each one also matches its template under the names it had in other
+    languages, so a language change renames the template rather than adding
+    a new one (which would create cards).
+    """
+    return [
+        TemplateUpsert(
+            name=template["Name"],
+            question_format=template["Front"],
+            answer_format=template["Back"],
+            previous_names=card_labels.known_names(template["Name"]),
+        )
+        for template in templates
+    ]
 
 
 def load_prompt_template(
@@ -111,7 +132,7 @@ def create_template_loader(
     package: str,
 ) -> tuple[
     Callable[..., str],
-    Callable[[str], str],
+    Callable[..., str],
 ]:
     """Create template loader functions for a specific package.
 
@@ -125,8 +146,8 @@ def create_template_loader(
     def _load_card_style(theme: CardTheme | None = None) -> str:
         return load_card_style(package, theme)
 
-    def _load_template(filename: str) -> str:
-        return load_template(package, filename)
+    def _load_template(filename: str, language: Language | None = None) -> str:
+        return load_template(package, filename, language)
 
     return _load_card_style, _load_template
 

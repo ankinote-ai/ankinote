@@ -7,9 +7,11 @@ from typing import Self
 
 from loguru import logger
 
-from ankinote.collections.common import MediaGap, store_card_fonts
+from ankinote.card_labels import card_language, template_name
+from ankinote.collections.common import MediaGap, store_card_fonts, template_upserts
+from ankinote.consts import Language
 from ankinote.services.ai import ImageGenerationService, TextGenerationService
-from ankinote.services.anki import AnkiCollectionClient, TemplateUpsert
+from ankinote.services.anki import AnkiCollectionClient
 from ankinote.services.anki_batch import anki_write_batch
 
 from .generator import LatexProblem, StemGenerator
@@ -50,6 +52,23 @@ def anki_tags(tags: list[str]) -> list[str]:
 def _image_name(image: bytes) -> str:
     """Named by content, so a diagram keeps its name when the card is edited."""
     return f"stem_{hashlib.md5(image).hexdigest()[:12]}.png"
+
+
+def stem_card_templates(
+    card_type: CardType, language: Language | None = None
+) -> list[dict[str, str]]:
+    """A STEM type's one card template, as Anki stores it.
+
+    Its name and labels are in ``language``, or the card language in settings.
+    """
+    language = language or card_language()
+    return [
+        {
+            "Name": template_name("card", language),
+            "Front": load_template(f"{card_type}/front.html", language),
+            "Back": load_template(f"{card_type}/back.html", language),
+        }
+    ]
 
 
 class StemCollection:
@@ -111,13 +130,7 @@ class StemCollection:
         """The selected type's one card template, as Anki stores it."""
         if self.card_type is None:
             raise ValueError("No card type selected")
-        return [
-            {
-                "Name": "Card 1",
-                "Front": load_template(f"{self.card_type}/front.html"),
-                "Back": load_template(f"{self.card_type}/back.html"),
-            }
-        ]
+        return stem_card_templates(self.card_type)
 
     async def __aenter__(self) -> Self:
         """Async context manager entry: ensure note type and deck exist."""
@@ -150,8 +163,7 @@ class StemCollection:
         """Ensure the note type exists in Anki, creating or updating it."""
         fields = list(NOTE_FIELDS[card_type])
         notetype_name = note_type_name(card_type)
-        front_template = load_template(f"{card_type}/front.html")
-        back_template = load_template(f"{card_type}/back.html")
+        templates = stem_card_templates(card_type)
         style = load_card_style()
         await store_card_fonts(self._anki)
         exists = await self._anki.models.exists(notetype_name)
@@ -159,13 +171,7 @@ class StemCollection:
             await self._anki.models.create(
                 model_name=notetype_name,
                 fields=fields,
-                templates=[
-                    {
-                        "Name": "Card 1",
-                        "Front": front_template,
-                        "Back": back_template,
-                    },
-                ],
+                templates=templates,
                 css=style,
                 is_cloze=False,
             )
@@ -174,14 +180,7 @@ class StemCollection:
 
         await self._anki.models.ensure_fields(notetype_name, fields)
         await self._anki.models.update_templates(
-            notetype_name,
-            [
-                TemplateUpsert(
-                    name="Card 1",
-                    question_format=front_template,
-                    answer_format=back_template,
-                )
-            ],
+            notetype_name, template_upserts(templates)
         )
         await self._anki.models.update_styling(notetype_name, style)
         logger.success(f"Updated note type: {notetype_name}")

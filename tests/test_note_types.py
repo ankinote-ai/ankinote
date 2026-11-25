@@ -44,6 +44,8 @@ async def test_sentence_note_type_sync_uses_only_sentence_dependencies(
         async def ensure_in_anki(self) -> None:
             return None
 
+        card_templates = staticmethod(note_types.SentenceCollection.card_templates)
+
     monkeypatch.setattr(note_types, "SentenceCollection", FakeSentenceCollection)
     spec = next(spec for spec in note_types.build_specs() if spec.key == "sentence")
 

@@ -163,9 +163,9 @@ class _DirectModelService(AnkiModelService):
 
         for upsert in templates:
             by_name = {tmpl["name"]: tmpl for tmpl in model["tmpls"]}
-            match_name = upsert.previous_name or upsert.name
+            match_name = upsert.match(by_name)
 
-            if match_name not in by_name:
+            if match_name is None:
                 tmpl = mm.new_template(upsert.name)
                 tmpl["qfmt"] = upsert.question_format
                 tmpl["afmt"] = upsert.answer_format
@@ -173,8 +173,7 @@ class _DirectModelService(AnkiModelService):
                 continue
 
             tmpl = by_name[match_name]
-            if upsert.previous_name is not None and upsert.name != upsert.previous_name:
-                tmpl["name"] = upsert.name
+            tmpl["name"] = upsert.name
             tmpl["qfmt"] = upsert.question_format
             tmpl["afmt"] = upsert.answer_format
 

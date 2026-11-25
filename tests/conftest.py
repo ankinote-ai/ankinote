@@ -33,3 +33,18 @@ def _isolate_settings_file(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
     developer's real ``~/.config/ankinote/settings.json``.
     """
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+
+
+def set_native_language(language: str) -> None:
+    """Save ``language`` as the native language (the card language)."""
+    from ankinote.settings import load_settings, save_settings
+
+    settings = load_settings()
+    settings.defaults.native_language = language
+    save_settings(settings)
+
+
+@pytest.fixture
+def english_cards() -> None:
+    """Card labels and template names in English (settings default: Chinese)."""
+    set_native_language("English")

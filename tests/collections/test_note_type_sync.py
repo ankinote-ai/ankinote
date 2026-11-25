@@ -15,6 +15,7 @@ from ankinote.services.anki import AnkiCollectionClient
 
 @pytest.mark.parametrize("exists", [True, False])
 @pytest.mark.parametrize("selected", [None, *CardType])
+@pytest.mark.usefixtures("english_cards")
 async def test_stem_sync_types(exists, selected):
     models = SimpleNamespace(
         exists=AsyncMock(return_value=exists),

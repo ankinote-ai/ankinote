@@ -9,6 +9,7 @@ from typing import Literal
 
 import httpx
 from fastapi import APIRouter, HTTPException
+from loguru import logger
 from pydantic import BaseModel, Field
 
 from ankinote.consts import (
@@ -29,8 +30,12 @@ from ankinote.model_routes import (
     route_targets,
     route_view,
 )
+from ankinote.note_types import build_specs, relabel
 from ankinote.services import model_check
+from ankinote.services.anki_batch import anki_write_batch
+from ankinote.services.anki_factory import create_anki_client
 from ankinote.settings import Settings, load_settings, save_settings
+from ankinote.web import anki_api
 
 UiLanguage = Literal["en", "zh-CN"]
 
@@ -122,7 +127,14 @@ async def languages() -> dict:
 
 @router.patch("/settings")
 async def patch_settings(patch: SettingsPatch) -> dict:
+    """Save the changed settings.
+
+    A new native language also renames the card templates and rewrites the
+    card labels of the note types Anki has, when Anki can be reached; when it
+    can't, the Note types page shows the update as pending.
+    """
     settings = load_settings()
+    old_native = settings.defaults.native_language
     if patch.native_language is not None or patch.target_language is not None:
         # Check the pair the patch leaves behind, including the saved half.
         native = patch.native_language or Language(settings.defaults.native_language)
@@ -139,7 +151,23 @@ async def patch_settings(patch: SettingsPatch) -> dict:
     if patch.ui_language is not None:
         settings.ui_language = patch.ui_language
     save_settings(settings)
+    if settings.defaults.native_language != old_native:
+        await _relabel_note_types()
     return _settings_out(settings)
+
+
+async def _relabel_note_types() -> None:
+    try:
+        await anki_api.ready_backend()
+        client = create_anki_client()
+        # One batch: one AnkiWeb sync for every note type.
+        async with anki_write_batch(client):
+            await relabel(client, build_specs())
+    except HTTPException as exc:
+        logger.info(f"Native language saved; card labels not updated: {exc.detail}")
+    except Exception as exc:
+        detail = anki_api.note_type_error(exc).detail
+        logger.info(f"Native language saved; card labels not updated: {detail}")
 
 
 @router.get("/models/providers")

@@ -1,8 +1,7 @@
 <script lang="ts">
   import type { CardSide, DraftNote, MathError } from "../lib/api";
-  import { t, type MessageKey } from "../lib/i18n.svelte";
+  import { t } from "../lib/i18n.svelte";
   import { theme } from "../lib/theme.svelte";
-  import en from "../lib/locales/en.json";
   import frameScript from "../lib/previewFrame.js?raw";
   import { randomId } from "../lib/randomId";
   import { inlineCss, inlineImages, mathjaxSource } from "../lib/frameAssets";
@@ -134,11 +133,6 @@
     const url = new URL(src, location.origin);
     if (url.origin === location.origin) void new Audio(url.href).play().catch(() => {});
   }
-
-  function templateName(name: string): string {
-    const key = `preview.template.${name}`;
-    return key in en ? t(key as MessageKey) : name;
-  }
 </script>
 
 <svelte:window onmessage={onMessage} />
@@ -149,12 +143,12 @@
       <div class="segments" role="radiogroup" aria-label={t("preview.template")}>
         {#each note.cards as c, i (c.name)}
           <button role="radio" aria-checked={index === i} class:on={index === i} onclick={() => (index = i)}>
-            {templateName(c.name)}
+            {c.name}
           </button>
         {/each}
       </div>
     {:else}
-      <span class="single">{templateName(card.name)}</span>
+      <span class="single">{card.name}</span>
     {/if}
     <div class="segments" role="radiogroup" aria-label={t("preview.side")}>
       <button role="radio" aria-checked={!back} class:on={!back} onclick={() => (back = false)}>
@@ -167,7 +161,7 @@
   </div>
   <iframe
     bind:this={frame}
-    title={t("preview.frame", { name: templateName(card.name) })}
+    title={t("preview.frame", { name: card.name })}
     sandbox="allow-scripts"
     srcdoc={frameDoc?.srcdoc}
     style:height="{height + FRAME_BORDER}px"

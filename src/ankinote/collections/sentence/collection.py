@@ -7,10 +7,15 @@ from typing import Self
 
 from loguru import logger
 
-from ankinote.collections.common import convert_to_html_ruby, store_card_fonts
+from ankinote.card_labels import card_language, template_name
+from ankinote.collections.common import (
+    convert_to_html_ruby,
+    store_card_fonts,
+    template_upserts,
+)
 from ankinote.consts import RUBY_ANNOTATION_LANGUAGES, Language
 from ankinote.services.ai import DISABLE_REASONING, TextGenerationService
-from ankinote.services.anki import AnkiCollectionClient, TemplateUpsert
+from ankinote.services.anki import AnkiCollectionClient
 from ankinote.services.anki_batch import anki_write_batch
 from ankinote.services.tts import SpeechService
 
@@ -77,13 +82,17 @@ class SentenceCollection:
         return self._anki_client
 
     @staticmethod
-    def card_templates() -> list[dict[str, str]]:
-        """The note type's card templates, as Anki stores them."""
+    def card_templates(language: Language | None = None) -> list[dict[str, str]]:
+        """The note type's card templates, as Anki stores them.
+
+        Names and labels are in ``language``, or the card language in settings.
+        """
+        language = language or card_language()
         return [
             {
-                "Name": "Production",
-                "Front": load_template("front.html"),
-                "Back": load_template("back.html"),
+                "Name": template_name("production", language),
+                "Front": load_template("front.html", language),
+                "Back": load_template("back.html", language),
             },
         ]
 
@@ -132,15 +141,7 @@ class SentenceCollection:
         # Ensure new fields (e.g. target_language) are added for existing note types
         await self._anki.models.ensure_fields(self.notetype_name, fields)
         await self._anki.models.update_templates(
-            self.notetype_name,
-            [
-                TemplateUpsert(
-                    name=template["Name"],
-                    question_format=template["Front"],
-                    answer_format=template["Back"],
-                )
-                for template in templates
-            ],
+            self.notetype_name, template_upserts(templates)
         )
         await self._anki.models.update_styling(self.notetype_name, css)
         logger.success(f"Updated note type: {self.notetype_name}")

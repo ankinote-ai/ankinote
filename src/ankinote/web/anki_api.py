@@ -393,6 +393,7 @@ def _note_type_out(status: TypeStatus) -> dict:
         "deck_exists": status.deck_exists,
         "missing_fields": status.missing_fields,
         "missing_templates": status.missing_templates,
+        "renamed_templates": status.renamed_templates,
         "css_differs": status.css_differs,
     }
 

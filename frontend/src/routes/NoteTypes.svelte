@@ -76,18 +76,18 @@
       out.push(t("notetypes.change.fields", { names: status.missing_fields.join(", ") }));
     }
     if (status.missing_templates.length) {
-      const names = status.missing_templates.map(templateName).join(", ");
+      const names = status.missing_templates.join(", ");
       out.push(t("notetypes.change.templates", { names }));
+    }
+    if (status.renamed_templates.length) {
+      const names = status.renamed_templates.join(", ");
+      out.push(t("notetypes.change.renamed", { names }));
     }
     if (status.css_differs) out.push(t("notetypes.change.css"));
     if (!status.deck_exists) out.push(t("notetypes.change.deck", { deck: status.deck }));
     return out;
   });
 
-  function templateName(template: string): string {
-    const key = `preview.template.${template}`;
-    return key in en ? t(key as MessageKey) : template;
-  }
 
   function errorText(failure: Failure): string {
     const own = `notetypes.err.${failure.code}`;
@@ -280,7 +280,7 @@
             <ul class="chips">
               {#each info.templates as template (template)}
                 {@const added = status?.missing_templates.includes(template)}
-                <li class:added>{templateName(template)}</li>
+                <li class:added>{template}</li>
               {/each}
             </ul>
             <h3 class="label">{t("notetypes.fields", { n: info.fields.length })}</h3>

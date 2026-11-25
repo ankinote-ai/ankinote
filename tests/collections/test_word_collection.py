@@ -406,6 +406,7 @@ def test_convert_to_note_type_keeps_korean_as_plain_text():
 
 
 @pytest.mark.asyncio
+@pytest.mark.usefixtures("english_cards")
 async def test_ensure_note_type_exists_registers_v2_templates():
     collection, models = _build_collection(Language.ENGLISH)
 
