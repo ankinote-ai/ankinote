@@ -35,9 +35,10 @@ note ids or raise per item.
 Proposed 2026-11-25; confirm with the user at the start of the step that
 needs them.
 
-- **One item per line everywhere, including `word batch --file`** (step 1).
-  Breaks word files written as space-separated words on one line; the README
-  and CLI guide already describe one word per line.
+- **One item per line everywhere, including `word batch --file`**
+  (confirmed 2026-11-25, done in step 1). Breaks word files written as
+  space-separated words on one line; the README and CLI guide already
+  describe one word per line.
 - **JSON output shape** (step 3): one JSON document on stdout, logs stay on
   stderr:
 
@@ -56,7 +57,14 @@ needs them.
   `lines`. JSONL is easy for an agent to write and needs no escaping rules;
   tabs are awkward to type in a shell.
 
-## Step 1: Shared batch runner; word, phrase, sentence on it (M)
+## Step 1: Shared batch runner; word, phrase, sentence on it (M), done
+
+Done 2026-11-25. `cli/batch.py` (`read_items`, `add_one`, `add_many`, `run`,
+`batch_options`) and `model_options` in `cli/factory.py`; tests in
+`tests/cli/test_batch.py`. Each kind module keeps resolving
+`anki_client_scope` and its `build_*_collection` from its own globals (via
+`_scope`), which the `capture_options` fixture relies on. `--rpm 0` now means
+no limit. Progress and summary still print to stdout; step 3 moves them.
 
 1. Tests first, red against today's code: `word batch` exits non-zero when an
    item fails; `word batch --file` keeps "ice cream" as one item; `add`
@@ -86,6 +94,10 @@ Done when: the new tests pass, the existing `tests/cli/` suite passes, and
 2. Port `stem add`/`batch`: concurrency and limiter from the runner (keep a
    low default, STEM cards think at `high` and draw an image), click output
    instead of rich, `-f` for `--file`. `stem add --image` and `--type` stay.
+   Replace stem's own `collection_options` with `model_options(images=True)`
+   plus `--type`; `stem add --image` needs `add_one` to pass the reference
+   image through (or its own call into `run`).
+3. Add `"stem"` to `KINDS` in `tests/cli/test_batch.py` where the topics fit.
 
 Done when: STEM behaves like the other kinds apart from its own options.
 

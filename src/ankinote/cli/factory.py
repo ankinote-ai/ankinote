@@ -65,6 +65,70 @@ def language_options(cmd):
     return cmd
 
 
+def model_options(*, thinking_default: str, images: bool):
+    """Add the model choices every card command shares.
+
+    ``--llm``, ``--profile`` and ``--thinking``; with ``images``, also
+    ``--image-model``, ``--image-size`` and ``--image-profile``.
+
+    :param thinking_default: how ``--thinking``'s help names the default
+        ("off for word cards").
+    """
+    options = [
+        click.option(
+            "--llm",
+            default=None,
+            show_default=DEFAULT_AI_SERVICE_CONFIG.text_model,
+            help="Text model ID for the card's content.",
+        ),
+        click.option(
+            "--profile",
+            default=None,
+            help="Named text provider profile (default: the active one in settings).",
+        ),
+        click.option(
+            "--thinking",
+            default=None,
+            type=click.Choice(THINKING_CHOICES),
+            help=(
+                "Override the model's extended-thinking level for this run "
+                f"(default: {thinking_default})."
+            ),
+        ),
+    ]
+    if images:
+        options += [
+            click.option(
+                "--image-model",
+                default=None,
+                show_default=DEFAULT_AI_SERVICE_CONFIG.image_model,
+                help="Image model ID for the card's picture.",
+            ),
+            click.option(
+                "--image-size",
+                default=None,
+                show_default=DEFAULT_AI_SERVICE_CONFIG.image_size,
+                type=int,
+                help="Image size in pixels (square).",
+            ),
+            click.option(
+                "--image-profile",
+                default=None,
+                help=(
+                    "Named image provider profile "
+                    "(default: the active one in settings)."
+                ),
+            ),
+        ]
+
+    def decorate(cmd):
+        for option in reversed(options):
+            cmd = option(cmd)
+        return cmd
+
+    return decorate
+
+
 def resolve_languages(
     native: str | None, target: str | None
 ) -> tuple[Language, Language]:

@@ -1,50 +1,25 @@
-import asyncio
+"""CLI commands for sentence (production) cards."""
+
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 import click
-from asynciolimiter import StrictLimiter
 
+from ankinote.cli.batch import add_many, add_one, batch_options, read_items, run
 from ankinote.cli.factory import (
-    THINKING_CHOICES,
     LanguageCollectionOptions,
     anki_client_scope,
     build_sentence_collection,
     language_options,
+    model_options,
     resolve_languages,
     resolve_thinking,
 )
-from ankinote.services.ai import DEFAULT_AI_SERVICE_CONFIG, DISABLE_REASONING
-
-MAX_CONCURRENCY = 10
-
-# -- Shared options -----------------------------------------------------------
-
-COLLECTION_OPTIONS = [
-    click.option(
-        "--llm",
-        default=None,
-        show_default=DEFAULT_AI_SERVICE_CONFIG.text_model,
-    ),
-    click.option(
-        "--profile",
-        default=None,
-        help="Named text provider profile (default: the active one in settings).",
-    ),
-    click.option(
-        "--thinking",
-        default=None,
-        type=click.Choice(THINKING_CHOICES),
-        help=(
-            "Override the model's extended-thinking level for this run "
-            "(default: off for sentence cards)."
-        ),
-    ),
-]
+from ankinote.services.ai import DISABLE_REASONING
 
 
 def collection_options(cmd):
-    for option in reversed(COLLECTION_OPTIONS):
-        cmd = option(cmd)
+    cmd = model_options(thinking_default="off for sentence cards", images=False)(cmd)
     return language_options(cmd)
 
 
@@ -66,15 +41,24 @@ def build_options(
     )
 
 
+def _scope(options: LanguageCollectionOptions):
+    @asynccontextmanager
+    async def scope():
+        async with (
+            anki_client_scope() as client,
+            build_sentence_collection(client, options) as collection,
+        ):
+            yield collection
+
+    return scope
+
+
 # -- sentence group -----------------------------------------------------------
 
 
 @click.group("sentence")
 def sentence():
-    """Sentence card commands (V2 - production cards)."""
-
-
-# -- init: create note type and deck ------------------------------------------
+    """Sentence card commands (production cards: recall the target sentence)."""
 
 
 @sentence.command("init")
@@ -83,18 +67,11 @@ def init(native, target, llm, profile, thinking):
     """Create sentence note type and deck in Anki."""
 
     async def _run():
-        options = build_options(native, target, llm, profile, thinking)
-        async with (
-            anki_client_scope() as client,
-            build_sentence_collection(client, options),
-        ):
+        async with _scope(build_options(native, target, llm, profile, thinking))():
             pass
 
-    asyncio.run(_run())
+    run(_run())
     click.echo("✓ Ready (sentence collection)")
-
-
-# -- add: single sentence -----------------------------------------------------
 
 
 @sentence.command("add")
@@ -107,35 +84,23 @@ def add(sentence, native, target, llm, profile, thinking):
     native-language translation will appear on the card front; the target
     sentence, notes, and phrase breakdown appear on the back.
     """
-
-    async def _run():
-        options = build_options(native, target, llm, profile, thinking)
-        async with (
-            anki_client_scope() as client,
-            build_sentence_collection(client, options) as collection,
-        ):
-            await collection.generate_and_add_note(sentence)
-
-    asyncio.run(_run())
-    click.echo(f"✓ Added sentence: {sentence}")
-
-
-# -- batch: multiple sentences, optionally from file --------------------------
+    add_one(_scope(build_options(native, target, llm, profile, thinking)), sentence)
 
 
 @sentence.command("batch")
 @click.argument("sentences", nargs=-1, metavar="[SENTENCE ...]")
-@click.option(
-    "--file", "-f", type=click.Path(exists=True, dir_okay=False, path_type=Path)
-)
-@click.option(
-    "--rpm",
-    default=60,
-    show_default=True,
-    help="Max requests per minute (match your AI provider's limit).",
-)
+@batch_options(rpm_default=60)
 @collection_options
-def batch(sentences, file, native, target, llm, rpm, profile, thinking):
+def batch(
+    sentences: tuple[str, ...],
+    file: Path | None,
+    rpm: int,
+    native,
+    target,
+    llm,
+    profile,
+    thinking,
+):
     """Generate and push multiple sentence production cards.
 
     \b
@@ -144,60 +109,10 @@ def batch(sentences, file, native, target, llm, rpm, profile, thinking):
 
     \b
     Examples:
-      anki sentence add "I overslept this morning."
-      anki sentence batch --file sentences.txt
-      anki sentence batch "I overslept this morning." --file more.txt
+      ankinote sentence add "I overslept this morning."
+      ankinote sentence batch --file sentences.txt
+      ankinote sentence batch "I overslept this morning." --file more.txt
     """
-    all_sentences = list(sentences)
-    if file:
-        # One sentence per line; strip empty lines
-        file_sentences = [
-            line.strip()
-            for line in file.read_text(encoding="utf-8").splitlines()
-            if line.strip()
-        ]
-        all_sentences += file_sentences
-
-    if not all_sentences:
-        raise click.UsageError("Provide at least one sentence via argument or --file.")
-
-    success, failed = [], []
-
-    async def _run():
-        nonlocal success
-
-        sem = asyncio.Semaphore(MAX_CONCURRENCY)
-        limiter = StrictLimiter(rpm / 60)
-        options = build_options(native, target, llm, profile, thinking)
-
-        async def _process(s: str):
-            nonlocal success
-            async with sem:
-                await limiter.wait()
-                try:
-                    await collection.generate_and_add_note(s)
-                    success.append(s)
-                except Exception as e:
-                    failed.append((s, str(e)))
-
-        async with (
-            anki_client_scope() as client,
-            build_sentence_collection(client, options) as collection,
-        ):
-            await asyncio.gather(*[_process(s) for s in all_sentences])
-
-    total = len(all_sentences)
-    click.echo(
-        f"Processing {total} sentences (concurrency={MAX_CONCURRENCY}, rpm={rpm}) ..."
-    )
-    asyncio.run(_run())
-    if len(success) == total:
-        click.echo("✅ All sentences processed successfully!")
-    else:
-        click.echo(f"\n✅ {len(success)}/{total} succeeded")
-        for s in success:
-            click.echo(f"   • {s}")
-    if failed:
-        click.echo(f"\n❌ {len(failed)} failed")
-    for s, reason in failed:
-        click.echo(f"   • {s}: {reason}")
+    items = read_items(sentences, file, noun="sentences")
+    options = build_options(native, target, llm, profile, thinking)
+    add_many(_scope(options), items, noun="sentences", rpm=rpm)

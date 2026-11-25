@@ -1,50 +1,25 @@
-import asyncio
+"""CLI commands for phrase cards."""
+
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 import click
-from asynciolimiter import StrictLimiter
 
+from ankinote.cli.batch import add_many, add_one, batch_options, read_items, run
 from ankinote.cli.factory import (
-    THINKING_CHOICES,
     LanguageCollectionOptions,
     anki_client_scope,
     build_phrase_collection,
     language_options,
+    model_options,
     resolve_languages,
     resolve_thinking,
 )
-from ankinote.services.ai import DEFAULT_AI_SERVICE_CONFIG, DISABLE_REASONING
-
-MAX_CONCURRENCY = 10
-
-# -- Shared options -----------------------------------------------------------
-
-COLLECTION_OPTIONS = [
-    click.option(
-        "--llm",
-        default=None,
-        show_default=DEFAULT_AI_SERVICE_CONFIG.text_model,
-    ),
-    click.option(
-        "--profile",
-        default=None,
-        help="Named text provider profile (default: the active one in settings).",
-    ),
-    click.option(
-        "--thinking",
-        default=None,
-        type=click.Choice(THINKING_CHOICES),
-        help=(
-            "Override the model's extended-thinking level for this run "
-            "(default: off for phrase cards)."
-        ),
-    ),
-]
+from ankinote.services.ai import DISABLE_REASONING
 
 
 def collection_options(cmd):
-    for option in reversed(COLLECTION_OPTIONS):
-        cmd = option(cmd)
+    cmd = model_options(thinking_default="off for phrase cards", images=False)(cmd)
     return language_options(cmd)
 
 
@@ -66,15 +41,24 @@ def build_options(
     )
 
 
+def _scope(options: LanguageCollectionOptions):
+    @asynccontextmanager
+    async def scope():
+        async with (
+            anki_client_scope() as client,
+            build_phrase_collection(client, options) as collection,
+        ):
+            yield collection
+
+    return scope
+
+
 # -- phrase group -------------------------------------------------------------
 
 
 @click.group("phrase")
 def phrase():
-    """Phrase / sentence card commands."""
-
-
-# -- init: create note type and deck ------------------------------------------
+    """Phrase card commands."""
 
 
 @phrase.command("init")
@@ -83,18 +67,11 @@ def init(native, target, llm, profile, thinking):
     """Create phrase note type and deck in Anki."""
 
     async def _run():
-        options = build_options(native, target, llm, profile, thinking)
-        async with (
-            anki_client_scope() as client,
-            build_phrase_collection(client, options),
-        ):
+        async with _scope(build_options(native, target, llm, profile, thinking))():
             pass
 
-    asyncio.run(_run())
+    run(_run())
     click.echo("✓ Ready (phrase collection)")
-
-
-# -- add: single phrase -------------------------------------------------------
 
 
 @phrase.command("add")
@@ -102,35 +79,23 @@ def init(native, target, llm, profile, thinking):
 @collection_options
 def add(phrase, native, target, llm, profile, thinking):
     """Generate and push a single phrase card."""
-
-    async def _run():
-        options = build_options(native, target, llm, profile, thinking)
-        async with (
-            anki_client_scope() as client,
-            build_phrase_collection(client, options) as collection,
-        ):
-            await collection.generate_and_add_note(phrase)
-
-    asyncio.run(_run())
-    click.echo(f"✓ Added phrase: {phrase}")
-
-
-# -- batch: multiple phrases, optionally from file ----------------------------
+    add_one(_scope(build_options(native, target, llm, profile, thinking)), phrase)
 
 
 @phrase.command("batch")
 @click.argument("phrases", nargs=-1, metavar="[PHRASE ...]")
-@click.option(
-    "--file", "-f", type=click.Path(exists=True, dir_okay=False, path_type=Path)
-)
-@click.option(
-    "--rpm",
-    default=60,
-    show_default=True,
-    help="Max requests per minute (match your AI provider's limit).",
-)
+@batch_options(rpm_default=60)
 @collection_options
-def batch(phrases, file, native, target, llm, rpm, profile, thinking):
+def batch(
+    phrases: tuple[str, ...],
+    file: Path | None,
+    rpm: int,
+    native,
+    target,
+    llm,
+    profile,
+    thinking,
+):
     """Generate and push multiple phrase cards.
 
     \b
@@ -139,58 +104,10 @@ def batch(phrases, file, native, target, llm, rpm, profile, thinking):
 
     \b
     Examples:
-      anki phrase batch "focus on" "look after"
-      anki phrase batch --file phrases.txt
-      anki phrase batch "call off" --file more.txt
+      ankinote phrase batch "focus on" "look after"
+      ankinote phrase batch --file phrases.txt
+      ankinote phrase batch "call off" --file more.txt
     """
-    all_phrases = list(phrases)
-    if file:
-        # One phrase per line; strip empty lines
-        file_phrases = [
-            line.strip()
-            for line in file.read_text(encoding="utf-8").splitlines()
-            if line.strip()
-        ]
-        all_phrases += file_phrases
-
-    if not all_phrases:
-        raise click.UsageError("Provide at least one phrase via argument or --file.")
-
-    success, failed = [], []
-
-    async def _run():
-        nonlocal success
-
-        sem = asyncio.Semaphore(MAX_CONCURRENCY)
-        limiter = StrictLimiter(rpm / 60)
-        options = build_options(native, target, llm, profile, thinking)
-
-        async def _process(p: str):
-            nonlocal success
-            async with sem:
-                await limiter.wait()
-                try:
-                    await collection.generate_and_add_note(p)
-                    success.append(p)
-                except Exception as e:
-                    failed.append((p, str(e)))
-
-        async with (
-            anki_client_scope() as client,
-            build_phrase_collection(client, options) as collection,
-        ):
-            await asyncio.gather(*[_process(p) for p in all_phrases])
-
-    total = len(all_phrases)
-    click.echo(f"Processing {total} phrases (concurrency={MAX_CONCURRENCY}) ...")
-    asyncio.run(_run())
-    if len(success) == total:
-        click.echo("✅ All phrases processed successfully!")
-    else:
-        click.echo(f"\n✅ {len(success)}/{total} succeeded")
-        for s in success:
-            click.echo(f"   • {s}")
-    if failed:
-        click.echo(f"\n❌ {len(failed)} failed")
-    for s, reason in failed:
-        click.echo(f"   • {s}: {reason}")
+    items = read_items(phrases, file, noun="phrases")
+    options = build_options(native, target, llm, profile, thinking)
+    add_many(_scope(options), items, noun="phrases", rpm=rpm)
