@@ -128,7 +128,8 @@ Estimates are working time including tests and checks.
    done 2026-11-25: all green; the chip, About (Docker hint for a minor,
    notes first for a major) and the phone layout look right.
 9. Push, then `make release part=minor` (new behaviour: update check). The
-   release notes say to re-run `ankinote skill install`.
+   release notes say to re-run `ankinote skill install`. Done 2026-11-25:
+   v1.3.0, notes written by hand.
 
 ## Compatibility rules
 

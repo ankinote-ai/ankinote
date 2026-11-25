@@ -48,9 +48,9 @@ types are the product (in-app editing of them was
 
 ## Next
 
-[Upgrade compatibility](plans/upgrade-compatibility.md): the fixes from the
-review of the [upgrade check](#upgrades-notice-a-new-version-upgrade-easily),
-in 2–3 sessions; the check is not pushed or released until they land.
+Nothing scheduled. Last: the [upgrade check](#upgrades-notice-a-new-version-upgrade-easily)
+and the fixes from its [compatibility review](plans/upgrade-compatibility.md),
+released in 1.3.0 (2026-11-25).
 
 Before that: [The CLI as an agent's tool](#the-cli-as-an-agents-tool),
 items 1–4, plus the CLI's inconsistencies, ran as a step-by-step
@@ -61,62 +61,6 @@ were next before that and are now [waiting for demand](#waiting-for-demand).
 ## Small follow-ups
 
 Unscheduled; each can ship on its own.
-
-### Upgrades: notice a new version, upgrade easily
-
-Design agreed 2026-11-25. AnkiNote notices a newer release and shows how
-to upgrade; it never upgrades itself.
-
-- **`uvx` stays current by itself.** uvx reuses the environment cached on
-  the first run, so `uvx --from ankinote-ai ankinote-web` users never see a
-  new release. The READMEs switch to `uvx --from ankinote-ai@latest
-  ankinote-web`, which checks PyPI on each launch and still starts offline
-  from the cache (checked with uv 0.13.9).
-- **The web app's backend checks PyPI**
-  (`https://pypi.org/pypi/ankinote-ai/json`, `info.version`) at startup and
-  once a day while it runs, since a home-server container can run for
-  months. It is the source for every install path (the Docker images are
-  built from PyPI releases) and has no rate limit, unlike GitHub's API.
-  A failed check stays silent. The browser never contacts PyPI.
-- **On by default, with an off switch**: `ANKINOTE_UPDATE_CHECK=0`. The
-  check shows pypi.org the server's IP; the README says so.
-- **Shown in the top bar and on the About page**: a small "new version"
-  marker in the top bar links to About, which shows the new version, its
-  release notes link (where "Before you upgrade" notes live) and the
-  command. The marker can be dismissed for that version.
-- **The command matches the install path**, with all of them listed when
-  it can't be told:
-  - Docker (`ENV ANKINOTE_INSTALL=docker` in the Dockerfile):
-    `docker compose pull && docker compose up -d`.
-  - `uv tool install` (`uv-receipt.toml` in `sys.prefix`):
-    `uv tool upgrade ankinote-ai`.
-  - `uvx` (`sys.prefix` inside the uv cache): the `@latest` command.
-  - Otherwise: `pip install -U ankinote-ai`.
-- **Not run by the app**: a running process can't replace itself, a
-  container would need the Docker socket, and Windows locks running
-  executables.
-- **No check in the CLI**: agents read its output, `--json` above all.
-
-**Forward-compatibility review: done 2026-11-25; fixes made the same day
-(steps 1–6), release pending.**
-Whatever a release ships keeps running in every install that never
-upgrades, so the fixes ship with the check, not after it. Findings, steps
-and estimates are in the [plan](plans/upgrade-compatibility.md). In short:
-
-- Blockers: one unknown key makes `settings.json` reset to defaults (keys
-  lost on the next save); CLI card commands rewrite existing note types on
-  every run (a new field forces a full AnkiWeb sync unasked).
-- The check: say "read first" for a major release (no "stay on 1.x");
-  take an optional release-notes link from PyPI's `project_urls` rather
-  than a separately fetched JSON; the skill moves to `@latest`; the
-  Docker command says where to run it.
-- **Compatibility rules** for every release from now on: never rename the
-  package, entry points, image, `ANKINOTE_INSTALL`, volume paths or env
-  vars; note type fields and templates are add-only and applied only on
-  an explicit update; `settings.json` is read leniently; `anki` bumps only
-  in a minor release; `--json` and jsonl keys are add-only; breaking
-  changes only in a major release with "Before you upgrade" notes (or an
-  `"Upgrade notes"` project URL, which every older install links to).
 
 ### Flag problem input on language cards
 
@@ -429,6 +373,62 @@ cover:
   template editor.
 
 ## Shipped
+
+### Upgrades: notice a new version, upgrade easily
+
+Shipped in 1.3.0 (2026-11-25). AnkiNote notices a newer release and shows how
+to upgrade; it never upgrades itself.
+
+- **`uvx` stays current by itself.** uvx reuses the environment cached on
+  the first run, so `uvx --from ankinote-ai ankinote-web` users never see a
+  new release. The READMEs switch to `uvx --from ankinote-ai@latest
+  ankinote-web`, which checks PyPI on each launch and still starts offline
+  from the cache (checked with uv 0.13.9).
+- **The web app's backend checks PyPI**
+  (`https://pypi.org/pypi/ankinote-ai/json`, `info.version`) at startup and
+  once a day while it runs, since a home-server container can run for
+  months. It is the source for every install path (the Docker images are
+  built from PyPI releases) and has no rate limit, unlike GitHub's API.
+  A failed check stays silent. The browser never contacts PyPI.
+- **On by default, with an off switch**: `ANKINOTE_UPDATE_CHECK=0`. The
+  check shows pypi.org the server's IP; the README says so.
+- **Shown in the top bar and on the About page**: a small "new version"
+  marker in the top bar links to About, which shows the new version, its
+  release notes link (where "Before you upgrade" notes live) and the
+  command. The marker can be dismissed for that version.
+- **The command matches the install path**, with all of them listed when
+  it can't be told:
+  - Docker (`ENV ANKINOTE_INSTALL=docker` in the Dockerfile):
+    `docker compose pull && docker compose up -d`.
+  - `uv tool install` (`uv-receipt.toml` in `sys.prefix`):
+    `uv tool upgrade ankinote-ai`.
+  - `uvx` (`sys.prefix` inside the uv cache): the `@latest` command.
+  - Otherwise: `pip install -U ankinote-ai`.
+- **Not run by the app**: a running process can't replace itself, a
+  container would need the Docker socket, and Windows locks running
+  executables.
+- **No check in the CLI**: agents read its output, `--json` above all.
+
+**Forward-compatibility review: done 2026-11-25; its fixes shipped with
+the check in 1.3.0.**
+Whatever a release ships keeps running in every install that never
+upgrades, so the fixes ship with the check, not after it. Findings, steps
+and estimates are in the [plan](plans/upgrade-compatibility.md). In short:
+
+- Blockers: one unknown key makes `settings.json` reset to defaults (keys
+  lost on the next save); CLI card commands rewrite existing note types on
+  every run (a new field forces a full AnkiWeb sync unasked).
+- The check: say "read first" for a major release (no "stay on 1.x");
+  take an optional release-notes link from PyPI's `project_urls` rather
+  than a separately fetched JSON; the skill moves to `@latest`; the
+  Docker command says where to run it.
+- **Compatibility rules** for every release from now on: never rename the
+  package, entry points, image, `ANKINOTE_INSTALL`, volume paths or env
+  vars; note type fields and templates are add-only and applied only on
+  an explicit update; `settings.json` is read leniently; `anki` bumps only
+  in a minor release; `--json` and jsonl keys are add-only; breaking
+  changes only in a major release with "Before you upgrade" notes (or an
+  `"Upgrade notes"` project URL, which every older install links to).
 
 ### 1.0: shorter path to the first card (2026-11)
 
