@@ -8,6 +8,8 @@ export type UpdateStatus = {
   current: string;
   latest: string | null;
   available: boolean;
+  /** The new release raises the major version: read its notes first. */
+  major: boolean;
   install: InstallMethod;
   /** The detected install path's command, or every one when it's unknown. */
   commands: { install: InstallMethod; command: string }[];

@@ -94,22 +94,25 @@ Estimates are working time including tests and checks.
 
 ### Session 2: the update check and its texts (about 2–2.5 h)
 
-3. **Skill uses `@latest`** (10 min). `SKILL.md` "Running it":
+3. **Skill uses `@latest`** (10 min), done 2026-11-25. `SKILL.md` "Running it":
    `uvx --from ankinote-ai@latest ankinote`.
-4. **Major releases** (about 1 h). `src/ankinote/web/update_api.py`,
+4. **Major releases** (about 1 h), done 2026-11-25.
+   `src/ankinote/web/update_api.py`,
    `frontend/src/lib/api.ts`, `frontend/src/routes/About.svelte`,
    8 locale files, `tests/web/test_update_api.py`.
    - `UpdateStatus.major: bool` (latest major above current).
    - About puts the release notes first and says "major release: read
      before upgrading"; the command follows. No "stay on 1.x": every
      upgrade command jumps to the newest release anyway.
-5. **Notes link from PyPI's `project_urls`** (about 45 min).
-   `update_api.py`, tests.
+5. **Notes link from PyPI's `project_urls`** (about 45 min), done
+   2026-11-25. `update_api.py`, tests.
    - Read `info.project_urls` from the same response; a label matching
      "Upgrade notes" (compare case- and punctuation-insensitively) replaces
      the `…/releases/tag/vX.Y.Z` link. Don't set it in `pyproject.toml`
-     yet; it exists for a future release to use.
-6. **Docker wording** (20 min, together with step 4's locale edits):
+     yet; it exists for a future release to use. Only `https://` links
+     count, since the page renders it as a link.
+6. **Docker wording** (20 min, together with step 4's locale edits), done
+   2026-11-25:
    run it in the folder with `compose.yaml`; if `ANKINOTE_IMAGE` pins a
    version, change the tag first.
 
@@ -144,4 +147,5 @@ These bind every release from now on; they are also listed in the roadmap.
   meaning.
 - Breaking changes only in a major release, whose release notes start with
   "Before you upgrade" (`make release` uses `--generate-notes`, so write
-  that section by hand for a major).
+  that section by hand for a major). To point every older install at a
+  page instead, set `"Upgrade notes"` under `[project.urls]`.

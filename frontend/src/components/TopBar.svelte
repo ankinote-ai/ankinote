@@ -61,13 +61,10 @@
   </nav>
   <div class="right">
     {#if update.marked && update.status?.latest}
-      <a
-        class="chip update"
-        href="/settings/about"
-        onclick={link}
-        title={t("bar.update", { version: update.status.latest })}
-        aria-label={t("bar.update", { version: update.status.latest })}
-      >
+      {@const label = t(update.status.major ? "bar.updateMajor" : "bar.update", {
+        version: update.status.latest,
+      })}
+      <a class="chip update" href="/settings/about" onclick={link} title={label} aria-label={label}>
         <span aria-hidden="true">↑</span> {update.status.latest}
       </a>
     {/if}

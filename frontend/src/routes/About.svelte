@@ -80,7 +80,14 @@
       {#if update.status?.available && update.status.latest}
         {@const u = update.status}
         <div class="update" role="status">
-          <h3>{t("about.update.title", { version: u.latest ?? "" })}</h3>
+          <h3>{t(u.major ? "about.update.titleMajor" : "about.update.title", { version: u.latest ?? "" })}</h3>
+          {#if u.major && u.notes_url}
+            <!-- A major release may break things: its notes come before the command. -->
+            <p class="major">
+              {t("about.update.major")}
+              <a href={u.notes_url} target="_blank" rel="noopener noreferrer">{t("about.update.readFirst")}</a>
+            </p>
+          {/if}
           <p class="note">{t(`about.update.how.${u.install}`)}</p>
           {#each u.commands as c, i (c.install)}
             <div class="command">
@@ -91,7 +98,7 @@
               </button>
             </div>
           {/each}
-          {#if u.notes_url}
+          {#if u.notes_url && !u.major}
             <a href={u.notes_url} target="_blank" rel="noopener noreferrer">{t("about.update.notes")}</a>
           {/if}
         </div>
@@ -183,6 +190,16 @@
 
   .update a {
     color: var(--accent);
+  }
+
+  .major {
+    margin: 0 0 12px;
+  }
+
+  .major a {
+    display: block;
+    margin-top: 2px;
+    font-weight: 600;
   }
 
   .command {

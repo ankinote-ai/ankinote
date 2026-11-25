@@ -97,7 +97,8 @@ to upgrade; it never upgrades itself.
   executables.
 - **No check in the CLI**: agents read its output, `--json` above all.
 
-**Forward-compatibility review: done 2026-11-25, fixes not yet made.**
+**Forward-compatibility review: done 2026-11-25; fixes made the same day
+(steps 1–6), release pending.**
 Whatever a release ships keeps running in every install that never
 upgrades, so the fixes ship with the check, not after it. Findings, steps
 and estimates are in the [plan](plans/upgrade-compatibility.md). In short:
@@ -114,7 +115,8 @@ and estimates are in the [plan](plans/upgrade-compatibility.md). In short:
   vars; note type fields and templates are add-only and applied only on
   an explicit update; `settings.json` is read leniently; `anki` bumps only
   in a minor release; `--json` and jsonl keys are add-only; breaking
-  changes only in a major release with "Before you upgrade" notes.
+  changes only in a major release with "Before you upgrade" notes (or an
+  `"Upgrade notes"` project URL, which every older install links to).
 
 ### Flag problem input on language cards
 

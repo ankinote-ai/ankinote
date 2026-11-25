@@ -8,6 +8,7 @@ const status = (over: Partial<UpdateStatus> = {}): UpdateStatus => ({
   current: "1.2.3",
   latest: "1.3.0",
   available: true,
+  major: false,
   install: "uvx",
   commands: [{ install: "uvx", command: "uvx --from ankinote-ai@latest ankinote-web" }],
   notes_url: "https://github.com/ankinote-ai/ankinote/releases/tag/v1.3.0",

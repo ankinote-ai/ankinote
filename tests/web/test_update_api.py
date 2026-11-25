@@ -13,9 +13,11 @@ from ankinote.web.app import create_app
 from ankinote.web.update_api import (
     UPGRADE_COMMANDS,
     InstallMethod,
+    Release,
     UpdateChecker,
     detect_install,
     fetch_latest_from_pypi,
+    is_major,
     is_newer,
     update_check_enabled,
 )
@@ -24,16 +26,23 @@ from ankinote.web.update_api import (
 class FakePyPI:
     """Answers like PyPI's JSON API; counts the calls."""
 
-    def __init__(self, latest: str = "9.0.0", *, down: bool = False) -> None:
+    def __init__(
+        self,
+        latest: str = "9.0.0",
+        *,
+        notes_url: str | None = None,
+        down: bool = False,
+    ) -> None:
         self.latest = latest
+        self.notes_url = notes_url
         self.down = down
         self.calls = 0
 
-    async def __call__(self) -> str:
+    async def __call__(self) -> Release:
         self.calls += 1
         if self.down:
             raise httpx.ConnectError("offline")
-        return self.latest
+        return Release(self.latest, self.notes_url)
 
 
 def _env_dir(tmp_path: Path, *parts: str, files: tuple[str, ...] = ()) -> Path:
@@ -141,6 +150,22 @@ def test_only_a_newer_final_release_counts(
     assert is_newer(latest, current) is newer
 
 
+@pytest.mark.parametrize(
+    ("latest", "current", "major"),
+    [
+        ("2.0.0", "1.9.3", True),
+        ("3.1.0", "1.2.3", True),
+        ("1.10.0", "1.9.0", False),
+        ("1.2.4", "1.2.3", False),
+        ("not a version", "1.2.3", False),
+    ],
+)
+def test_a_major_release_raises_the_first_number(
+    latest: str, current: str, major: bool
+) -> None:
+    assert is_major(latest, current) is major
+
+
 # PyPI
 
 
@@ -150,7 +175,48 @@ async def test_reads_the_latest_version_from_pypi() -> None:
         return httpx.Response(200, json={"info": {"version": "1.4.0"}, "releases": {}})
 
     async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
-        assert await fetch_latest_from_pypi(client) == "1.4.0"
+        assert await fetch_latest_from_pypi(client) == Release("1.4.0", None)
+
+
+@pytest.mark.parametrize(
+    "label", ["Upgrade notes", "upgrade-notes", "UPGRADE_NOTES", "Upgrade Notes:"]
+)
+async def test_the_latest_release_can_point_at_its_upgrade_notes(label: str) -> None:
+    # Old installs read the newest release's project URLs, so a future release
+    # can send them to a page written after they shipped.
+    url = "https://ankinote.example/upgrade/2.0"
+    info = {
+        "version": "2.0.0",
+        "project_urls": {"Homepage": "https://example.org", label: url},
+    }
+
+    async with httpx.AsyncClient(
+        transport=httpx.MockTransport(
+            lambda _: httpx.Response(200, json={"info": info})
+        )
+    ) as client:
+        assert await fetch_latest_from_pypi(client) == Release("2.0.0", url)
+
+
+@pytest.mark.parametrize(
+    "project_urls",
+    [
+        None,
+        [],
+        {"Release notes": "https://example.org/notes"},
+        {"Upgrade notes": "javascript:alert(1)"},
+        {"Upgrade notes": 7},
+    ],
+)
+async def test_no_usable_upgrade_notes_link_is_ignored(project_urls: object) -> None:
+    info = {"version": "2.0.0", "project_urls": project_urls}
+
+    async with httpx.AsyncClient(
+        transport=httpx.MockTransport(
+            lambda _: httpx.Response(200, json={"info": info})
+        )
+    ) as client:
+        assert await fetch_latest_from_pypi(client) == Release("2.0.0", None)
 
 
 @pytest.mark.parametrize(
@@ -183,7 +249,7 @@ async def test_a_failed_check_stays_silent_and_keeps_the_last_answer() -> None:
     pypi.down = True
     await checker.check()
 
-    assert checker.latest == "1.9.0"
+    assert checker.status().latest == "1.9.0"
     assert checker.status().available
 
 
@@ -242,12 +308,36 @@ async def test_startup_checks_and_reports_a_new_version(no_dist: Path) -> None:
         "current": "1.2.3",
         "latest": "9.0.0",
         "available": True,
+        "major": True,
         "install": "uvx",
         "commands": [
             {"install": "uvx", "command": "uvx --from ankinote-ai@latest ankinote-web"}
         ],
         "notes_url": "https://github.com/ankinote-ai/ankinote/releases/tag/v9.0.0",
     }
+
+
+async def test_a_minor_release_is_not_major(no_dist: Path) -> None:
+    pypi = FakePyPI("1.3.0")
+    checker = UpdateChecker(
+        fetch=pypi, current="1.2.3", enabled=True, install=InstallMethod.PIP
+    )
+
+    body = await _update(create_app(no_dist, updates=checker), pypi)
+
+    assert body["available"] is True
+    assert body["major"] is False
+
+
+async def test_upgrade_notes_replace_the_release_page(no_dist: Path) -> None:
+    pypi = FakePyPI("2.0.0", notes_url="https://ankinote.example/upgrade/2.0")
+    checker = UpdateChecker(
+        fetch=pypi, current="1.2.3", enabled=True, install=InstallMethod.PIP
+    )
+
+    body = await _update(create_app(no_dist, updates=checker), pypi)
+
+    assert body["notes_url"] == "https://ankinote.example/upgrade/2.0"
 
 
 async def test_unknown_install_lists_every_command(no_dist: Path) -> None:
@@ -274,6 +364,7 @@ async def test_up_to_date_is_not_an_update(no_dist: Path) -> None:
 
     assert body["latest"] == __version__
     assert body["available"] is False
+    assert body["major"] is False
     assert body["notes_url"] is None
 
 

@@ -43,6 +43,15 @@ class InstallMethod(StrEnum):
     UNKNOWN = "unknown"
 
 
+NOTES_LABEL = "upgradenotes"
+"""A project URL labelled "Upgrade notes" (any case or punctuation) in the
+latest release's metadata replaces the link to its GitHub release page.
+
+Every install reads the newest release's ``project_urls``, so a release can
+send installs that shipped long before it to a page written for the upgrade.
+"""
+
+
 UPGRADE_COMMANDS: dict[InstallMethod, str] = {
     InstallMethod.DOCKER: "docker compose pull && docker compose up -d",
     InstallMethod.UV_TOOL: f"uv tool upgrade {PACKAGE}",
@@ -101,7 +110,45 @@ def is_newer(latest: str, current: str) -> bool:
         return False
 
 
-async def fetch_latest_from_pypi(client: httpx.AsyncClient) -> str:
+def is_major(latest: str, current: str) -> bool:
+    """Whether ``latest`` raises the major version, which may break things."""
+    try:
+        return Version(latest).major > Version(current).major
+    except InvalidVersion:
+        return False
+
+
+@dataclass(frozen=True)
+class Release:
+    """The latest release, as PyPI describes it."""
+
+    version: str
+    notes_url: str | None = None
+
+
+def _label_key(label: str) -> str:
+    return "".join(c for c in label.casefold() if c.isalnum())
+
+
+def upgrade_notes_url(project_urls: object) -> str | None:
+    """The "Upgrade notes" link among a release's project URLs, if any.
+
+    Only ``https`` links count, since the page renders it as a link.
+    """
+    if not isinstance(project_urls, dict):
+        return None
+    for label, url in project_urls.items():
+        if (
+            isinstance(label, str)
+            and _label_key(label) == NOTES_LABEL
+            and isinstance(url, str)
+            and url.startswith("https://")
+        ):
+            return url
+    return None
+
+
+async def fetch_latest_from_pypi(client: httpx.AsyncClient) -> Release:
     """The latest release PyPI lists.
 
     :raises httpx.HTTPError: When PyPI can't be reached or answers with an error.
@@ -112,12 +159,12 @@ async def fetch_latest_from_pypi(client: httpx.AsyncClient) -> str:
     data = response.json()
     info = data.get("info") if isinstance(data, dict) else None
     version = info.get("version") if isinstance(info, dict) else None
-    if isinstance(version, str):
-        return version
+    if isinstance(info, dict) and isinstance(version, str):
+        return Release(version, upgrade_notes_url(info.get("project_urls")))
     raise ValueError("PyPI's answer has no info.version")
 
 
-async def _fetch_with_shared_session() -> str:
+async def _fetch_with_shared_session() -> Release:
     return await fetch_latest_from_pypi(get_session())
 
 
@@ -131,6 +178,7 @@ class UpdateStatus(BaseModel):
     current: str
     latest: str | None
     available: bool
+    major: bool
     install: InstallMethod
     commands: list[UpgradeCommand]
     notes_url: str | None
@@ -140,15 +188,15 @@ class UpdateStatus(BaseModel):
 class UpdateChecker:
     """Remembers the latest release PyPI reported.
 
-    :param fetch: Returns the latest version; any error it raises is logged
+    :param fetch: Returns the latest release; any error it raises is logged
         and otherwise ignored.
     """
 
-    fetch: Callable[[], Awaitable[str]] = _fetch_with_shared_session
+    fetch: Callable[[], Awaitable[Release]] = _fetch_with_shared_session
     current: str = __version__
     enabled: bool = field(default_factory=lambda: update_check_enabled(os.environ))
     install: InstallMethod = field(default_factory=current_install)
-    latest: str | None = None
+    latest: Release | None = None
 
     async def check(self) -> None:
         """Ask once; a failure keeps the previous answer and stays silent."""
@@ -164,11 +212,13 @@ class UpdateChecker:
             await asyncio.sleep(interval)
 
     def status(self) -> UpdateStatus:
+        latest = self.latest.version if self.latest else None
         available = (
-            self.enabled
-            and self.latest is not None
-            and is_newer(self.latest, self.current)
+            self.enabled and latest is not None and is_newer(latest, self.current)
         )
+        notes_url = None
+        if available and self.latest:
+            notes_url = self.latest.notes_url or f"{RELEASES_URL}/tag/v{latest}"
         if self.install is InstallMethod.UNKNOWN:
             installs = list(UPGRADE_COMMANDS)
         else:
@@ -176,13 +226,14 @@ class UpdateChecker:
         return UpdateStatus(
             enabled=self.enabled,
             current=self.current,
-            latest=self.latest,
+            latest=latest,
             available=available,
+            major=available and latest is not None and is_major(latest, self.current),
             install=self.install,
             commands=[
                 UpgradeCommand(install=i, command=UPGRADE_COMMANDS[i]) for i in installs
             ],
-            notes_url=f"{RELEASES_URL}/tag/v{self.latest}" if available else None,
+            notes_url=notes_url,
         )
 
 
