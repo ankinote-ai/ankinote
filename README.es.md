@@ -124,14 +124,6 @@ Para que el contenedor use un Anki de escritorio con AnkiConnect, usa `deploy/st
 
 El comando `ankinote` crea tarjetas sin abrir el navegador y usa los mismos ajustes que la app web. Por eso cualquier agente de IA que pueda ejecutar comandos (Claude Code, Codex, …) puede usarlo por ti.
 
-**Enséñale los comandos una sola vez:**
-
-```bash
-uvx --from ankinote-ai ankinote skill install
-```
-
-Copia en `~/.claude/skills` y `~/.agents/skills` una skill que enseña a Claude Code, Codex y otros agentes a llamar a `ankinote`, saber qué tarjetas se guardaron y reintentar solo las que fallaron. Vuelve a ejecutarlo después de actualizar AnkiNote.
-
 **Desde una foto de lo que estás leyendo.** Fotografía una página donde subrayaste palabras nuevas y dile a tu agente: *«Haz tarjetas de Anki con las palabras subrayadas.»* Lee la imagen, extrae las palabras y ejecuta:
 
 ```bash
@@ -146,7 +138,7 @@ ankinote word batch --file words.txt --rpm 30
 
 Las tarjetas de la CLI van directamente a Anki, sin vista previa. Para revisar cada una antes de guardarla, pega la misma lista en la página Generar de la app web.
 
-Ejecuta `ankinote` solo para abrir un menú en la terminal. La [Guía de uso de la CLI](docs/cli-usage.md) cubre frases, oraciones, STEM y todas las opciones.
+Ejecuta `ankinote` solo para abrir un menú en la terminal. La [Guía de uso de la CLI](docs/cli-usage.md) cubre frases, oraciones, STEM y todas las opciones. Para enseñarle estos comandos a tu agente, ejecuta una vez `ankinote skill install` (y de nuevo tras actualizar).
 
 ---
 

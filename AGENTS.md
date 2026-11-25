@@ -5,7 +5,7 @@
 - Source lives in `src/ankinote/`; tests live in `tests/`.
 - For collection backend or AnkiWeb sync changes, consult the confirmed design in [Direct Collection Backend and AnkiWeb Sync](docs/plans/direct-collection-backend.md).
 - For open work, what comes next, or whether something is in scope, read the [Roadmap](docs/roadmap.md); record changes in product direction there.
-- The `ankinote-cli` agent skill ships in the wheel from `src/ankinote/skills/ankinote-cli/`; update it when CLI commands, options, or output change.
+- Whenever you change the CLI (commands, options, output, errors, defaults), check whether the `ankinote-cli` agent skill in `src/ankinote/skills/ankinote-cli/` needs the same change; it ships in the wheel to users' agents.
 - Use `README.md` for configuration and document new integration settings there. Keep credentials and `.env` files out of commits.
 
 ## Development

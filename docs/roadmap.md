@@ -37,6 +37,9 @@ types are the product (in-app editing of them was
     local-access guard stops other web pages from driving it, nothing more.
     Use a home network, Tailscale, or a reverse proxy that asks for a login
     (`ankinote-web` warns at startup when it listens beyond loopback).
+- **The web app leads; the CLI supports** (2026-11-25): READMEs, docs and
+  launch copy present the web app first and keep the CLI and its agent
+  skill short and near the end.
 - **Curated over configurable**: a few good themes and language pairs
   rather than open-ended editors.
 - **Never break existing cards**: note type names and fields stay or get a
