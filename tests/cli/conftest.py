@@ -16,10 +16,16 @@ def capture_options(monkeypatch):
     ``"note_kwargs"`` holds the keyword arguments of the last call.
     Inputs listed in ``fail`` raise ``RuntimeError("boom: <input>")``; the
     others are saved as note ``1``, or ``note_ids`` when a list is given.
+    With ``chatter``, each call also prints to stdout, as litellm does on
+    some errors.
     """
 
     def capture(
-        module, *, fail: Iterable[str] = (), note_ids: list[int] | None = None
+        module,
+        *,
+        fail: Iterable[str] = (),
+        note_ids: list[int] | None = None,
+        chatter: bool = False,
     ) -> dict[str, object]:
         failing = set(fail)
         items: list[str] = []
@@ -41,6 +47,8 @@ def capture_options(monkeypatch):
             async def generate_and_add_note(self, text, *args, **kwargs):
                 items.append(text)
                 captured["note_kwargs"] = kwargs
+                if chatter:
+                    print(f"chatter: {text}")
                 if text in failing:
                     raise RuntimeError(f"boom: {text}")
                 return 1 if note_ids is None else note_ids

@@ -1,16 +1,19 @@
 """Shared ``add`` / ``batch`` behavior for the card commands.
 
 Reads the items, generates them with a concurrency cap and a per-minute
-limit, prints one line per item, and sets the exit code: 0 when every item
-was saved, 1 when any failed or Anki couldn't be reached, 2 for usage errors.
+limit, reports one result per item, and sets the exit code: 0 when every
+item was saved, 1 when any failed or Anki couldn't be reached, 2 for usage
+errors. stdout carries only the result (the summary, or with ``--json`` one
+JSON document); progress and anything printed while generating go to stderr.
 """
 
 import asyncio
+import json
+import sys
 from collections.abc import Awaitable, Callable, Coroutine, Iterable, Sequence
-from contextlib import AbstractAsyncContextManager
+from contextlib import AbstractAsyncContextManager, redirect_stdout
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Protocol
+from typing import Protocol, TextIO
 
 import click
 from asynciolimiter import StrictLimiter
@@ -48,8 +51,21 @@ class ItemResult:
         return self.error is None
 
 
+def json_option(cmd):
+    """Add ``--json`` to an ``add`` or ``batch`` command."""
+    return click.option(
+        "--json",
+        "as_json",
+        is_flag=True,
+        help=(
+            "Print one JSON document with each item's result (note ids or "
+            "error) to stdout; progress and logs go to stderr."
+        ),
+    )(cmd)
+
+
 def batch_options(*, rpm_default: int, rpm_note: str = ""):
-    """Add ``--file`` and ``--rpm`` to a ``batch`` command.
+    """Add ``--file``, ``--rpm`` and ``--json`` to a ``batch`` command.
 
     :param rpm_default: the kind's default items per minute.
     :param rpm_note: appended to ``--rpm``'s help, e.g. why the default is low.
@@ -60,6 +76,7 @@ def batch_options(*, rpm_default: int, rpm_note: str = ""):
     )
 
     def decorate(cmd):
+        cmd = json_option(cmd)
         cmd = click.option(
             "--rpm",
             default=rpm_default,
@@ -70,14 +87,14 @@ def batch_options(*, rpm_default: int, rpm_note: str = ""):
         return click.option(
             "--file",
             "-f",
-            type=click.Path(exists=True, dir_okay=False, path_type=Path),
-            help="Read more items from a file, one per line.",
+            type=click.File("r", encoding="utf-8"),
+            help="Read more items from a file, one per line; - reads stdin.",
         )(cmd)
 
     return decorate
 
 
-def read_items(args: Sequence[str], file: Path | None, *, noun: str) -> list[Item]:
+def read_items(args: Sequence[str], file: TextIO | None, *, noun: str) -> list[Item]:
     """Items from the arguments, then the file's non-blank lines.
 
     :param noun: the kind's plural, for the error message ("words").
@@ -85,7 +102,7 @@ def read_items(args: Sequence[str], file: Path | None, *, noun: str) -> list[Ite
     """
     texts = [arg.strip() for arg in args]
     if file is not None:
-        texts += file.read_text(encoding="utf-8").splitlines()
+        texts += file.read().splitlines()
     items = [Item(text.strip()) for text in texts if text.strip()]
     if not items:
         raise click.UsageError(
@@ -94,25 +111,44 @@ def read_items(args: Sequence[str], file: Path | None, *, noun: str) -> list[Ite
     return items
 
 
-def add_one(scope: CollectionScope, text: str) -> None:
+def add_one(scope: CollectionScope, text: str, *, kind: str, as_json: bool) -> None:
     """Make one item's card(s) and print the saved note ids.
 
-    :raises click.ClickException: the item failed or Anki is unreachable.
+    :param kind: the command group ("word"), named in the JSON document.
+    :raises click.ClickException: Anki is unreachable, or (without
+        ``as_json``) the item failed.
     """
-    [result] = run(_make_all(scope, [Item(text)], rpm=0))
-    if not result.ok:
+    [result] = _make_all_quietly(scope, [Item(text)], rpm=0)
+    if as_json:
+        _print_json(kind, [result])
+    elif result.ok:
+        click.echo(f"✓ Added: {text} ({_notes(result.note_ids)})")
+    else:
         raise click.ClickException(f"{text}: {result.error}")
-    click.echo(f"✓ Added: {text} ({_notes(result.note_ids)})")
+    if not result.ok:
+        click.get_current_context().exit(1)
 
 
-def add_many(scope: CollectionScope, items: list[Item], *, noun: str, rpm: int) -> None:
-    """Make every item's cards and print a summary; exit 1 if any failed."""
+def add_many(
+    scope: CollectionScope,
+    items: list[Item],
+    *,
+    kind: str,
+    noun: str,
+    rpm: int,
+    as_json: bool,
+) -> None:
+    """Make every item's cards and report each result; exit 1 if any failed."""
     click.echo(
         f"Processing {len(items)} {noun} "
-        f"(concurrency={MAX_CONCURRENCY}, rpm={rpm or 'no limit'}) ..."
+        f"(concurrency={MAX_CONCURRENCY}, rpm={rpm or 'no limit'}) ...",
+        err=True,
     )
-    results = run(_make_all(scope, items, rpm=rpm))
-    _print_summary(results)
+    results = _make_all_quietly(scope, items, rpm=rpm)
+    if as_json:
+        _print_json(kind, results)
+    else:
+        _print_summary(results)
     if not all(result.ok for result in results):
         click.get_current_context().exit(1)
 
@@ -129,6 +165,21 @@ def run[T](coro: Coroutine[object, object, T]) -> T:
         raise
     except Exception as e:
         raise click.ClickException(_describe(e)) from e
+
+
+def _make_all_quietly(
+    scope: CollectionScope, items: Iterable[Item], *, rpm: int
+) -> list[ItemResult]:
+    """Generate the items with stdout sent to stderr.
+
+    Providers' libraries print to stdout (litellm does on some errors), which
+    would corrupt the result an agent parses.
+    """
+    try:
+        with redirect_stdout(sys.stderr):
+            return run(_make_all(scope, items, rpm=rpm))
+    finally:
+        sys.stderr.flush()
 
 
 async def _make_all(
@@ -153,6 +204,24 @@ async def _make_all(
         async with asyncio.TaskGroup() as group:
             tasks = [group.create_task(make(item)) for item in items]
     return [task.result() for task in tasks]
+
+
+def _print_json(kind: str, results: Sequence[ItemResult]) -> None:
+    succeeded = sum(result.ok for result in results)
+    document = {
+        "kind": kind,
+        "total": len(results),
+        "succeeded": succeeded,
+        "failed": len(results) - succeeded,
+        "results": [_result_json(result) for result in results],
+    }
+    click.echo(json.dumps(document, ensure_ascii=False))
+
+
+def _result_json(result: ItemResult) -> dict[str, object]:
+    if result.ok:
+        return {"input": result.item.text, "ok": True, "note_ids": [*result.note_ids]}
+    return {"input": result.item.text, "ok": False, "error": result.error}
 
 
 def _print_summary(results: list[ItemResult]) -> None:

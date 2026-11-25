@@ -5,10 +5,18 @@ from collections.abc import Awaitable
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TextIO
 
 import click
 
-from ankinote.cli.batch import add_many, add_one, batch_options, read_items, run
+from ankinote.cli.batch import (
+    add_many,
+    add_one,
+    batch_options,
+    json_option,
+    read_items,
+    run,
+)
 from ankinote.cli.factory import (
     StemCollectionOptions,
     anki_client_scope,
@@ -108,6 +116,7 @@ def init(llm, profile, thinking, image_model, image_size, image_profile, card_ty
 
 @stem.command("add")
 @click.argument("topic")
+@json_option
 @click.option(
     "--image",
     "image_path",
@@ -122,6 +131,7 @@ def init(llm, profile, thinking, image_model, image_size, image_profile, card_ty
 def add(
     topic,
     image_path: Path | None,
+    as_json: bool,
     llm,
     profile,
     thinking,
@@ -138,7 +148,7 @@ def add(
     options = build_options(
         llm, image_model, image_size, profile, image_profile, thinking, card_type
     )
-    add_one(_scope(options, image_path), topic)
+    add_one(_scope(options, image_path), topic, kind="stem", as_json=as_json)
 
 
 @stem.command("batch")
@@ -150,8 +160,9 @@ def add(
 @collection_options
 def batch(
     topics: tuple[str, ...],
-    file: Path | None,
+    file: TextIO | None,
     rpm: int,
+    as_json: bool,
     llm,
     profile,
     thinking,
@@ -170,10 +181,13 @@ def batch(
     Examples:
       ankinote stem batch "What is entropy?" "State Bayes' theorem"
       ankinote stem batch --file topics.txt
+      cat topics.txt | ankinote stem batch --file - --json
       ankinote stem batch --file problems.txt --type example
     """
     items = read_items(topics, file, noun="topics")
     options = build_options(
         llm, image_model, image_size, profile, image_profile, thinking, card_type
     )
-    add_many(_scope(options), items, noun="topics", rpm=rpm)
+    add_many(
+        _scope(options), items, kind="stem", noun="topics", rpm=rpm, as_json=as_json
+    )

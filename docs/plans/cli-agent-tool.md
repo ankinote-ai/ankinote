@@ -107,7 +107,15 @@ topics at once (was one at a time); `--rpm` still defaults to 10.
 
 Done when: STEM behaves like the other kinds apart from its own options.
 
-## Step 3: `--json` and stdin (S)
+## Step 3: `--json` and stdin (S), done
+
+Done 2026-11-25. `json_option` in `cli/batch.py`; `--file` is a
+`click.File`, so `-` reads stdin and a missing file is a usage error. stdout
+carries only the result: the "Processing …" line goes to stderr, and
+generation runs under `redirect_stdout(sys.stderr)` because litellm prints
+to stdout on some errors. When Anki can't be reached the run fails before
+any item: exit 1, the error on stderr, stdout empty (no JSON document); the
+skill in step 4 should say so.
 
 1. Tests first: `--json` output parses and matches the shape above for all
    succeeded, some failed, and `add`; `--file -` reads stdin; nothing but
@@ -125,9 +133,13 @@ one parseable result per line.
   retry or report failed items, exit codes, stdin.
 - `docs/cli-usage.md` and the README's terminal section: one item per line
   for every kind, `--json`, `--file -`.
-- Roadmap: tick items 2–4 of "The CLI as an agent's tool". The skill lives in
-  the repo; users of the `uvx` install don't get it, so decide whether the
-  README should link to it as a copyable snippet.
+- Roadmap: tick items 2–4 of "The CLI as an agent's tool".
+- Where the skill lives (decide with the user): a skill in this repo only
+  reaches agents working in this repo, but the goal is that any agent on the
+  machine (other projects, `uvx` installs) can drive `ankinote`. Options:
+  install it user-wide (`~/.claude/skills/`, `~/.agents/skills/`) by symlink
+  or copy, document that in the README, or ship it in the wheel with a
+  command that installs it (e.g. `ankinote skill install`).
 
 ## Step 5: Context with each item (M)
 

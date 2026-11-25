@@ -1,11 +1,18 @@
 """CLI commands for phrase cards."""
 
 from contextlib import asynccontextmanager
-from pathlib import Path
+from typing import TextIO
 
 import click
 
-from ankinote.cli.batch import add_many, add_one, batch_options, read_items, run
+from ankinote.cli.batch import (
+    add_many,
+    add_one,
+    batch_options,
+    json_option,
+    read_items,
+    run,
+)
 from ankinote.cli.factory import (
     LanguageCollectionOptions,
     anki_client_scope,
@@ -76,10 +83,16 @@ def init(native, target, llm, profile, thinking):
 
 @phrase.command("add")
 @click.argument("phrase")
+@json_option
 @collection_options
-def add(phrase, native, target, llm, profile, thinking):
+def add(phrase, as_json, native, target, llm, profile, thinking):
     """Generate and push a single phrase card."""
-    add_one(_scope(build_options(native, target, llm, profile, thinking)), phrase)
+    add_one(
+        _scope(build_options(native, target, llm, profile, thinking)),
+        phrase,
+        kind="phrase",
+        as_json=as_json,
+    )
 
 
 @phrase.command("batch")
@@ -88,8 +101,9 @@ def add(phrase, native, target, llm, profile, thinking):
 @collection_options
 def batch(
     phrases: tuple[str, ...],
-    file: Path | None,
+    file: TextIO | None,
     rpm: int,
+    as_json: bool,
     native,
     target,
     llm,
@@ -106,8 +120,11 @@ def batch(
     Examples:
       ankinote phrase batch "focus on" "look after"
       ankinote phrase batch --file phrases.txt
+      cat phrases.txt | ankinote phrase batch --file - --json
       ankinote phrase batch "call off" --file more.txt
     """
     items = read_items(phrases, file, noun="phrases")
     options = build_options(native, target, llm, profile, thinking)
-    add_many(_scope(options), items, noun="phrases", rpm=rpm)
+    add_many(
+        _scope(options), items, kind="phrase", noun="phrases", rpm=rpm, as_json=as_json
+    )

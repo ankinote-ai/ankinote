@@ -1,11 +1,18 @@
 """CLI commands for word cards."""
 
 from contextlib import asynccontextmanager
-from pathlib import Path
+from typing import TextIO
 
 import click
 
-from ankinote.cli.batch import add_many, add_one, batch_options, read_items, run
+from ankinote.cli.batch import (
+    add_many,
+    add_one,
+    batch_options,
+    json_option,
+    read_items,
+    run,
+)
 from ankinote.cli.factory import (
     WordCollectionOptions,
     anki_client_scope,
@@ -87,15 +94,25 @@ def init(
 
 @word.command("add")
 @click.argument("word")
+@json_option
 @collection_options
 def add(
-    word, native, target, llm, profile, thinking, image_model, image_size, image_profile
+    word,
+    as_json,
+    native,
+    target,
+    llm,
+    profile,
+    thinking,
+    image_model,
+    image_size,
+    image_profile,
 ):
     """Generate and push a single word card (one note per part of speech)."""
     options = build_options(
         native, target, llm, image_model, image_size, profile, image_profile, thinking
     )
-    add_one(_scope(options), word)
+    add_one(_scope(options), word, kind="word", as_json=as_json)
 
 
 @word.command("batch")
@@ -107,8 +124,9 @@ def add(
 @collection_options
 def batch(
     words: tuple[str, ...],
-    file: Path | None,
+    file: TextIO | None,
     rpm: int,
+    as_json: bool,
     native,
     target,
     llm,
@@ -128,10 +146,13 @@ def batch(
     Examples:
       ankinote word batch apple banana cat
       ankinote word batch --file words.txt
+      cat words.txt | ankinote word batch --file - --json
       ankinote word batch --rpm 30 apple --file more.txt
     """
     items = read_items(words, file, noun="words")
     options = build_options(
         native, target, llm, image_model, image_size, profile, image_profile, thinking
     )
-    add_many(_scope(options), items, noun="words", rpm=rpm)
+    add_many(
+        _scope(options), items, kind="word", noun="words", rpm=rpm, as_json=as_json
+    )

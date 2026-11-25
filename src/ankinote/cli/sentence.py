@@ -1,11 +1,18 @@
 """CLI commands for sentence (production) cards."""
 
 from contextlib import asynccontextmanager
-from pathlib import Path
+from typing import TextIO
 
 import click
 
-from ankinote.cli.batch import add_many, add_one, batch_options, read_items, run
+from ankinote.cli.batch import (
+    add_many,
+    add_one,
+    batch_options,
+    json_option,
+    read_items,
+    run,
+)
 from ankinote.cli.factory import (
     LanguageCollectionOptions,
     anki_client_scope,
@@ -76,15 +83,21 @@ def init(native, target, llm, profile, thinking):
 
 @sentence.command("add")
 @click.argument("sentence")
+@json_option
 @collection_options
-def add(sentence, native, target, llm, profile, thinking):
+def add(sentence, as_json, native, target, llm, profile, thinking):
     """Generate and push a single sentence production card.
 
     The *sentence* argument should be in the target language. Its
     native-language translation will appear on the card front; the target
     sentence, notes, and phrase breakdown appear on the back.
     """
-    add_one(_scope(build_options(native, target, llm, profile, thinking)), sentence)
+    add_one(
+        _scope(build_options(native, target, llm, profile, thinking)),
+        sentence,
+        kind="sentence",
+        as_json=as_json,
+    )
 
 
 @sentence.command("batch")
@@ -93,8 +106,9 @@ def add(sentence, native, target, llm, profile, thinking):
 @collection_options
 def batch(
     sentences: tuple[str, ...],
-    file: Path | None,
+    file: TextIO | None,
     rpm: int,
+    as_json: bool,
     native,
     target,
     llm,
@@ -111,8 +125,16 @@ def batch(
     Examples:
       ankinote sentence add "I overslept this morning."
       ankinote sentence batch --file sentences.txt
+      cat sentences.txt | ankinote sentence batch --file - --json
       ankinote sentence batch "I overslept this morning." --file more.txt
     """
     items = read_items(sentences, file, noun="sentences")
     options = build_options(native, target, llm, profile, thinking)
-    add_many(_scope(options), items, noun="sentences", rpm=rpm)
+    add_many(
+        _scope(options),
+        items,
+        kind="sentence",
+        noun="sentences",
+        rpm=rpm,
+        as_json=as_json,
+    )
