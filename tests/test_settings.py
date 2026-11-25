@@ -2,6 +2,7 @@
 
 import json
 import os
+from pathlib import Path
 
 import httpx
 import pytest
@@ -460,3 +461,144 @@ def test_saved_settings_are_private_to_the_user(tmp_path, monkeypatch) -> None:
     assert path.stat().st_mode & 0o777 == 0o600
     assert json.loads(path.read_text())["api_keys"] == {"OPENAI_API_KEY": "sk-secret"}
     assert [p.name for p in path.parent.iterdir()] == ["settings.json"]
+
+
+def _write_settings(tmp_path, monkeypatch, data: object) -> Path:
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    path = tmp_path / "ankinote" / "settings.json"
+    path.parent.mkdir()
+    path.write_text(data if isinstance(data, str) else json.dumps(data))
+    return path
+
+
+_CURRENT = {
+    "text_providers": {
+        "Work": {
+            "vendor": "OpenAI",
+            "model": "gpt-4o",
+            "base_url": "https://api.openai.com/v1",
+            "api_key": "sk-work",
+        }
+    },
+    "active_text_provider": "Work",
+    "api_keys": {"GOOGLE_TTS_KEY": "g-key"},
+    "defaults": {"native_language": "German", "target_language": "Japanese"},
+}
+
+
+@pytest.mark.parametrize(
+    "extra",
+    [
+        {"future_top_level": {"x": 1}},
+        {"defaults": {**_CURRENT["defaults"], "future_default": True}},
+        {
+            "text_providers": {
+                "Work": {**_CURRENT["text_providers"]["Work"], "future": "x"}
+            }
+        },
+    ],
+    ids=["top-level", "defaults", "profile"],
+)
+def test_an_unknown_key_keeps_the_rest_of_the_settings(
+    tmp_path, monkeypatch, extra: dict
+) -> None:
+    # A newer release may add keys; an older one sharing the file must not
+    # throw the whole file away because of them.
+    _write_settings(tmp_path, monkeypatch, {**_CURRENT, **extra})
+
+    settings = load_settings()
+
+    assert settings.active_text_provider == "Work"
+    assert settings.text_providers["Work"].api_key == "sk-work"
+    assert settings.api_keys == {"GOOGLE_TTS_KEY": "g-key"}
+    assert settings.defaults.native_language == "German"
+    assert settings.defaults.target_language == "Japanese"
+
+
+def test_a_wrong_type_falls_back_for_that_field_only(tmp_path, monkeypatch) -> None:
+    _write_settings(
+        tmp_path,
+        monkeypatch,
+        {
+            **_CURRENT,
+            "image_size": "big",
+            "ui_language": 3,
+            "api_keys": {"GOOGLE_TTS_KEY": "g-key", "BAD": 1},
+            "defaults": {"native_language": "German", "generate_image": "no"},
+            "text_providers": {
+                "Work": {**_CURRENT["text_providers"]["Work"], "model": 4},
+                "Broken": "not a profile",
+            },
+            "image_providers": [],
+        },
+    )
+
+    settings = load_settings()
+
+    assert settings.image_size == 512
+    assert settings.ui_language == "en"
+    assert settings.api_keys == {"GOOGLE_TTS_KEY": "g-key"}
+    assert settings.defaults.native_language == "German"
+    assert settings.defaults.generate_image is True
+    assert set(settings.text_providers) == {"Work"}
+    assert settings.text_providers["Work"].model == ""
+    assert settings.text_providers["Work"].api_key == "sk-work"
+    assert settings.image_providers  # the defaults
+
+
+def test_save_keeps_keys_a_newer_release_wrote(tmp_path, monkeypatch) -> None:
+    # Downgrade, save, upgrade again: the newer settings must still be there.
+    path = _write_settings(
+        tmp_path,
+        monkeypatch,
+        {
+            **_CURRENT,
+            "future_top_level": {"x": 1},
+            "defaults": {**_CURRENT["defaults"], "future_default": True},
+            "text_providers": {
+                "Work": {**_CURRENT["text_providers"]["Work"], "future": "x"}
+            },
+        },
+    )
+
+    settings = load_settings()
+    settings.defaults.native_language = "French"
+    settings.text_providers["Home"] = ProviderProfile(vendor="OpenAI")
+    save_settings(settings)
+
+    data = json.loads(path.read_text())
+    assert data["future_top_level"] == {"x": 1}
+    assert data["defaults"]["future_default"] is True
+    assert data["defaults"]["native_language"] == "French"
+    assert data["text_providers"]["Work"]["future"] == "x"
+    assert data["text_providers"]["Home"]["vendor"] == "OpenAI"
+
+
+def test_save_drops_a_removed_profile_and_legacy_keys(tmp_path, monkeypatch) -> None:
+    path = _write_settings(tmp_path, monkeypatch, {"provider": "OpenAI"})
+
+    settings = load_settings()
+    save_settings(settings)
+    settings.text_providers = {"Other": ProviderProfile(vendor="OpenAI")}
+    settings.active_text_provider = "Other"
+    save_settings(settings)
+
+    data = json.loads(path.read_text())
+    assert "provider" not in data
+    assert set(data["text_providers"]) == {"Other"}
+
+
+@pytest.mark.parametrize("content", ["{not json", "[1, 2]", "null"])
+def test_an_unreadable_file_is_set_aside_not_overwritten(
+    tmp_path, monkeypatch, content: str
+) -> None:
+    path = _write_settings(tmp_path, monkeypatch, content)
+
+    settings = load_settings()
+    save_settings(settings)
+
+    assert settings.active_text_provider == Settings().active_text_provider
+    broken = list(path.parent.glob("settings.json.broken-*"))
+    assert len(broken) == 1
+    assert broken[0].read_text() == content
+    assert json.loads(path.read_text())["text_providers"]

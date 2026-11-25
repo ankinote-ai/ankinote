@@ -5,9 +5,12 @@ import json
 import os
 import tempfile
 from collections.abc import Callable
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, fields
+from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
+
+from loguru import logger
 
 from ankinote.card_theme import default_palette, palette_ids
 from ankinote.config import envs
@@ -502,15 +505,38 @@ def _get_config_path() -> Path:
     return _get_config_dir() / "settings.json"
 
 
-def _parse_profiles(raw: dict) -> dict[str, ProviderProfile]:
+# settings.json is shared by every installed version (an upgraded web app
+# next to a cached CLI, a downgraded Docker tag), so it is read leniently:
+# unknown keys are ignored here and kept by ``save_settings``, and a value of
+# the wrong type falls back to its default for that field only.
+
+
+def _typed[T: (str, int, bool)](data: dict, key: str, default: T) -> T:
+    """``data[key]`` when it has ``default``'s exact type, else ``default``."""
+    value = data.get(key)
+    return cast(T, value) if type(value) is type(default) else default
+
+
+def _str_dict(value: object) -> dict[str, str]:
+    if not isinstance(value, dict):
+        return {}
+    return {k: v for k, v in value.items() if isinstance(k, str) and isinstance(v, str)}
+
+
+def _lenient[T: (DefaultsConfig, ProviderProfile)](cls: type[T], raw: object) -> T:
+    """``cls`` from the known keys of ``raw`` that have the right type."""
+    obj = cls()
+    if isinstance(raw, dict):
+        for f in fields(obj):
+            setattr(obj, f.name, _typed(raw, f.name, getattr(obj, f.name)))
+    return obj
+
+
+def _parse_profiles(raw: object) -> dict[str, ProviderProfile]:
+    if not isinstance(raw, dict):
+        return {}
     return {
-        name: ProviderProfile(
-            vendor=value.get("vendor", ""),
-            model=value.get("model", ""),
-            base_url=value.get("base_url", ""),
-            api_key=value.get("api_key", ""),
-            preset=value.get("preset", ""),
-        )
+        name: _lenient(ProviderProfile, value)
         for name, value in raw.items()
         if isinstance(name, str) and isinstance(value, dict)
     }
@@ -546,32 +572,32 @@ def _settings_from_current_shape(data: dict) -> Settings:
     once the Settings page has saved either field once, its stored value is
     always non-empty and the env var is no longer consulted.
     """
-    text_providers = _parse_profiles(data.get("text_providers", {}))
-    image_providers = _parse_profiles(data.get("image_providers", {}))
-    speech_providers = _parse_profiles(data.get("speech_providers", {}))
-    active_speech_provider = data.get("active_speech_provider", "")
+    text_providers = _parse_profiles(data.get("text_providers"))
+    image_providers = _parse_profiles(data.get("image_providers"))
+    speech_providers = _parse_profiles(data.get("speech_providers"))
+    api_keys = _str_dict(data.get("api_keys"))
+    active_speech_provider = _typed(data, "active_speech_provider", "")
     if "speech_providers" not in data:
-        speech_providers, active_speech_provider = _speech_from_google_key(
-            data.get("api_keys", {})
-        )
+        speech_providers, active_speech_provider = _speech_from_google_key(api_keys)
+    first_image = next(iter(image_providers), DEFAULT_IMAGE_PROFILE_NAME)
     return Settings(
         text_providers=text_providers or _default_text_providers(),
-        active_text_provider=data.get("active_text_provider")
+        active_text_provider=_typed(data, "active_text_provider", "")
         or next(iter(text_providers), DEFAULT_TEXT_PROFILE_NAME),
         image_providers=image_providers or _default_image_providers(),
         # "" is the image route turned off; only a file without the key
         # (0.x before routes could be off) falls back to the first profile.
-        active_image_provider=data["active_image_provider"]
+        active_image_provider=_typed(data, "active_image_provider", first_image)
         if "active_image_provider" in data
-        else next(iter(image_providers), DEFAULT_IMAGE_PROFILE_NAME),
+        else first_image,
         speech_providers=speech_providers,
         active_speech_provider=active_speech_provider,
-        image_size=data.get("image_size", 512),
-        api_keys=data.get("api_keys", {}),
-        defaults=DefaultsConfig(**data.get("defaults", {})),
-        ui_language=data.get("ui_language", "en"),
-        anki_backend=data.get("anki_backend") or envs.ANKI_BACKEND,
-        anki_collection_path=data.get("anki_collection_path")
+        image_size=_typed(data, "image_size", 512),
+        api_keys=api_keys,
+        defaults=_lenient(DefaultsConfig, data.get("defaults")),
+        ui_language=_typed(data, "ui_language", "en"),
+        anki_backend=_typed(data, "anki_backend", "") or envs.ANKI_BACKEND,
+        anki_collection_path=_typed(data, "anki_collection_path", "")
         or envs.ANKI_COLLECTION_PATH,
         card_theme_light=_palette(data.get("card_theme_light")),
         card_theme_dark=_palette(data.get("card_theme_dark")),
@@ -591,6 +617,17 @@ def _palette(value: object) -> str:
 # config file can still be recognized and migrated on first load.
 _LEGACY_CUSTOM_PROVIDER = "Custom (OpenAI-compatible)"
 _LEGACY_CUSTOM_API_KEY_STORAGE_KEY = "CUSTOM_API_KEY"
+# Keys of that shape; migrated on load, so a save drops them.
+_LEGACY_KEYS = frozenset(
+    {
+        "provider",
+        "text_model",
+        "custom_base_url",
+        "custom_providers",
+        "image_provider",
+        "image_model",
+    }
+)
 
 
 def _settings_from_legacy_shape(data: dict) -> Settings:
@@ -601,10 +638,12 @@ def _settings_from_legacy_shape(data: dict) -> Settings:
     single active ``image_provider``/``image_model`` — each becomes one
     ``ProviderProfile`` here.
     """
-    old_api_keys: dict = data.get("api_keys", {})
-    old_custom_providers: dict = data.get("custom_providers", {})
-    old_provider = data.get("provider", "OpenAI")
-    old_text_model = data.get("text_model", "gpt-4o")
+    old_api_keys = _str_dict(data.get("api_keys"))
+    old_custom_providers = data.get("custom_providers")
+    if not isinstance(old_custom_providers, dict):
+        old_custom_providers = {}
+    old_provider = _typed(data, "provider", "OpenAI")
+    old_text_model = _typed(data, "text_model", "gpt-4o")
 
     text_providers: dict[str, ProviderProfile] = {}
     taken: set[str] = set()
@@ -634,7 +673,7 @@ def _settings_from_legacy_shape(data: dict) -> Settings:
         text_providers[name] = ProviderProfile(
             vendor=CUSTOM_VENDOR,
             model=old_text_model,
-            base_url=data.get("custom_base_url", ""),
+            base_url=_typed(data, "custom_base_url", ""),
             api_key=old_api_keys.get(_LEGACY_CUSTOM_API_KEY_STORAGE_KEY, ""),
         )
         active_text_provider = name
@@ -647,15 +686,15 @@ def _settings_from_legacy_shape(data: dict) -> Settings:
         taken.add(name)
         text_providers[name] = ProviderProfile(
             vendor=CUSTOM_VENDOR,
-            model=cvalue.get("model", ""),
-            base_url=cvalue.get("base_url", ""),
-            api_key=cvalue.get("api_key", ""),
+            model=_typed(cvalue, "model", ""),
+            base_url=_typed(cvalue, "base_url", ""),
+            api_key=_typed(cvalue, "api_key", ""),
         )
         if cname == old_provider:
             active_text_provider = name
 
-    old_image_model = data.get("image_model", "gemini/gemini-3.1-flash-lite-image")
-    old_image_provider = data.get("image_provider") or image_provider_for(
+    old_image_model = _typed(data, "image_model", "gemini/gemini-3.1-flash-lite-image")
+    old_image_provider = _typed(data, "image_provider", "") or image_provider_for(
         old_image_model
     )
     image_providers: dict[str, ProviderProfile] = {}
@@ -681,12 +720,12 @@ def _settings_from_legacy_shape(data: dict) -> Settings:
         or next(iter(image_providers), DEFAULT_IMAGE_PROFILE_NAME),
         speech_providers=speech_providers,
         active_speech_provider=active_speech_provider,
-        image_size=data.get("image_size", 512),
+        image_size=_typed(data, "image_size", 512),
         api_keys=google_tts,
-        defaults=DefaultsConfig(**data.get("defaults", {})),
-        ui_language=data.get("ui_language", "en"),
-        anki_backend=data.get("anki_backend") or envs.ANKI_BACKEND,
-        anki_collection_path=data.get("anki_collection_path")
+        defaults=_lenient(DefaultsConfig, data.get("defaults")),
+        ui_language=_typed(data, "ui_language", "en"),
+        anki_backend=_typed(data, "anki_backend", "") or envs.ANKI_BACKEND,
+        anki_collection_path=_typed(data, "anki_collection_path", "")
         or envs.ANKI_COLLECTION_PATH,
     )
 
@@ -756,49 +795,82 @@ def load_settings() -> Settings:
     Transparently migrates a pre-profile settings.json (one active provider
     per kind, plus a flat ``custom_providers`` dict) into the current
     multi-profile shape. The file is rewritten in the new shape on next save.
+    A file that isn't a JSON object is moved aside rather than lost.
     """
     path = _get_config_path()
     if not path.exists():
-        return Settings(
-            anki_backend=envs.ANKI_BACKEND,
-            anki_collection_path=envs.ANKI_COLLECTION_PATH,
-        )
+        return _env_settings()
+    data = _read_object(path)
+    if data is None:
+        _set_aside(path)
+        return _env_settings()
+    if "text_providers" in data:
+        return follow_presets(_settings_from_current_shape(data))
+    return _settings_from_legacy_shape(data)
+
+
+def _env_settings() -> Settings:
+    return Settings(
+        anki_backend=envs.ANKI_BACKEND,
+        anki_collection_path=envs.ANKI_COLLECTION_PATH,
+    )
+
+
+def _read_object(path: Path) -> dict | None:
+    """The JSON object in ``path``, or ``None`` if it holds anything else."""
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
-        if "text_providers" in data:
-            return follow_presets(_settings_from_current_shape(data))
-        return _settings_from_legacy_shape(data)
-    except json.JSONDecodeError, KeyError, TypeError:
-        return Settings()
+    except ValueError:
+        return None
+    return data if isinstance(data, dict) else None
+
+
+def _set_aside(path: Path) -> None:
+    stamp = datetime.now().astimezone().strftime("%Y%m%d-%H%M%S")
+    target = path.with_name(f"{path.name}.broken-{stamp}")
+    path.rename(target)
+    logger.warning(f"{path} could not be read; moved it to {target}, using defaults")
 
 
 def save_settings(settings: Settings) -> None:
-    """Save settings to ~/.config/ankinote/settings.json."""
+    """Save settings to ~/.config/ankinote/settings.json.
+
+    Keys this version doesn't know (written by a newer release) are kept, at
+    the top level, in ``defaults`` and in each profile still present.
+    """
     config_dir = _get_config_dir()
     config_dir.mkdir(parents=True, exist_ok=True)
-    data = {
-        "text_providers": {
-            name: asdict(profile) for name, profile in settings.text_providers.items()
-        },
+    path = _get_config_path()
+    on_disk = (_read_object(path) if path.exists() else None) or {}
+
+    def profiles(key: str, current: dict[str, ProviderProfile]) -> dict:
+        old = on_disk.get(key)
+        old = old if isinstance(old, dict) else {}
+        return {name: _over(old.get(name), asdict(p)) for name, p in current.items()}
+
+    known = {
+        "text_providers": profiles("text_providers", settings.text_providers),
         "active_text_provider": settings.active_text_provider,
-        "image_providers": {
-            name: asdict(profile) for name, profile in settings.image_providers.items()
-        },
+        "image_providers": profiles("image_providers", settings.image_providers),
         "active_image_provider": settings.active_image_provider,
-        "speech_providers": {
-            name: asdict(profile) for name, profile in settings.speech_providers.items()
-        },
+        "speech_providers": profiles("speech_providers", settings.speech_providers),
         "active_speech_provider": settings.active_speech_provider,
         "image_size": settings.image_size,
         "api_keys": settings.api_keys,
-        "defaults": asdict(settings.defaults),
+        "defaults": _over(on_disk.get("defaults"), asdict(settings.defaults)),
         "ui_language": settings.ui_language,
         "anki_backend": settings.anki_backend,
         "anki_collection_path": settings.anki_collection_path,
         "card_theme_light": settings.card_theme_light,
         "card_theme_dark": settings.card_theme_dark,
     }
-    _write_private(_get_config_path(), json.dumps(data, indent=2))
+    unknown = {k: v for k, v in on_disk.items() if k not in _LEGACY_KEYS}
+    _write_private(path, json.dumps(_over(unknown, known), indent=2))
+
+
+def _over(old: object, known: dict) -> dict:
+    """``known`` written over ``old``, keeping the keys only ``old`` has."""
+    return {**old, **known} if isinstance(old, dict) else known
 
 
 def _write_private(path: Path, text: str) -> None:

@@ -62,8 +62,8 @@ Estimates are working time including tests and checks.
 
 ### Session 1: the two blockers (Python only, about 2.5–3 h)
 
-1. **Lenient settings** (1.5–2 h). `src/ankinote/settings.py`,
-   `tests/test_settings.py`.
+1. **Lenient settings** (1.5–2 h), done 2026-11-25.
+   `src/ankinote/settings.py`, `tests/test_settings.py`.
    - Tests first: an unknown key in `defaults`, in a profile, and at the
      top level keeps the rest of the settings; a save keeps unknown
      top-level keys; an unparseable file is not overwritten by defaults.
