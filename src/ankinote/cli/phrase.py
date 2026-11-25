@@ -6,9 +6,11 @@ from typing import TextIO
 import click
 
 from ankinote.cli.batch import (
+    InputFormat,
     add_many,
     add_one,
     batch_options,
+    context_option,
     json_option,
     read_items,
     run,
@@ -83,27 +85,35 @@ def init(native, target, llm, profile, thinking):
 
 @phrase.command("add")
 @click.argument("phrase")
+@context_option
 @json_option
 @collection_options
-def add(phrase, as_json, native, target, llm, profile, thinking):
-    """Generate and push a single phrase card."""
+def add(phrase, context, as_json, native, target, llm, profile, thinking):
+    """Generate and push a single phrase card.
+
+    \b
+    With --context, the card covers the sense used in that sentence:
+      ankinote phrase add "pick up" --context "I'll pick you up at six."
+    """
     add_one(
         _scope(build_options(native, target, llm, profile, thinking)),
         phrase,
         kind="phrase",
         as_json=as_json,
+        context=context,
     )
 
 
 @phrase.command("batch")
 @click.argument("phrases", nargs=-1, metavar="[PHRASE ...]")
-@batch_options(rpm_default=60)
+@batch_options(rpm_default=60, context=True)
 @collection_options
 def batch(
     phrases: tuple[str, ...],
     file: TextIO | None,
     rpm: int,
     as_json: bool,
+    input_format: InputFormat,
     native,
     target,
     llm,
@@ -122,8 +132,14 @@ def batch(
       ankinote phrase batch --file phrases.txt
       cat phrases.txt | ankinote phrase batch --file - --json
       ankinote phrase batch "call off" --file more.txt
+      ankinote phrase batch --format jsonl --file phrases.jsonl --json
+
+    \b
+    With --format jsonl, each line can carry the sentence the phrase came
+    from, and the card covers only the sense used there:
+      {"text": "pick up", "context": "I'll pick you up at six."}
     """
-    items = read_items(phrases, file, noun="phrases")
+    items = read_items(phrases, file, noun="phrases", input_format=input_format)
     options = build_options(native, target, llm, profile, thinking)
     add_many(
         _scope(options), items, kind="phrase", noun="phrases", rpm=rpm, as_json=as_json

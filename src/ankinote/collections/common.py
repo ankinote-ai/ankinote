@@ -181,6 +181,27 @@ def create_prompt_loader[KT](
     return _load_prompt
 
 
+def with_context(
+    package: str, system_prompt: str, user_message: str, context: str | None
+) -> tuple[str, str]:
+    """Add the sentence an item came from, and the rules for it, to a prompt.
+
+    The rules are ``<package>.prompts/context.md``, appended to the system
+    prompt; the sentence goes on a last ``Context:`` line of the user message.
+
+    :param context: the text the learner met the item in; ``None`` or blank
+        leaves both parts exactly as they are.
+    :returns: the system prompt and the user message.
+    """
+    context = (context or "").strip()
+    if not context:
+        return system_prompt, user_message
+    rules = (
+        files(f"{package}.prompts").joinpath("context.md").read_text(encoding="utf-8")
+    )
+    return f"{system_prompt}\n\n{rules}", f"{user_message}\nContext: {context}"
+
+
 _ANGLED_PHONETIC_PATTERN = re.compile(r"<([^:>]+):([^>]+)>")  # <汉:hàn>
 _INLINE_PHONETIC_PATTERN = re.compile(r"([一-龯々ヶヵ]+)<([^:>]+)>")  # 漢<かん>
 

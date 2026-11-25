@@ -55,7 +55,21 @@ needs them.
 - **Context input format** (step 5): `add --context "…"`; for `batch`,
   `--format jsonl` with lines `{"text": "…", "context": "…"}`, default
   `lines`. JSONL is easy for an agent to write and needs no escaping rules;
-  tabs are awkward to type in a shell.
+  tabs are awkward to type in a shell. Confirmed 2026-11-25.
+- **What context does to a card** (step 5, confirmed 2026-11-25): `word` and
+  `phrase` take it; `sentence` (already a sentence) and `stem` (has
+  `--image`) don't. With context the card covers only the part of speech and
+  the one sense used there (word: one record, one sense; phrase: no
+  supporting meanings), the context sentence is the first example (only the
+  sentence holding the item if the context is longer, wording unchanged),
+  and the picture shows that sense. Without context, what is sent to the
+  model is byte-for-byte what it is today: the rules live in a separate
+  prompt addendum, and the note types don't change.
+- **Web input** (step 6, confirmed 2026-11-25): no new control. A line on the
+  Generate page with `[ ]` around the item is the context sentence: `We sat
+  on the [bank] of the river.` Phrases may mark several parts, joined in
+  order (`I'll [pick] you [up] at six.` → `pick up`); word takes exactly one.
+  Lines without brackets behave as today; sentence and STEM ignore brackets.
 
 ## Step 1: Shared batch runner; word, phrase, sentence on it (M), done
 
@@ -148,27 +162,61 @@ inputs, since language cards allow duplicates.
   or copy, document that in the README, or ship it in the wheel with a
   command that installs it (e.g. `ankinote skill install`).
 
-## Step 5: Context with each item (M)
+## Step 5: Context with each item (M), done
+
+Done 2026-11-25. The rules are `collections/{word,phrase}/prompts/context.md`,
+added by `collections/common.py:with_context`; `context` is a keyword-only
+argument from the generators up to `generate_and_add_note`. CLI: `Item.context`,
+`context_option`, `batch_options(context=True)` adds `--format`. Tests in
+`tests/collections/test_context_prompts.py` and `tests/cli/test_context_cli.py`.
+Checked live with `gemini-3.5-flash-lite` ("bank" river vs. aircraft,
+"ran" → run, "make out", "pick up"): one record, one sense, the sentence
+verbatim as the first example. Two prompt fixes came out of it: the card must
+stay on the queried item (an unrelated context once produced a card for
+another word), and `supporting_meanings` must be `[]`. A context without
+the item still ends up as an example; that is left to the roadmap's "flag
+problem input" item.
 
 The highest-value roadmap item, and the only one that changes generation.
+Scope and card behavior are under [Decisions](#decisions).
 
-1. Confirm scope with the user: which kinds take context. Proposed: `word`
-   and `phrase` (the sense used in a sentence); not `sentence` (the input is
-   already a sentence) or `stem` (it has `--image`).
-2. Tests first: the prompt sent for a word with context contains the
+1. Tests first: the prompt sent for a word with context contains the
    context; without context the prompt is unchanged (existing wire and
    prompt tests stay green).
-3. Thread an optional `context` from `generate_word_data` /
+2. Thread an optional `context` from `generate_word_data` /
    `generate_phrase_data` (`collections/*/generator.py`) through the
    collections' `generate_cards` / `generate_and_add_note` to the CLI, and
    extend the prompts in `collections/{word,phrase}/prompts/`: focus the card
    on the sense used there, and use the sentence as one of the examples.
-4. CLI: `add --context`, `batch --format jsonl`. Results echo the context.
-5. Check a few real cards against a live key (polysemous words such as
-   "bank", "run") before calling it done.
+3. CLI: `add --context`, `batch --format jsonl`. Results echo the context.
+   Update the `ankinote-cli` skill.
+4. Check a few real cards against a live key (polysemous words such as
+   "bank", "run") before calling it done: call the generators only, no
+   media, nothing saved to Anki.
 
-The web app's Generate page doesn't take context yet; add it to the roadmap
-as a follow-up rather than this step.
+## Step 6: Context on the web app's Generate page (M)
+
+1. Tests first: the bracket parser (one item for word, joined parts for
+   phrase, no brackets → today's line, several brackets on a word line → an
+   error on that line); the generate API passes `context` through.
+2. API: an optional `context` per item; regenerate keeps it.
+3. Generate page: parse brackets for word and phrase; the queue row shows
+   the item with the sentence on a muted second line; placeholder and line
+   hint explain the brackets. Follow the design language; check desktop and
+   phone widths.
+4. README (all six languages): a short "how people use it" section after the
+   showcase, workflow first, with this one: paste the sentence you met the
+   word in and mark it. Benefits: the card covers that one sense, so a
+   polysemous word or phrasal verb stays uncluttered, and the sentence you
+   actually read stays on the card as its first example, which helps it
+   stick. Present it through the web app; the CLI stays low-key.
+
+## Later: the "photograph a wrong answer" workflow in the README
+
+Already works (STEM, a picture of the question on the Generate page, the
+Example type). Add it to the README's workflow section once that exists:
+the card is the problem you actually got wrong, with a step-by-step solution
+you can check and edit before saving. Not scheduled.
 
 ## After this plan
 

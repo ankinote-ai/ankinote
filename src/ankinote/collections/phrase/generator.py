@@ -5,7 +5,12 @@ from dataclasses import dataclass, field
 
 from loguru import logger
 
-from ankinote.collections.common import MediaGap, create_prompt_loader, synthesize_all
+from ankinote.collections.common import (
+    MediaGap,
+    create_prompt_loader,
+    synthesize_all,
+    with_context,
+)
 from ankinote.consts import Language
 from ankinote.services.ai import DISABLE_REASONING, TextGenerationService
 from ankinote.services.tts import SpeechSynthesizer
@@ -67,6 +72,7 @@ async def generate_phrase_data(
     model: str,
     temperature: float = 0.3,
     reasoning_effort: str | None = DISABLE_REASONING,
+    context: str | None = None,
 ) -> PhraseModel:
     """Generate phrase card data via LLM.
 
@@ -78,6 +84,9 @@ async def generate_phrase_data(
         temperature: Sampling temperature for generation.
         reasoning_effort: Forwarded to the provider; defaults to disabling the
             model's extended thinking pass, which adds little for this prompt.
+        context: The sentence the learner met the phrase in; the card then
+            covers the sense used there, with that sentence as the first
+            example. None sends the usual prompt unchanged.
 
     Returns:
         A PhraseModel object describing the phrase.
@@ -92,6 +101,9 @@ async def generate_phrase_data(
         f"Phrase: {phrase}\n"
         f"Target language: {target_language.value}\n"
         f"Native language: {native_language.value}"
+    )
+    system_prompt, user_message = with_context(
+        "ankinote.collections.phrase", system_prompt, user_message, context
     )
 
     logger.info(
@@ -150,6 +162,7 @@ class PhraseGenerator:
         native_lang: Language,
         temperature: float = 0.3,
         reasoning_effort: str | None = DISABLE_REASONING,
+        context: str | None = None,
     ) -> PhraseModel:
         """Generate structured phrase data via LLM."""
         return await generate_phrase_data(
@@ -160,6 +173,7 @@ class PhraseGenerator:
             model=self._text_model,
             temperature=temperature,
             reasoning_effort=reasoning_effort,
+            context=context,
         )
 
     async def generate_media(

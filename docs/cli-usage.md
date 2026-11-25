@@ -77,6 +77,26 @@ ankinote sentence add "I overslept this morning."
 ankinote sentence batch --file sentences.txt
 ```
 
+### The sentence a word or phrase came from
+
+`word` and `phrase` can take the sentence you met the item in. The card then
+covers only the part of speech and the sense used there, rather than the
+most common senses, and that sentence becomes its first example; a word's
+picture shows that sense. `add` takes `--context`; `batch --format jsonl`
+reads one JSON object per line from `--file`, with `context` optional:
+
+```bash
+ankinote word add bank --context "We sat on the bank of the river."
+ankinote phrase add "pick up" --context "I'll pick you up at six."
+
+ankinote word batch --format jsonl --file words.jsonl
+# words.jsonl:
+# {"text": "bank", "context": "We sat on the bank of the river."}
+# {"text": "serendipity"}
+```
+
+Without context, nothing changes. `sentence` and `stem` don't take it.
+
 ### STEM cards
 
 ```bash
@@ -176,13 +196,15 @@ printf 'apple\nice cream\n' | ankinote word batch --file - --json
 ```
 
 `note_ids` is always a list, since a word can make one note per part of
-speech. Exit codes, with or without `--json`:
+speech. An item given with context also carries `"context"`. Exit codes,
+with or without `--json`:
 
 - `0`: every item was saved.
 - `1`: at least one item failed (the document lists which and why), or
   nothing ran because Anki couldn't be reached; then stdout is empty and the
   error is on stderr.
-- `2`: usage error, such as no items, an unknown option, or a missing file.
+- `2`: usage error, such as no items, an unknown option, a missing file, or
+  a bad `--format jsonl` line.
 
 To retry, rerun only the failed inputs: language cards allow duplicates, so
 rerunning a whole batch saves the succeeded items twice.

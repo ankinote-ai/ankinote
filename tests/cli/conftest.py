@@ -13,7 +13,8 @@ def capture_options(monkeypatch):
     Call it with the CLI module; it returns a dict whose ``"options"`` key holds
     the typed collection options after the command runs, and whose ``"items"``
     key lists the inputs the collection was asked to generate, in order;
-    ``"note_kwargs"`` holds the keyword arguments of the last call.
+    ``"note_kwargs"`` holds the keyword arguments of the last call, and
+    ``"kwargs_by_item"`` each input's.
     Inputs listed in ``fail`` raise ``RuntimeError("boom: <input>")``; the
     others are saved as note ``1``, or ``note_ids`` when a list is given.
     With ``chatter``, each call also prints to stdout, as litellm does on
@@ -29,7 +30,8 @@ def capture_options(monkeypatch):
     ) -> dict[str, object]:
         failing = set(fail)
         items: list[str] = []
-        captured: dict[str, object] = {"items": items}
+        kwargs_by_item: dict[str, dict[str, object]] = {}
+        captured: dict[str, object] = {"items": items, "kwargs_by_item": kwargs_by_item}
 
         @asynccontextmanager
         async def fake_client_scope():
@@ -47,6 +49,7 @@ def capture_options(monkeypatch):
             async def generate_and_add_note(self, text, *args, **kwargs):
                 items.append(text)
                 captured["note_kwargs"] = kwargs
+                kwargs_by_item[text] = kwargs
                 if chatter:
                     print(f"chatter: {text}")
                 if text in failing:

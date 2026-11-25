@@ -50,8 +50,8 @@ types are the product (in-app editing of them was
 [The CLI as an agent's tool](#the-cli-as-an-agents-tool), items 1–4, plus
 the CLI's inconsistencies (exit codes, `word` files split on whitespace,
 `stem batch` on its own code path); scheduled 2026-11-25 as a step-by-step
-[plan](plans/cli-agent-tool.md). Steps 1–4 shipped 2026-11-25; step 5,
-context with each item, remains. Grammar cards and scene cards were next
+[plan](plans/cli-agent-tool.md). Steps 1–4 shipped 2026-11-25; steps 5–6,
+context with each item in the CLI and on the Generate page, remain. Grammar cards and scene cards were next
 before that and are now [waiting for demand](#waiting-for-demand).
 
 ## Small follow-ups
@@ -76,6 +76,9 @@ then memorizes it). Nothing tells the user.
   one item on purpose.
 - Start with tests that reproduce the kept typo and the unflagged
   several-sentence line.
+- Also flag a context sentence that doesn't contain the item (CLI
+  `--context`; the web app's brackets rule it out). Checked 2026-11-25: told
+  to ignore such a context, the model still used it as the first example.
 
 ### Fix with AI inside the live editor
 
@@ -98,8 +101,6 @@ Proposed 2026-11-25 (UI not yet confirmed):
 
 ### STEM in the web app
 
-- Reference image (a photographed problem) as input: in 0.x, not yet in the
-  web app.
 - Thinking level on the Generate page: in 0.x, not yet in the web app.
 
 ### Rendering polish
@@ -197,7 +198,7 @@ app's job (one item per line on the Generate page).
 
 What would make the CLI a better agent tool, in rough order of value
 (items 1–4 are in the [plan](plans/cli-agent-tool.md); 2–4 shipped
-2026-11-25):
+2026-11-25; item 1 also reaches the web app as the plan's step 6):
 
 1. **Context with each item.** Pass the sentence the word was underlined in,
    so the card explains the sense used there and can use that sentence as an
@@ -350,6 +351,11 @@ cover:
 - **Gemini Batch API** (2026-11-25): half price, but jobs are asynchronous
   (up to 24 hours), which does not suit generating while you review. Worth
   revisiting only for large file imports.
+- **Cloze cards from a context sentence** (2026-11-25): the marked word in
+  its sentence could become a cloze, but a new card needs a new field (a
+  migration and a full AnkiWeb sync), and the word note's recall card
+  already targets the one sense. Cloze fits grammar cards better, which are
+  [waiting for demand](#waiting-for-demand).
 - **Stronger grammar notes on sentence cards** (2026-11-25): which grammar
   is worth explaining depends on the learner's level, which AnkiNote doesn't
   know.

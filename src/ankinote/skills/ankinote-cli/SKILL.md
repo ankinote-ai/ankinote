@@ -15,12 +15,13 @@ no configuration.
 
 1. Work out the items from what the user gave you: underlined words in a
    photo of a page, a vocabulary list, sentences from an article, a
-   photographed math problem.
+   photographed math problem. For words and phrases, keep the sentence each
+   one appeared in when you have it (see [Context](#context)).
 2. Show the list and confirm it if you had to guess (unclear handwriting,
    ambiguous underlines), or if it's more than a few dozen cards: each card
    costs AI requests on the user's key. Otherwise go ahead.
-3. Run one `batch` per card kind with `--json`, items one per line on stdin
-   (see [Input](#input)).
+3. Run one `batch` per card kind with `--json`, items on stdin (see
+   [Input](#input)).
 4. Read the result (see [Results](#results)), retry the failed items once if
    the error looks temporary, then tell the user what was saved and what
    failed and why.
@@ -50,6 +51,8 @@ keys or edit `settings.json` by hand.
 ```
 ankinote <word|phrase|sentence|stem> add <item> [--json]
 ankinote <word|phrase|sentence|stem> batch [items...] [--file path|-] [--rpm N] [--json]
+ankinote <word|phrase> add <item> --context "<sentence>"
+ankinote <word|phrase> batch --format jsonl --file path|-
 ankinote <word|phrase|sentence|stem> init        # create note type + deck if missing
 ankinote anki <login|logout|status|sync>         # built-in Anki only
 ankinote profiles list [--json]
@@ -92,6 +95,29 @@ EOF
 
 Items can also be arguments (quote multi-word ones), and both can be mixed.
 
+## Context
+
+For `word` and `phrase`, pass the sentence the item appeared in whenever you
+have it, e.g. the sentence around an underlined word in a photo. The card
+then covers only the part of speech and the sense used there (one note, not
+one per part of speech), uses that sentence as its first example, and its
+picture shows that sense. Without context, a word card lists its most common
+senses. Use the sentence as written; don't fix or shorten it.
+
+`--format jsonl` reads one JSON object per line from `--file`; `context` is
+optional per line, and arguments stay plain items:
+
+```bash
+ankinote word batch --format jsonl --json --file - <<'EOF'
+{"text": "bank", "context": "We sat on the bank of the river."}
+{"text": "serendipity"}
+EOF
+ankinote phrase add "pick up" --context "I'll pick you up at six." --json
+```
+
+Give the item in its dictionary form or as it appears; the card uses the
+dictionary form either way. `sentence` and `stem` take no context.
+
 ## Results
 
 With `--json`, stdout holds exactly one JSON document; progress and logs go
@@ -104,14 +130,15 @@ to stderr. `add` prints the same shape with one result.
    {"input": "xyzzy", "ok": false, "error": "…"}]}
 ```
 
-`note_ids` is a list: a word can make one note per part of speech.
+`note_ids` is a list: a word can make one note per part of speech. Results
+of items given with context also echo `"context"`.
 
 | Exit | Meaning | stdout |
 | --- | --- | --- |
 | 0 | every item saved | the JSON document |
 | 1 | some items failed | the JSON document; read each `error` |
 | 1 | nothing ran (Anki unreachable, collection in use, bad setting) | empty; the error is on stderr |
-| 2 | usage error (no items, unknown option, missing file) | empty; the error is on stderr |
+| 2 | usage error (no items, unknown option, missing file, a bad jsonl line) | empty; the error is on stderr |
 
 To retry, rerun only the inputs whose `ok` is false. Never rerun the whole
 batch: language cards allow duplicates, so items that already succeeded

@@ -165,21 +165,30 @@ class PhraseCollection:
         self,
         phrase: str,
         tags: list[str] | None = None,
+        *,
+        context: str | None = None,
     ) -> int:
         """Generate complete phrase data and add/update note in Anki."""
-        [card] = await self.generate_cards(phrase)
+        [card] = await self.generate_cards(phrase, context=context)
         note_id = await self.save_card(card, tags)
         logger.success(f"Completed generation for phrase '{phrase}', note {note_id}")
         return note_id
 
-    async def generate_cards(self, phrase: str) -> list[PhraseCardData]:
-        """Generate the note for ``phrase``, unsaved (always one)."""
+    async def generate_cards(
+        self, phrase: str, *, context: str | None = None
+    ) -> list[PhraseCardData]:
+        """Generate the note for ``phrase``, unsaved (always one).
+
+        :param context: the sentence the learner met the phrase in; the card
+            then covers the sense used there.
+        """
         logger.info(f"Starting generation for phrase: {phrase}")
         phrase_model = await self._generator.generate_phrase_data(
             phrase=phrase,
             target_lang=self._target_language,
             native_lang=self._native_language,
             reasoning_effort=self._reasoning_effort,
+            context=context,
         )
         media = await self._generator.generate_media(
             phrase_model=phrase_model,

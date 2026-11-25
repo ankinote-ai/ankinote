@@ -13,6 +13,7 @@ from ankinote.collections.common import (
     MediaGap,
     create_prompt_loader,
     synthesize_all,
+    with_context,
 )
 from ankinote.consts import Language
 from ankinote.services.ai import (
@@ -100,11 +101,16 @@ async def generate_word_data(
     model: str,
     temperature: float = 0.3,
     reasoning_effort: str | None = DISABLE_REASONING,
+    context: str | None = None,
 ) -> list[WordModel]:
     """Generate vocabulary card data for a word using AI.
 
     Extended model "thinking" is disabled by default: the prompt is tightly
     specified and the output is short, so it adds little but costs tokens.
+
+    :param context: the sentence the learner met the word in; the model then
+        returns one record for the sense used there, with that sentence as
+        the first example. ``None`` sends the usual prompt unchanged.
     """
     system_prompt = _load_prompt_template(target_language)
     user_message = (
@@ -112,6 +118,9 @@ async def generate_word_data(
         f"Target language: {target_language.value}\n"
         f"Native language: {native_language.value}\n"
         "Goal: Create concise Anki cards optimized for recognition, recall, and spelling."
+    )
+    system_prompt, user_message = with_context(
+        "ankinote.collections.word", system_prompt, user_message, context
     )
 
     logger.info(
@@ -180,6 +189,7 @@ class WordGenerator:
         native_lang: Language,
         temperature: float = 0.3,
         reasoning_effort: str | None = DISABLE_REASONING,
+        context: str | None = None,
     ) -> list[WordModel]:
         """Generate structured word data via LLM."""
         return await generate_word_data(
@@ -190,6 +200,7 @@ class WordGenerator:
             model=self._text_model,
             temperature=temperature,
             reasoning_effort=reasoning_effort,
+            context=context,
         )
 
     async def generate_media(

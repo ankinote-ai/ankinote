@@ -174,19 +174,27 @@ class WordCollection:
         self,
         word: str,
         tags: list[str] | None = None,
+        *,
+        context: str | None = None,
     ) -> list[int]:
-        cards = await self.generate_cards(word)
+        cards = await self.generate_cards(word, context=context)
         note_ids = [await self.save_card(card, tags) for card in cards]
         logger.success(
             f"Completed generation for '{word}': {len(note_ids)} note(s) created/updated"
         )
         return note_ids
 
-    async def generate_cards(self, word: str) -> list[WordCardData]:
-        """Generate the notes for ``word`` (one per part of speech), unsaved."""
+    async def generate_cards(
+        self, word: str, *, context: str | None = None
+    ) -> list[WordCardData]:
+        """Generate the notes for ``word`` (one per part of speech), unsaved.
+
+        :param context: the sentence the learner met the word in; then one
+            note, for the sense used there.
+        """
         logger.info(f"Starting generation for word: {word}")
         cards: list[WordCardData] = []
-        for word_model in await self._generate_word_models(word):
+        for word_model in await self._generate_word_models(word, context):
             media = await self._generator.generate_media(
                 word_model=word_model,
                 target_lang=self._target_language,
@@ -258,12 +266,15 @@ class WordCollection:
             images={index: f"{word_hash}_img{index}.png" for index in media.images},
         )
 
-    async def _generate_word_models(self, word: str) -> list[WordModel]:
+    async def _generate_word_models(
+        self, word: str, context: str | None = None
+    ) -> list[WordModel]:
         return await self._generator.generate_word_data(
             word=word,
             target_lang=self._target_language,
             native_lang=self._native_language,
             reasoning_effort=self._reasoning_effort,
+            context=context,
         )
 
     async def _add_or_update_note(

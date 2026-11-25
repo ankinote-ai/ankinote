@@ -6,9 +6,11 @@ from typing import TextIO
 import click
 
 from ankinote.cli.batch import (
+    InputFormat,
     add_many,
     add_one,
     batch_options,
+    context_option,
     json_option,
     read_items,
     run,
@@ -94,10 +96,12 @@ def init(
 
 @word.command("add")
 @click.argument("word")
+@context_option
 @json_option
 @collection_options
 def add(
     word,
+    context,
     as_json,
     native,
     target,
@@ -108,11 +112,16 @@ def add(
     image_size,
     image_profile,
 ):
-    """Generate and push a single word card (one note per part of speech)."""
+    """Generate and push a single word card (one note per part of speech).
+
+    \b
+    With --context, one note for the sense the word has in that sentence:
+      ankinote word add bank --context "We sat on the bank of the river."
+    """
     options = build_options(
         native, target, llm, image_model, image_size, profile, image_profile, thinking
     )
-    add_one(_scope(options), word, kind="word", as_json=as_json)
+    add_one(_scope(options), word, kind="word", as_json=as_json, context=context)
 
 
 @word.command("batch")
@@ -120,6 +129,7 @@ def add(
 @batch_options(
     rpm_default=8,
     rpm_note="Word cards default lower: each also makes a picture and audio.",
+    context=True,
 )
 @collection_options
 def batch(
@@ -127,6 +137,7 @@ def batch(
     file: TextIO | None,
     rpm: int,
     as_json: bool,
+    input_format: InputFormat,
     native,
     target,
     llm,
@@ -148,8 +159,14 @@ def batch(
       ankinote word batch --file words.txt
       cat words.txt | ankinote word batch --file - --json
       ankinote word batch --rpm 30 apple --file more.txt
+      ankinote word batch --format jsonl --file words.jsonl --json
+
+    \b
+    With --format jsonl, each line can carry the sentence the word came from,
+    and the card covers only the sense used there:
+      {"text": "bank", "context": "We sat on the bank of the river."}
     """
-    items = read_items(words, file, noun="words")
+    items = read_items(words, file, noun="words", input_format=input_format)
     options = build_options(
         native, target, llm, image_model, image_size, profile, image_profile, thinking
     )
