@@ -60,12 +60,38 @@ Unscheduled; each can ship on its own.
 
 ### Upgrades: notice a new version, upgrade easily
 
-Wanted 2026-11-25; how is still open. AnkiNote should notice when a newer
-release exists and offer a convenient way to upgrade. Each install path
-needs its own route: `uv tool` / `uvx` / pip from PyPI, and the Docker
-images (GHCR, Docker Hub). Open questions: where the check runs (web app,
-CLI, or both), how often, what it may contact (PyPI's JSON API or GitHub
-Releases), and whether an upgrade only shows the command or runs it.
+Design agreed 2026-11-25. AnkiNote notices a newer release and shows how
+to upgrade; it never upgrades itself.
+
+- **`uvx` stays current by itself.** uvx reuses the environment cached on
+  the first run, so `uvx --from ankinote-ai ankinote-web` users never see a
+  new release. The READMEs switch to `uvx --from ankinote-ai@latest
+  ankinote-web`, which checks PyPI on each launch and still starts offline
+  from the cache (checked with uv 0.13.9).
+- **The web app's backend checks PyPI**
+  (`https://pypi.org/pypi/ankinote-ai/json`, `info.version`) at startup and
+  once a day while it runs, since a home-server container can run for
+  months. It is the source for every install path (the Docker images are
+  built from PyPI releases) and has no rate limit, unlike GitHub's API.
+  A failed check stays silent. The browser never contacts PyPI.
+- **On by default, with an off switch**: `ANKINOTE_UPDATE_CHECK=0`. The
+  check shows pypi.org the server's IP; the README says so.
+- **Shown in the top bar and on the About page**: a small "new version"
+  marker in the top bar links to About, which shows the new version, its
+  release notes link (where "Before you upgrade" notes live) and the
+  command. The marker can be dismissed for that version.
+- **The command matches the install path**, with all of them listed when
+  it can't be told:
+  - Docker (`ENV ANKINOTE_INSTALL=docker` in the Dockerfile):
+    `docker compose pull && docker compose up -d`.
+  - `uv tool install` (`uv-receipt.toml` in `sys.prefix`):
+    `uv tool upgrade ankinote-ai`.
+  - `uvx` (`sys.prefix` inside the uv cache): the `@latest` command.
+  - Otherwise: `pip install -U ankinote-ai`.
+- **Not run by the app**: a running process can't replace itself, a
+  container would need the Docker socket, and Windows locks running
+  executables.
+- **No check in the CLI**: agents read its output, `--json` above all.
 
 ### Flag problem input on language cards
 
