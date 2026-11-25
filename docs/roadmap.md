@@ -3,7 +3,7 @@
 Product directions, grouped by status. Nothing here is a commitment to a date,
 framework, or API. Last reorganized 2026-11-25.
 
-- **Next**: [scene cards with image occlusion](#scene-cards-with-image-occlusion).
+- **Next**: nothing scheduled.
 - **Small follow-ups**: [unscheduled, independent of each other](#small-follow-ups).
 - **Waiting for demand**: [built only once users ask](#waiting-for-demand).
 - **Later ideas**: [CLI as an agent's tool](#the-cli-as-an-agents-tool),
@@ -44,28 +44,9 @@ types are the product (in-app editing of them was
 
 ## Next
 
-Started in its own session, on the user's go. (Grammar cards were next too
-until 2026-11-25; now [waiting for demand](#waiting-for-demand).)
-
-### Scene cards with image occlusion
-
-Raised 2026-11-25; explore before planning. A scene picture (a kitchen, a
-station) with its everyday objects; each object's name is hidden and the
-user recalls it. Anki has a built-in Image Occlusion note type (since
-23.10); the user picks which objects to hide on each card.
-
-What AnkiNote would add is the part Anki can't: draw the scene, find the
-objects in it, and name each one in the target language (with audio), so the
-user only chooses what to hide. A short spike should answer, before any UI:
-
-1. Does the image model draw scenes whose objects are clearly separate?
-2. Does a vision model return usable boxes and names for them?
-3. Can AnkiNote write Anki's own Image Occlusion notes through both
-   backends (the note type, the occlusion field format)?
-
-If all three hold, it is a large feature (an occlusion editor in the web
-app, a new note type, the preview), so a 2.x candidate rather than a small
-follow-up.
+Nothing scheduled since 2026-11-25; pick from the
+[small follow-ups](#small-follow-ups). Grammar cards and scene cards were
+next and are now [waiting for demand](#waiting-for-demand).
 
 ## Small follow-ups
 
@@ -165,6 +146,25 @@ Designed or discussed; built only once users ask.
     land on one card. One point per card: too broad a topic returns
     narrower points to pick from; "A vs B" is one card about A with B under
     the contrast. Native-language "how do I say…" queries are left out.
+- **Scene cards with image occlusion** (raised and deferred 2026-11-25): a
+  labeled scene (a kitchen with each object named in the target language),
+  the labels hidden by Anki's own Image Occlusion masks. Deferred because it
+  saves the user little over making the same note in Anki. Findings if
+  built:
+  - Write Anki's stock `Image Occlusion` notes; no new note type. The
+    `Occlusion` field holds `{{cN::image-occlusion:rect:left=…:top=…:width=…:height=…:oi=1}}`
+    with 0–1 coordinates, one `cN` per card. Rendering depends only on the
+    field, so AnkiConnect's `addNote` should work as well as the direct
+    backend's `add_image_occlusion_note` (unverified against Desktop;
+    collections from before 23.10 may lack the type).
+  - AnkiNote draws the labels itself, never the image model (it misspells,
+    above all CJK, and its text positions are unknown). Flow: text model
+    lists the objects for a topic → image model draws them without text →
+    vision model locates the listed objects → labels with leader lines
+    composited onto the image, masks placed on the known label boxes.
+  - No per-word audio (`Back Extra` is shared by the note's cards); CJK
+    labels need a bundled font. Generated scenes first; a user's own photo
+    reuses the flow with harder detection.
 
 - **A built-in password** for the web app. Until then, a reverse proxy that
   asks for a login (see the principles above). Accounts belong to the
