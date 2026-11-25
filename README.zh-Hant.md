@@ -214,6 +214,10 @@ make check                # 程式碼檢查與型別檢查（ruff + ty）
 - [筆記類型說明](docs/NoteType.org)
 - [Agent Skill](src/ankinote/skills/ankinote-cli/SKILL.md) — 搭配 AI 程式設計助手使用 AnkiNote
 
+## 🌐 社群
+
+- [GitHub 討論區](https://github.com/ankinote-ai/ankinote/discussions) — 提問、提想法、分享你做的卡片
+
 ## 📄 開源授權
 
 MIT License — 詳見 [LICENSE](LICENSE)。

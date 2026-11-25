@@ -216,6 +216,7 @@ make check                # 代码检查与类型检查（ruff + ty）
 
 ## 🌐 社区
 
+- [GitHub 讨论区](https://github.com/ankinote-ai/ankinote/discussions) — 提问、提想法、晒你做的卡片
 - [LINUX DO](https://linux.do/)
 
 ## 📄 开源协议

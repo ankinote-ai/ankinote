@@ -60,6 +60,7 @@
   const links = [
     { label: "about.project", href: REPO_URL },
     { label: "about.issues", href: `${REPO_URL}/issues` },
+    { label: "about.discussions", href: `${REPO_URL}/discussions` },
     { label: "about.releases", href: `${REPO_URL}/releases` },
     { label: "about.license", href: `${REPO_URL}/blob/main/LICENSE`, text: "MIT" },
   ] as const;

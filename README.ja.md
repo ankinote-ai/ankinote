@@ -214,6 +214,10 @@ make check                # リント ＆ 型チェック（ruff + ty）
 - [ノートタイプリファレンス](docs/NoteType.org)
 - [Agent Skill](src/ankinote/skills/ankinote-cli/SKILL.md) — AI コーディングアシスタントとの連携用
 
+## 🌐 コミュニティ
+
+- [GitHub Discussions](https://github.com/ankinote-ai/ankinote/discussions) — 質問、アイデア、作ったカードの共有
+
 ## 📄 ライセンス
 
 MIT License — 詳細は [LICENSE](LICENSE) をご覧ください。

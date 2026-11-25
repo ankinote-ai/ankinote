@@ -217,6 +217,7 @@ make check                # lint & type-check (ruff + ty)
 
 ## 🌐 Community
 
+- [GitHub Discussions](https://github.com/ankinote-ai/ankinote/discussions) — questions, ideas, and the cards you made
 - [LINUX DO](https://linux.do/)
 
 ## 📄 License

@@ -214,6 +214,10 @@ make check                # lint y comprobación de tipos (ruff + ty)
 - [Referencia de tipos de nota](docs/NoteType.org)
 - [Agent Skill](src/ankinote/skills/ankinote-cli/SKILL.md) — para usar AnkiNote con asistentes de programación IA
 
+## 🌐 Comunidad
+
+- [GitHub Discussions](https://github.com/ankinote-ai/ankinote/discussions) — preguntas, ideas y las tarjetas que has hecho
+
 ## 📄 Licencia
 
 Licencia MIT — consulta el archivo [LICENSE](LICENSE) para más detalles.
