@@ -53,7 +53,7 @@ ankinote <word|phrase|sentence|stem> add <item> [--json]
 ankinote <word|phrase|sentence|stem> batch [items...] [--file path|-] [--rpm N] [--json]
 ankinote <word|phrase> add <item> --context "<sentence>"
 ankinote <word|phrase> batch --format jsonl --file path|-
-ankinote <word|phrase|sentence|stem> init        # create note type + deck if missing
+ankinote <word|phrase|sentence|stem> init        # create or update note type + deck
 ankinote anki <login|logout|status|sync>         # built-in Anki only
 ankinote profiles list [--json]
 ```
@@ -78,8 +78,10 @@ Decisions that matter:
 - **Rate:** `--rpm` caps items started per minute: 8 for `word`, 10 for
   `stem`, 60 otherwise. Keep the default unless the user's provider allows
   more; lower it if items fail with rate-limit errors.
-- **Note types:** the web app's setup already creates them. Run `init` only
-  if a command reports a missing note type or deck.
+- **Note types:** the web app's setup already creates them, and `add`/`batch`
+  create a missing one but never change an existing one. Run `init` only when
+  the user asks to update them: it rewrites an existing type's templates and
+  styling, which can make AnkiWeb ask for a full sync.
 
 ## Input
 

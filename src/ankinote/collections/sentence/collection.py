@@ -110,23 +110,26 @@ class SentenceCollection:
     async def ensure_in_anki(self) -> None:
         """Create or update this note type and its deck in Anki.
 
-        Idempotent equivalent of the CLI ``init`` command: creates the note
-        type with the current fields, templates and styling when missing, or
-        refreshes templates, styling and missing fields when it already exists,
-        then ensures the deck is present. Does not start TTS or LLM services,
-        so it is safe to call from the GUI setup flow.
+        What the CLI ``init`` command runs: creates the note type with the
+        current fields, templates and styling when missing, or refreshes
+        templates, styling and missing fields when it already exists (which
+        can require a full sync), then ensures the deck is present. Does not
+        start TTS or LLM services, so it is safe to call from the GUI setup
+        flow. Entering the collection only creates what is missing.
         """
         async with anki_write_batch(self._anki):
-            await self._ensure_note_type_exists()
+            await self._ensure_note_type_exists(update=True)
             await self._ensure_deck_exists()
 
-    async def _ensure_note_type_exists(self) -> None:
-        """Ensure the note type exists in Anki, create or update it."""
+    async def _ensure_note_type_exists(self, *, update: bool = False) -> None:
+        """Create the note type when missing; with ``update``, refresh it too."""
+        exists = await self._anki.models.exists(self.notetype_name)
+        if exists and not update:
+            return
         fields = [f.name for f in dataclasses.fields(SentenceNoteType)]
         css = load_card_style()
         await store_card_fonts(self._anki)
         templates = self.card_templates()
-        exists = await self._anki.models.exists(self.notetype_name)
         if not exists:
             await self._anki.models.create(
                 model_name=self.notetype_name,

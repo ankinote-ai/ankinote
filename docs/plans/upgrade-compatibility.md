@@ -77,7 +77,7 @@ Estimates are working time including tests and checks.
 
    *Cut point: commit; safe to stop here.*
 
-2. **CLI leaves existing note types alone** (about 1 h).
+2. **CLI leaves existing note types alone** (about 1 h), done 2026-11-25.
    `src/ankinote/collections/{word,phrase,sentence,stem}/collection.py`,
    `src/ankinote/cli/*.py` `init` commands, `tests/collections/`,
    `tests/cli/`.

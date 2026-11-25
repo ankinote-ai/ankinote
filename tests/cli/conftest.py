@@ -14,7 +14,8 @@ def capture_options(monkeypatch):
     the typed collection options after the command runs, and whose ``"items"``
     key lists the inputs the collection was asked to generate, in order;
     ``"note_kwargs"`` holds the keyword arguments of the last call, and
-    ``"kwargs_by_item"`` each input's.
+    ``"kwargs_by_item"`` each input's; ``"ensured"`` is set once the note
+    type was created or updated explicitly (``ensure_in_anki``).
     Inputs listed in ``fail`` raise ``RuntimeError("boom: <input>")``; the
     others are saved as note ``1``, or ``note_ids`` when a list is given.
     With ``chatter``, each call also prints to stdout, as litellm does on
@@ -45,6 +46,9 @@ def capture_options(monkeypatch):
 
             async def __aexit__(self, exc_type, exc_val, exc_tb):
                 return None
+
+            async def ensure_in_anki(self):
+                captured["ensured"] = True
 
             async def generate_and_add_note(self, text, *args, **kwargs):
                 items.append(text)

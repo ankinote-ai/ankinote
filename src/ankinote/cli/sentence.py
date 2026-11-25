@@ -71,11 +71,17 @@ def sentence():
 @sentence.command("init")
 @collection_options
 def init(native, target, llm, profile, thinking):
-    """Create sentence note type and deck in Anki."""
+    """Create or update the sentence note type and deck in Anki.
+
+    Updates an existing note type to this version's fields, templates and
+    styling, which can make AnkiWeb ask for a full sync; `add` and `batch`
+    only create what is missing.
+    """
 
     async def _run():
-        async with _scope(build_options(native, target, llm, profile, thinking))():
-            pass
+        options = build_options(native, target, llm, profile, thinking)
+        async with _scope(options)() as collection:
+            await collection.ensure_in_anki()
 
     run(_run())
     click.echo("✓ Ready (sentence collection)")

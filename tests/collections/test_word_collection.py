@@ -457,7 +457,7 @@ async def test_ensure_note_type_exists_updates_existing_model():
     collection, models = _build_collection(Language.ENGLISH)
     models.exists_result = True
 
-    await collection._ensure_note_type_exists()
+    await collection._ensure_note_type_exists(update=True)
 
     assert models.created is None
     assert models.ensured_fields == [

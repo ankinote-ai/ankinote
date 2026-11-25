@@ -57,10 +57,10 @@ The CLI currently provides four collection entrypoints. Run `ankinote <type> --h
 ### Word, phrase, and sentence cards
 
 `word`, `phrase`, and `sentence` all follow the same `init` / `add` / `batch`
-shape — `init` creates the note type and deck, `add` takes one item, `batch`
-takes several (as arguments, `--file`, or both). A file holds one item per
-line for every kind, so a phrase or sentence with spaces stays one item;
-blank lines are skipped:
+shape — `init` creates or updates the note type and deck, `add` takes one
+item, `batch` takes several (as arguments, `--file`, or both). A file holds
+one item per line for every kind, so a phrase or sentence with spaces stays
+one item; blank lines are skipped:
 
 ```bash
 ankinote word init
@@ -76,6 +76,11 @@ ankinote phrase batch --file phrases.txt
 ankinote sentence add "I overslept this morning."
 ankinote sentence batch --file sentences.txt
 ```
+
+`add` and `batch` create a missing note type and deck but never change an
+existing note type. `init` (for every kind, STEM included) also updates an
+existing type to this version's fields, templates and styling, like the web
+app's Note types page; adding a field can make AnkiWeb ask for a full sync.
 
 ### The sentence a word or phrase came from
 

@@ -101,13 +101,19 @@ def stem():
 @stem.command("init")
 @collection_options
 def init(llm, profile, thinking, image_model, image_size, image_profile, card_type):
-    """Create note types and deck in Anki (only --type's note type if given)."""
+    """Create or update the note types and deck (only --type's if given).
+
+    Updates an existing note type to this version's fields, templates and
+    styling, which can make AnkiWeb ask for a full sync; `add` and `batch`
+    only create what is missing.
+    """
     options = build_options(
         llm, image_model, image_size, profile, image_profile, thinking, card_type
     )
 
     async def _run():
         async with _scope(options)() as collection:
+            await collection.ensure_in_anki()
             return collection.deck_name
 
     deck_name = run(_run())

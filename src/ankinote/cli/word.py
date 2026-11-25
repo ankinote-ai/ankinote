@@ -81,14 +81,19 @@ def word():
 def init(
     native, target, llm, profile, thinking, image_model, image_size, image_profile
 ):
-    """Create note type and deck in Anki."""
+    """Create or update the note type and deck in Anki.
+
+    Updates an existing note type to this version's fields, templates and
+    styling, which can make AnkiWeb ask for a full sync; `add` and `batch`
+    only create what is missing.
+    """
     options = build_options(
         native, target, llm, image_model, image_size, profile, image_profile, thinking
     )
 
     async def _run():
-        async with _scope(options)():
-            pass
+        async with _scope(options)() as collection:
+            await collection.ensure_in_anki()
 
     run(_run())
     click.echo("✓ Ready (word collection)")
