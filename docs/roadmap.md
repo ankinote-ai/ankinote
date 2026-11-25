@@ -118,8 +118,6 @@ How it works today is under [Shipped](#thinking-control-shipped). Open items:
 
 ### Launch
 
-- A downloadable sample deck (`.apkg`), so people can judge cards before
-  installing. The README shows screenshots and a GIF; no deck yet.
 - Promotion channels and their status are tracked outside the repo.
 
 ## Waiting for demand
@@ -331,6 +329,8 @@ cover:
   [Waiting for demand](#waiting-for-demand) (extra instructions, keeping
   template edits made in Anki). The scoping notes are in git history
   (commit 918cbe6).
+- **A downloadable sample deck** (`.apkg`, 2026-11-25): the README's
+  screenshots and GIF show the cards.
 - **Photo input for language cards** (2026-11-25): an agent reading the
   photo and calling the CLI covers it.
 - **`gemini-nano-banana-2.1` for images** (2026-11-25): same $0.0336 per 1K
