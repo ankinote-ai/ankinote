@@ -7,7 +7,7 @@
 .PHONY: test clean-test clean lint check format pre-commit help \
         build clean-dist bump-version \
         release release-check _release-guard docker-backfill \
-        install install-dev web-install web-dev web-build web-check brand
+        install install-dev web-install web-dev web-build web-check web-test brand
 
 clean-test:
 	rm -rf .pytest_cache
@@ -67,6 +67,9 @@ web-build:
 
 web-check:
 	$(PNPM) check
+
+web-test:
+	$(PNPM) test
 
 # Mark, icons and social preview from the default palette (scripts/brand.py).
 brand:
@@ -150,6 +153,7 @@ help:
 	@echo "  web-dev         - Run the API (:8000) and Vite dev server (:5173)"
 	@echo "  web-build       - Build the frontend into src/ankinote/web/dist"
 	@echo "  web-check       - Type-check the frontend (svelte-check)"
+	@echo "  web-test        - Run the frontend unit tests (Vitest)"
 	@echo "  brand           - Regenerate the logo, icons and social preview"
 	@echo "  bump-version    - Bump version (part=patch|minor|major)"
 	@echo "  release-check   - Verify the repo is ready to release"

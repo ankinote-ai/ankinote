@@ -1,7 +1,9 @@
 /**
  * The Generate workspace's session: every line of input becomes a queue
  * row that generates in the background (a few at a time), and the preview
- * follows the selected row. Nothing reaches Anki until a row is saved.
+ * follows the selected row. Nothing reaches Anki until a row is saved. A
+ * word or phrase line may be the sentence it was met in, with the item
+ * marked by brackets (`brackets.ts`).
  *
  * A ready or saved note can have its fields edited first (`Editing`);
  * applying an edit replaces the note's preview, and a saved row goes back
@@ -12,6 +14,7 @@
  * The session lives at module level, so switching workspaces keeps it; a
  * reload starts a new one (drafts are in the server's memory anyway).
  */
+import { parseLine, type BracketError } from "./brackets";
 import type { Picture } from "./picture";
 import { randomId } from "./randomId";
 import {
@@ -144,14 +147,22 @@ export class Row {
   /** A rewrite or undo that didn't happen; the note is as it was. */
   changeFailure = $state<Failure | null>(null);
 
+  /** STEM: the type asked for; undefined lets the model choose. */
+  readonly cardType?: StemType;
+  /** STEM: a picture of the question, read by the model. */
+  readonly picture?: Picture;
+  /** Words and phrases: the sentence the item was met in; regenerating keeps it. */
+  readonly context?: string;
+
   constructor(
     readonly kind: Kind,
     readonly text: string,
-    /** STEM: the type asked for; undefined lets the model choose. */
-    readonly cardType?: StemType,
-    /** STEM: a picture of the question, read by the model. */
-    readonly picture?: Picture,
-  ) {}
+    extra: { cardType?: StemType; picture?: Picture; context?: string } = {},
+  ) {
+    this.cardType = extra.cardType;
+    this.picture = extra.picture;
+    this.context = extra.context;
+  }
 
   get note(): DraftNote | null {
     return this.notes[this.pick] ?? null;
@@ -245,21 +256,34 @@ class Session {
     }
   }
 
-  /** Queue one row per non-empty line; returns how many were added. */
-  add(input: string): number {
+  /**
+   * Queue one row per non-empty line. Returns how many were added, and the
+   * lines whose brackets couldn't be read, with the first such problem.
+   */
+  add(input: string): { added: number; kept: string[]; error: BracketError | null } {
     const seen = new Set<string>();
     const lines = input
       .split("\n")
       .map((line) => line.trim())
       .filter((line) => line && !seen.has(line) && (seen.add(line), true));
-    const type = this.kind === "stem" && this.stemType !== "auto" ? this.stemType : undefined;
-    const rows = lines.map((line) => new Row(this.kind, line, type));
-    if (!rows.length) return 0;
+    const kept: string[] = [];
+    let error: BracketError | null = null;
+    const rows: Row[] = [];
+    for (const line of lines) {
+      const parsed = parseLine(this.kind, line);
+      if (parsed.ok) {
+        rows.push(new Row(this.kind, parsed.item.text, { context: parsed.item.context }));
+      } else {
+        kept.push(line);
+        error ??= parsed.error;
+      }
+    }
+    if (!rows.length) return { added: 0, kept, error };
     this.rows.push(...rows);
     // Follow the new input unless the user is looking at a finished card.
     if (!this.selected || !this.selected.saveable) this.selectedId = rows[0]!.id;
     this.#pump();
-    return rows.length;
+    return { added: rows.length, kept, error };
   }
 
   /** Queue one STEM card: the whole text is one question, with its picture if any. */
@@ -267,7 +291,7 @@ class Session {
     const text = input.trim();
     if (!text && !picture) return false;
     const type = this.stemType !== "auto" ? this.stemType : undefined;
-    const row = new Row("stem", text, type, picture);
+    const row = new Row("stem", text, { cardType: type, picture });
     this.rows.push(row);
     // Follow the new input unless the user is looking at a finished card.
     if (!this.selected || !this.selected.saveable) this.selectedId = row.id;
@@ -453,6 +477,7 @@ class Session {
       audio: this.audio,
       card_type: row.cardType,
       reference_image: row.picture && { data: row.picture.data, mime: row.picture.mime },
+      context: row.context,
     };
     row.asked = { image: options.image, audio: options.audio };
     try {

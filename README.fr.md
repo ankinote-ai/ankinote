@@ -65,6 +65,25 @@ Fini la mise en forme manuelle et les copier-coller entre ChatGPT et Anki. Utili
 
 ---
 
+## 🧭 Comment on s'en sert
+
+### Apprendre un mot dans la phrase où on l'a rencontré
+
+Un mot inconnu dans un article ou un roman ? Collez la phrase entière dans la page Générer et mettez le mot entre crochets (ou chaque partie d'une expression) :
+
+```text
+We sat on the [bank] of the river.
+I'll [pick] you [up] at six.
+```
+
+- **Un seul sens, rien de superflu.** La carte ne couvre que le sens employé dans la phrase : « bank » comme rive, pas tous les sens du dictionnaire. Les mots polysémiques et les verbes à particule restent clairs.
+- **Votre phrase devient le premier exemple.** La ligne que vous avez lue reste sur la carte mot pour mot : vous révisez le mot là où vous l'avez rencontré, et ce contexte aide à le retenir.
+- **N'importe quelle forme, n'importe quelle langue.** Marquez la forme que vous avez vue (`ran`, `食べた`, ou les deux parties d'un allemand `Ich [rufe] dich [an]`) ; la carte donne la forme du dictionnaire.
+
+Une ligne sans crochets est simplement le mot : mots seuls et phrases peuvent aller dans le même lot.
+
+---
+
 ## 🚀 Démarrage rapide (1 minute)
 
 Le seul prérequis est [uv](https://docs.astral.sh/uv/getting-started/installation/) (il gère Python automatiquement) :

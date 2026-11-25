@@ -65,6 +65,25 @@ No manual formatting. No copy-pasting between ChatGPT and Anki. Bring your own A
 
 ---
 
+## 🧭 How People Use It
+
+### Learn a word in the sentence you met it
+
+Reading an article or a novel and hit a word you don't know? Paste the whole sentence into the Generate page and put brackets around the word (or around each part of a phrase):
+
+```text
+We sat on the [bank] of the river.
+I'll [pick] you [up] at six.
+```
+
+- **One sense, no clutter.** The card covers only the meaning the sentence uses: "bank" as a riverside, not every sense the dictionary lists. Words with many meanings and phrasal verbs stay focused.
+- **Your sentence is the first example.** The line you actually read stays on the card word for word, so you review the word where you met it, and that context helps it stick.
+- **Any form, any language.** Mark the form you saw (`ran`, `食べた`, or both parts of a German `Ich [rufe] dich [an]`); the card gives the dictionary form.
+
+A line without brackets is just the word, so single words and sentences can go in the same batch.
+
+---
+
 ## 🚀 Quick Start (1 Minute)
 
 The only prerequisite is [uv](https://docs.astral.sh/uv/getting-started/installation/) (it manages Python for you):

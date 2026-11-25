@@ -23,7 +23,7 @@ from collections import OrderedDict
 from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass, field
 from pathlib import PurePosixPath
-from typing import Any, Literal, Protocol
+from typing import Any, Literal, Protocol, cast
 
 from fastapi import APIRouter, HTTPException, Response
 from litellm.exceptions import BadRequestError
@@ -82,12 +82,16 @@ _MEDIA_TYPES = {".mp3": "audio/mpeg", ".png": "image/png"}
 # Words, phrases and sentences; a STEM question or problem may be longer.
 _TEXT_LIMIT = 300
 _STEM_TEXT_LIMIT = 4000
+# The sentence a word or phrase was met in (a line on the Generate page).
+_CONTEXT_LIMIT = 1000
 # A STEM question may come with one picture, base64 in the request. The page
 # shrinks it first; this is the most the server takes, once decoded.
 _PICTURE_LIMIT = 5 * 1024 * 1024
 _PICTURE_TYPES = Literal["image/png", "image/jpeg", "image/webp"]
 
 Kind = Literal["word", "phrase", "sentence", "stem"]
+# The kinds whose card can follow the sentence the item was met in.
+_CONTEXT_KINDS = ("word", "phrase")
 
 
 class CardCollection(Protocol):
@@ -111,6 +115,14 @@ class CardCollection(Protocol):
     async def save_card(self, card: Any, /) -> int: ...
 
     async def ensure_in_anki(self) -> None: ...
+
+
+class ContextCollection(Protocol):
+    """Words and phrases: a card can follow the sentence the item was met in."""
+
+    async def generate_cards(
+        self, text: str, /, *, context: str | None = None
+    ) -> Sequence[Any]: ...
 
 
 _STYLES: dict[Kind, Callable[..., str]] = {
@@ -271,6 +283,14 @@ class GenerateIn(BaseModel):
     card_type: CardType | None = Field(
         default=None, description="STEM only. Omit to let the model choose."
     )
+    context: str | None = Field(
+        default=None,
+        max_length=4 * _CONTEXT_LIMIT,
+        description=(
+            "Words and phrases: the sentence the item was met in; the card "
+            f"covers the sense used there. Up to {_CONTEXT_LIMIT} characters."
+        ),
+    )
 
 
 def _fail(status: int, code: str, detail: str = "") -> HTTPException:
@@ -298,6 +318,11 @@ def _request_input(kind: Kind, body: GenerateIn) -> tuple[str, bytes | None]:
     source = body.text.strip()
     if kind != "stem" and len(source) > _TEXT_LIMIT:
         raise _fail(422, "too_long", str(_TEXT_LIMIT))
+    context = _context(body)
+    if context is not None and kind not in _CONTEXT_KINDS:
+        raise _fail(422, "context_not_supported")
+    if context is not None and len(context) > _CONTEXT_LIMIT:
+        raise _fail(422, "context_too_long", str(_CONTEXT_LIMIT))
     if body.reference_image is not None and kind != "stem":
         raise _fail(422, "image_not_supported")
     picture = (
@@ -306,6 +331,11 @@ def _request_input(kind: Kind, body: GenerateIn) -> tuple[str, bytes | None]:
     if not source and picture is None:
         raise _fail(422, "empty")
     return source, picture
+
+
+def _context(body: GenerateIn) -> str | None:
+    """The request's context sentence; blank is none."""
+    return (body.context or "").strip() or None
 
 
 def _mime(body: GenerateIn) -> str:
@@ -427,6 +457,9 @@ async def generate(kind: Kind, body: GenerateIn) -> dict:
                     picture,
                     _mime(body),
                 )
+            elif context := _context(body):
+                maker = cast(ContextCollection, collection)
+                cards = await maker.generate_cards(source, context=context)
             else:
                 cards = await collection.generate_cards(source)
     except TimeoutError as exc:

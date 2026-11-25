@@ -65,6 +65,25 @@ Sin formato manual. Sin copiar y pegar entre ChatGPT y Anki. Usa tu propia clave
 
 ---
 
+## 🧭 Cómo se usa
+
+### Aprende una palabra en la frase donde la encontraste
+
+¿Te topas con una palabra desconocida en un artículo o una novela? Pega la frase entera en la página Generar y pon la palabra entre corchetes (o cada parte de una expresión):
+
+```text
+We sat on the [bank] of the river.
+I'll [pick] you [up] at six.
+```
+
+- **Un solo sentido, sin relleno.** La tarjeta cubre solo el significado que usa la frase: "bank" como orilla, no todos los sentidos del diccionario. Las palabras polisémicas y los phrasal verbs quedan claros.
+- **Tu frase es el primer ejemplo.** La línea que leíste queda en la tarjeta palabra por palabra, así repasas la palabra donde la encontraste, y ese contexto ayuda a recordarla.
+- **Cualquier forma, cualquier idioma.** Marca la forma que viste (`ran`, `食べた`, o las dos partes de un alemán `Ich [rufe] dich [an]`); la tarjeta da la forma de diccionario.
+
+Una línea sin corchetes es simplemente la palabra, así que palabras sueltas y frases pueden ir en el mismo lote.
+
+---
+
 ## 🚀 Inicio rápido (1 minuto)
 
 El único requisito es [uv](https://docs.astral.sh/uv/getting-started/installation/) (gestiona Python automáticamente):

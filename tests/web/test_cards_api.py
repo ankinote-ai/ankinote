@@ -689,6 +689,77 @@ async def test_a_stem_question_may_be_longer_than_a_word(
     assert stem["kind"] == "stem"
 
 
+@pytest.mark.parametrize(
+    ("kind", "answer", "text", "context"),
+    [
+        ("word", [MOON], "moon", "The moon is bright tonight."),
+        ("phrase", TAKE_OFF, "takes … off", "The plane takes off at six."),
+    ],
+)
+async def test_a_context_sentence_reaches_the_model(
+    api: httpx.AsyncClient,
+    models: dict[str, Any],
+    kind: str,
+    answer: Any,
+    text: str,
+    context: str,
+) -> None:
+    await _gemini(api)
+    models["answer"] = json.dumps(answer)
+
+    response = await api.post(
+        f"/api/cards/{kind}", json={"text": text, "context": f"  {context} "}
+    )
+
+    assert response.status_code == 200, response.text
+    prompt = models["prompts"][0]
+    assert prompt.startswith(f"{kind.capitalize()}: {text}\n")
+    assert prompt.endswith(f"\nContext: {context}")
+    assert "## Context sentence" in models["calls"][0][0]["content"]
+
+
+async def test_a_blank_context_is_no_context(
+    api: httpx.AsyncClient, models: dict[str, Any]
+) -> None:
+    await _gemini(api)
+
+    await api.post("/api/cards/word", json={"text": "moon"})
+    await api.post("/api/cards/word", json={"text": "moon", "context": " "})
+
+    assert models["prompts"][0] == models["prompts"][1]
+    assert "Context:" not in models["prompts"][1]
+    assert models["calls"][0][0] == models["calls"][1][0]
+
+
+@pytest.mark.parametrize("kind", ["sentence", "stem"])
+async def test_only_words_and_phrases_take_a_context(
+    api: httpx.AsyncClient, models: dict[str, Any], kind: str
+) -> None:
+    await _gemini(api)
+
+    response = await api.post(
+        f"/api/cards/{kind}", json={"text": "F=ma", "context": "Newton: F=ma."}
+    )
+
+    assert response.status_code == 422
+    assert response.json()["detail"]["code"] == "context_not_supported"
+    assert models["prompts"] == []
+
+
+async def test_a_context_has_its_own_length_limit(
+    api: httpx.AsyncClient, models: dict[str, Any]
+) -> None:
+    await _gemini(api)
+    sentence = "We sat on the bank of the river. " * 40
+
+    response = await api.post(
+        "/api/cards/word", json={"text": "bank", "context": sentence}
+    )
+
+    assert response.status_code == 422
+    assert response.json()["detail"] == {"code": "context_too_long", "detail": "1000"}
+
+
 async def test_a_live_preview_shows_unapplied_edits_and_keeps_the_draft(
     api: httpx.AsyncClient, models: dict[str, Any]
 ) -> None:

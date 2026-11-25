@@ -293,6 +293,8 @@ export const api = {
       card_type?: StemType;
       /** STEM: a picture of the question. */
       reference_image?: { data: string; mime: string };
+      /** Words and phrases: the sentence the item was met in. */
+      context?: string;
     } = {},
   ) => request<{ notes: DraftNote[] }>("POST", `/api/cards/${kind}`, { text, ...options }),
   editDraft: (id: string, values: FormValues) =>

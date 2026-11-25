@@ -151,6 +151,13 @@ shows the template's name instead of a one-option switch. Keys: `Ctrl+S` saves t
 field), `R` regenerates, `↑`/`↓` select. The queue is per browser tab: a
 reload starts a new session.
 
+Context sentences, built 2026-11-25: for Word and Phrase, a line with `[ ]`
+around the item is the sentence it was met in; there is no separate field.
+The placeholder and the hint under Generate say so. The queue row shows the
+item on its first line and the sentence on a muted, single-line second line
+(hidden in the phone's chip strip). A line whose brackets don't pair up
+stays in the box with an error under it; the rest of the batch is queued.
+
 Edit fields, built 2026-11-13: "Edit fields" (`E`) under a ready or saved
 preview swaps the card for a form of what the note's model says (not raw
 field HTML, so the classes baked into fields stay right): text fields, list

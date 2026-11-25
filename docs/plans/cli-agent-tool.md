@@ -67,9 +67,12 @@ needs them.
   prompt addendum, and the note types don't change.
 - **Web input** (step 6, confirmed 2026-11-25): no new control. A line on the
   Generate page with `[ ]` around the item is the context sentence: `We sat
-  on the [bank] of the river.` Phrases may mark several parts, joined in
-  order (`I'll [pick] you [up] at six.` → `pick up`); word takes exactly one.
-  Lines without brackets behave as today; sentence and STEM ignore brackets.
+  on the [bank] of the river.` Several marked parts are one item, joined in
+  order with ` … ` (`I'll [pick] you [up] at six.` → `pick … up`), for words
+  too, so a German separable verb works (`Ich [rufe] dich [an].` →
+  `rufe … an`, card `anrufen`); the model gives the dictionary form. Changed
+  from "word takes exactly one" at the start of step 6. Lines without
+  brackets behave as before; sentence and STEM ignore brackets.
 
 ## Step 1: Shared batch runner; word, phrase, sentence on it (M), done
 
@@ -194,7 +197,21 @@ Scope and card behavior are under [Decisions](#decisions).
    "bank", "run") before calling it done: call the generators only, no
    media, nothing saved to Anki.
 
-## Step 6: Context on the web app's Generate page (M)
+## Step 6: Context on the web app's Generate page (M), done
+
+Done 2026-11-25. Parser: `frontend/src/lib/brackets.ts`, tested with Vitest
+(`make web-test`, new with this step) in `brackets.test.ts`; full-width
+`［］` and `【】` count, since CJK input methods type them. A line whose
+brackets don't pair up stays in the box with a note; the others are queued.
+API: `context` on `POST /api/cards/{kind}` (words and phrases; 422
+`context_not_supported` otherwise, `context_too_long` past 1000
+characters); the row keeps it, so Regenerate sends it again. Prompts: parts
+joined with ` … ` are one item, and a split word's highlights are its parts
+as written. Checked live with `gemini-3.5-flash-lite`: German `rufe … an` →
+anrufen, `fängt … an` → anfangen, 食べた → 食べる, 먹었어요 → 먹다,
+`dímelo` → decir, `levée` → se lever, `pick … up` → pick up, each with the
+sentence verbatim as the first example. README: "How People Use It" in all
+six languages.
 
 1. Tests first: the bracket parser (one item for word, joined parts for
    phrase, no brackets → today's line, several brackets on a word line → an

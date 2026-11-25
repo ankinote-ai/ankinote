@@ -10,6 +10,7 @@
     type SavedNote,
     type StemType,
   } from "../lib/api";
+  import { takesContext, type BracketError } from "../lib/brackets";
   import { editErrorText } from "../lib/editText";
   import { session, type Row } from "../lib/generate.svelte";
   import { PictureError, pictureIn, readPicture, type Picture } from "../lib/picture";
@@ -29,6 +30,8 @@
   /** STEM: the picture of the question, if one is attached. */
   let picture = $state<Picture | null>(null);
   let pictureError = $state("");
+  /** Lines whose brackets couldn't be read stay in the box, with this. */
+  let bracketError = $state<BracketError | null>(null);
 
   /** Matches the CSS container query: a phone gets a single-line input. */
   const phone = $derived(width <= 600);
@@ -107,13 +110,23 @@
   }
 
   function submit() {
-    const added = stem ? session.addStem(input, picture ?? undefined) : session.add(input);
-    if (added) {
-      input = "";
-      picture = null;
-      pictureError = "";
+    let added = false;
+    let kept = false;
+    if (stem) {
+      added = session.addStem(input, picture ?? undefined);
+      if (added) {
+        input = "";
+        picture = null;
+        pictureError = "";
+      }
+    } else {
+      const result = session.add(input);
+      added = result.added > 0;
+      kept = result.kept.length > 0;
+      bracketError = result.error;
+      if (added || kept) input = result.kept.join("\n");
     }
-    if (added && phone) {
+    if (added && !kept && phone) {
       // The page scrolls on a phone: close the keyboard and go back to the
       // top, where the session strip shows the new card's progress.
       field?.blur();
@@ -323,6 +336,7 @@
             class:on={session.kind === kind}
             onclick={() => {
               session.kind = kind;
+              bracketError = null;
               if (kind !== "stem") {
                 picture = null;
                 pictureError = "";
@@ -461,8 +475,15 @@
             {lines > 1 ? t("generate.submitN", { n: lines }) : t("generate.submit")}
             {#if !phone}<kbd class="hint">Ctrl ↵</kbd>{/if}
           </button>
-          <span class="note">{t(stem ? "generate.stemHint" : "generate.lineHint")}</span>
+          <span class="note">
+            {t(stem ? "generate.stemHint" : "generate.lineHint")}
+            {#if takesContext(session.kind)}{t("generate.contextHint")}{/if}
+          </span>
         </div>
+      {/if}
+
+      {#if bracketError && input.trim()}
+        <p class="note off error" role="alert">{t("generate.bracketErr")}</p>
       {/if}
     </form>
   </Pane>
@@ -489,6 +510,7 @@
               </span>
               <span class="qw">{label(r)}</span>
               <span class="qs" class:busy={!!r.rewriting}>{status(r)}</span>
+              {#if r.context}<span class="qc" title={r.context}>{r.context}</span>{/if}
               {#if r.state === "ready" || r.state === "saved"}
                 {@const gaps = shortGaps(r)}
                 {#if gaps}<span class="qn">{gaps}</span>{/if}
@@ -914,6 +936,7 @@
     grid-template-columns: 18px minmax(0, 1fr) auto;
     grid-template-areas:
       "g w s"
+      ". c c"
       ". n n";
     align-items: center;
     gap: 0 8px;
@@ -979,6 +1002,15 @@
   .qi.failed .qs,
   .qi.unsaved .qs {
     color: var(--err);
+  }
+
+  .qc {
+    grid-area: c;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+    color: var(--muted);
   }
 
   .qn {
@@ -1366,6 +1398,7 @@
     }
 
     .qs,
+    .qc,
     .qn,
     .qfoot .keys {
       display: none;
