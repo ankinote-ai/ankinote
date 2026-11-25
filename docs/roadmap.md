@@ -48,7 +48,11 @@ types are the product (in-app editing of them was
 
 ## Next
 
-Nothing scheduled. [The CLI as an agent's tool](#the-cli-as-an-agents-tool),
+[Upgrade compatibility](plans/upgrade-compatibility.md): the fixes from the
+review of the [upgrade check](#upgrades-notice-a-new-version-upgrade-easily),
+in 2–3 sessions; the check is not pushed or released until they land.
+
+Before that: [The CLI as an agent's tool](#the-cli-as-an-agents-tool),
 items 1–4, plus the CLI's inconsistencies, ran as a step-by-step
 [plan](plans/cli-agent-tool.md) that finished 2026-11-25, including context
 sentences in the CLI and on the Generate page. Grammar cards and scene cards
@@ -93,28 +97,24 @@ to upgrade; it never upgrades itself.
   executables.
 - **No check in the CLI**: agents read its output, `--json` above all.
 
-**Before releasing it: a forward-compatibility review** (asked for
-2026-11-25, in a fresh session). Whatever a release ships here keeps
-running in every install that never upgrades, and it is the only channel
-to those installs, so get the foundation right first. Questions to settle:
+**Forward-compatibility review: done 2026-11-25, fixes not yet made.**
+Whatever a release ships keeps running in every install that never
+upgrades, so the fixes ship with the check, not after it. Findings, steps
+and estimates are in the [plan](plans/upgrade-compatibility.md). In short:
 
-- The upgrade commands, the release-notes URL (`…/releases/tag/vX.Y.Z`) and
-  the install-path markers are frozen into each release. What if the
-  package, repo, image or compose layout changes, or `@latest` stops being
-  the right advice? Should the advice come from something fetched (a small
-  JSON in the repo or on the release) rather than from code?
-- A major release with breaking changes: an old install would offer it
-  like a patch. Does the check need a way to say "read this first" or "stop
-  at 1.x"?
-- What old installs may depend on: PyPI's JSON API and `info.version`,
-  `ANKINOTE_UPDATE_CHECK`, `ANKINOTE_INSTALL=docker` in the image, the
-  `/api/update` shape (the frontend ships in the same wheel, so it only
-  matters if that changes).
-- Beyond the check, what an upgrade must never break: `settings.json` (no
-  schema version today?), note types (field changes force a full AnkiWeb
-  sync), the collection and Docker volumes, env vars, CLI flags and
-  `--json` output that agents script against. List the places without a
-  version or migration path.
+- Blockers: one unknown key makes `settings.json` reset to defaults (keys
+  lost on the next save); CLI card commands rewrite existing note types on
+  every run (a new field forces a full AnkiWeb sync unasked).
+- The check: say "read first" for a major release (no "stay on 1.x");
+  take an optional release-notes link from PyPI's `project_urls` rather
+  than a separately fetched JSON; the skill moves to `@latest`; the
+  Docker command says where to run it.
+- **Compatibility rules** for every release from now on: never rename the
+  package, entry points, image, `ANKINOTE_INSTALL`, volume paths or env
+  vars; note type fields and templates are add-only and applied only on
+  an explicit update; `settings.json` is read leniently; `anki` bumps only
+  in a minor release; `--json` and jsonl keys are add-only; breaking
+  changes only in a major release with "Before you upgrade" notes.
 
 ### Flag problem input on language cards
 
