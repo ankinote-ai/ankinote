@@ -126,6 +126,14 @@ AnkiNote has no login, so keep it on your home network or a private network such
 
 The `ankinote` command makes cards without opening a browser, using the same settings as the web app. That makes it a tool any AI agent that can run commands (Claude Code, Codex, …) can use for you.
 
+**Teach your agent the commands once:**
+
+```bash
+uvx --from ankinote-ai ankinote skill install
+```
+
+This copies a skill into `~/.claude/skills` and `~/.agents/skills` that shows Claude Code, Codex, and other agents how to call `ankinote`, read back which cards were saved, and retry only the ones that failed. Run it again after upgrading AnkiNote.
+
 **From a photo of what you're reading.** Photograph a page where you underlined new words and tell your agent: *"Make Anki cards for the underlined words."* It reads the picture, picks out the words, and runs:
 
 ```bash
@@ -181,7 +189,7 @@ make check                # lint & type-check (ruff + ty)
 - [CLI Usage Guide](docs/cli-usage.md)
 - [Docker Deployment Guide](deploy/README.md)
 - [Note Types Reference](docs/NoteType.org)
-- [Agent Skill](.agents/skills/ankinote-cli/SKILL.md) — for using AnkiNote with AI coding assistants
+- [Agent Skill](src/ankinote/skills/ankinote-cli/SKILL.md) — for using AnkiNote with AI coding assistants
 
 ## 🌐 Community
 

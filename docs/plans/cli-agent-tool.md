@@ -127,9 +127,16 @@ Done when: an agent can run
 `printf 'apple\nice cream\n' | ankinote word batch --file - --json` and get
 one parseable result per line.
 
-## Step 4: Docs and the agent skill (S)
+## Step 4: Docs and the agent skill (S), done
 
-- `.agents/skills/ankinote-cli/SKILL.md`: prefer `--json`, read `results`,
+Done 2026-11-25. Decided with the user: the skill ships in the wheel at
+`src/ankinote/skills/ankinote-cli/` (`.agents/skills/ankinote-cli` is a
+symlink to it), and `ankinote skill install [--dir …]` copies it into
+`~/.claude/skills` and `~/.agents/skills` (`cli/skill.py`, tests in
+`tests/cli/test_skill_cli.py`). The skill tells agents to retry only failed
+inputs, since language cards allow duplicates.
+
+- `SKILL.md`: prefer `--json`, read `results`,
   retry or report failed items, exit codes, stdin.
 - `docs/cli-usage.md` and the README's terminal section: one item per line
   for every kind, `--json`, `--file -`.

@@ -124,6 +124,14 @@ Pour que le conteneur utilise un Anki Desktop avec AnkiConnect, utilisez `deploy
 
 La commande `ankinote` crée des cartes sans ouvrir le navigateur et utilise les mêmes réglages que l'application web. N'importe quel agent IA capable d'exécuter des commandes (Claude Code, Codex, …) peut donc s'en servir pour vous.
 
+**Apprenez-lui les commandes, une seule fois :**
+
+```bash
+uvx --from ankinote-ai ankinote skill install
+```
+
+Cela copie dans `~/.claude/skills` et `~/.agents/skills` une skill qui montre à Claude Code, Codex et aux autres agents comment appeler `ankinote`, savoir quelles cartes ont été enregistrées et ne relancer que celles qui ont échoué. Relancez-la après chaque mise à jour d'AnkiNote.
+
 **À partir d'une photo de votre lecture.** Photographiez une page où vous avez souligné des mots nouveaux et dites à votre agent : *« Fais des cartes Anki avec les mots soulignés. »* Il lit l'image, repère les mots et exécute :
 
 ```bash
@@ -178,7 +186,7 @@ make check                # lint et vérification des types (ruff + ty)
 - [Guide d'utilisation CLI](docs/cli-usage.md)
 - [Guide de déploiement Docker](deploy/README.md)
 - [Référence des types de notes](docs/NoteType.org)
-- [Agent Skill](.agents/skills/ankinote-cli/SKILL.md) — pour utiliser AnkiNote avec des assistants de code IA
+- [Agent Skill](src/ankinote/skills/ankinote-cli/SKILL.md) — pour utiliser AnkiNote avec des assistants de code IA
 
 ## 📄 Licence
 

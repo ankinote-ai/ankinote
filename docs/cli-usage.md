@@ -58,7 +58,9 @@ The CLI currently provides four collection entrypoints. Run `ankinote <type> --h
 
 `word`, `phrase`, and `sentence` all follow the same `init` / `add` / `batch`
 shape — `init` creates the note type and deck, `add` takes one item, `batch`
-takes several (as arguments or `--file`):
+takes several (as arguments, `--file`, or both). A file holds one item per
+line for every kind, so a phrase or sentence with spaces stays one item;
+blank lines are skipped:
 
 ```bash
 ankinote word init
@@ -156,6 +158,44 @@ ankinote word batch --file words.txt --rpm 30
 ankinote stem add "State Bayes' theorem" --image-model gpt-image-1 --image-size 1024
 ```
 
+### Scripts and agents: stdin, JSON, exit codes
+
+`--file -` reads the items from stdin, one per line. `--json` on any `add`
+or `batch` prints one JSON document to stdout with a result per item;
+progress and logs go to stderr, so stdout stays parseable:
+
+```bash
+printf 'apple\nice cream\n' | ankinote word batch --file - --json
+```
+
+```json
+{"kind": "word", "total": 2, "succeeded": 1, "failed": 1,
+ "results": [
+   {"input": "apple", "ok": true, "note_ids": [1712, 1713]},
+   {"input": "ice cream", "ok": false, "error": "…"}]}
+```
+
+`note_ids` is always a list, since a word can make one note per part of
+speech. Exit codes, with or without `--json`:
+
+- `0`: every item was saved.
+- `1`: at least one item failed (the document lists which and why), or
+  nothing ran because Anki couldn't be reached; then stdout is empty and the
+  error is on stderr.
+- `2`: usage error, such as no items, an unknown option, or a missing file.
+
+To retry, rerun only the failed inputs: language cards allow duplicates, so
+rerunning a whole batch saves the succeeded items twice.
+
+### Agent skill
+
+`ankinote skill install` copies the `ankinote-cli` skill, which tells an AI
+agent when to call which command and how to read the results, into
+`~/.claude/skills` (Claude Code) and `~/.agents/skills` (Codex and other
+agents that follow the Agent Skills convention). `--dir <path>` installs into
+other folders instead; repeat it for several. The skill ships with the
+package, so run the command again after upgrading to update it.
+
 ## Getting Help
 
 ```bash
@@ -169,4 +209,5 @@ ankinote sentence --help
 ankinote stem --help
 ankinote word batch --help
 ankinote profiles list --help
+ankinote skill install --help
 ```

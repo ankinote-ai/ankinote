@@ -10,6 +10,7 @@ from .anki import anki
 from .phrase import phrase
 from .profiles import profiles
 from .sentence import sentence
+from .skill import skill
 from .stem import stem
 from .word import word
 
@@ -44,6 +45,7 @@ cli.add_command(sentence)
 cli.add_command(stem)
 cli.add_command(anki)
 cli.add_command(profiles)
+cli.add_command(skill)
 
 
 def main():

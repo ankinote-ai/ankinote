@@ -124,6 +124,14 @@ docker compose up -d      # http://localhost:8080 にアクセス
 
 `ankinote` コマンドはブラウザを開かずにカードを作れ、Web アプリと同じ設定を使います。コマンドを実行できる AI エージェント（Claude Code、Codex など）なら、あなたの代わりに使えます。
 
+**最初に一度、エージェントにコマンドを教えます：**
+
+```bash
+uvx --from ankinote-ai ankinote skill install
+```
+
+`~/.claude/skills` と `~/.agents/skills` にスキルをコピーします。Claude Code や Codex などのエージェントは、これで `ankinote` の呼び出し方、保存できたカードの確認方法、失敗した分だけを再試行する方法を知ります。AnkiNote を更新したら、もう一度実行してください。
+
 **読んでいるページの写真から。** 新しい単語に線を引いたページを撮って、エージェントに *「線を引いた単語を Anki カードにして」* と頼むだけ。画像を読み、単語を拾い、次を実行します：
 
 ```bash
@@ -178,7 +186,7 @@ make check                # リント ＆ 型チェック（ruff + ty）
 - [CLI 利用ガイド](docs/cli-usage.md)
 - [Docker デプロイガイド](deploy/README.md)
 - [ノートタイプリファレンス](docs/NoteType.org)
-- [Agent Skill](.agents/skills/ankinote-cli/SKILL.md) — AI コーディングアシスタントとの連携用
+- [Agent Skill](src/ankinote/skills/ankinote-cli/SKILL.md) — AI コーディングアシスタントとの連携用
 
 ## 📄 ライセンス
 

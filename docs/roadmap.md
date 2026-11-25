@@ -47,7 +47,8 @@ types are the product (in-app editing of them was
 [The CLI as an agent's tool](#the-cli-as-an-agents-tool), items 1–4, plus
 the CLI's inconsistencies (exit codes, `word` files split on whitespace,
 `stem batch` on its own code path); scheduled 2026-11-25 as a step-by-step
-[plan](plans/cli-agent-tool.md). Grammar cards and scene cards were next
+[plan](plans/cli-agent-tool.md). Steps 1–4 shipped 2026-11-25; step 5,
+context with each item, remains. Grammar cards and scene cards were next
 before that and are now [waiting for demand](#waiting-for-demand).
 
 ## Small follow-ups
@@ -192,19 +193,21 @@ CLI; batch generation for people who want to review each card is the web
 app's job (one item per line on the Generate page).
 
 What would make the CLI a better agent tool, in rough order of value
-(items 1–4 are in the [plan](plans/cli-agent-tool.md)):
+(items 1–4 are in the [plan](plans/cli-agent-tool.md); 2–4 shipped
+2026-11-25):
 
 1. **Context with each item.** Pass the sentence the word was underlined in,
    so the card explains the sense used there and can use that sentence as an
    example (the agent has it from the photo anyway).
-2. **Machine-readable results.** `--json` on `add`/`batch`: one result per
+2. ✅ **Machine-readable results.** `--json` on `add`/`batch`: one result per
    item (saved note id, or the error), and a non-zero exit when any item
    failed, so the agent can retry or report exactly what didn't make it.
-3. **Input from stdin** (`--file -`) and one-item-per-line files, so phrases
+3. ✅ **Input from stdin** (`--file -`) and one-item-per-line files, so phrases
    and sentences batch as cleanly as words.
-4. **A ready-made agent skill** in the docs (a `SKILL.md` / AGENTS.md
-   snippet): when to call which command, the language flags, and to ask
-   before making more than a few dozen cards.
+4. ✅ **A ready-made agent skill**: when to call which command, the
+   language flags, and to ask before making more than a few dozen cards.
+   Ships in the wheel; `ankinote skill install` copies it into
+   `~/.claude/skills` and `~/.agents/skills`.
 5. **Review later.** Optionally send CLI-made cards to the web app's queue
    instead of straight to Anki, for users who want the agent to collect and
    themselves to approve.

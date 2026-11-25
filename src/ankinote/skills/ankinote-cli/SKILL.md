@@ -17,10 +17,13 @@ no configuration.
    photo of a page, a vocabulary list, sentences from an article, a
    photographed math problem.
 2. Show the list and confirm it if you had to guess (unclear handwriting,
-   ambiguous underlines). Otherwise go ahead.
-3. Run one `batch` (or `add`) command per card kind, e.g.
-   `ankinote word batch serendipity ephemeral eloquent`.
-4. Report what was saved and any items that failed.
+   ambiguous underlines), or if it's more than a few dozen cards: each card
+   costs AI requests on the user's key. Otherwise go ahead.
+3. Run one `batch` per card kind with `--json`, items one per line on stdin
+   (see [Input](#input)).
+4. Read the result (see [Results](#results)), retry the failed items once if
+   the error looks temporary, then tell the user what was saved and what
+   failed and why.
 
 CLI cards are saved without a preview. If the user wants to check or edit
 each card first, suggest pasting the list into the web app's Generate page
@@ -30,7 +33,7 @@ instead.
 
 Use whichever works: `ankinote` (installed with `uv tool install ankinote-ai`),
 `uvx --from ankinote-ai ankinote`, or `uv run ankinote` inside a checkout of
-this repository.
+the ankinote repository.
 
 Before the first run in a session, check what is configured:
 
@@ -45,8 +48,8 @@ keys or edit `settings.json` by hand.
 ## Commands
 
 ```
-ankinote <word|phrase|sentence|stem> add <item>
-ankinote <word|phrase|sentence|stem> batch [items...] [--file path] [--rpm N]
+ankinote <word|phrase|sentence|stem> add <item> [--json]
+ankinote <word|phrase|sentence|stem> batch [items...] [--file path|-] [--rpm N] [--json]
 ankinote <word|phrase|sentence|stem> init        # create note type + deck if missing
 ankinote anki <login|logout|status|sync>         # built-in Anki only
 ankinote profiles list [--json]
@@ -69,10 +72,53 @@ Decisions that matter:
 - **Provider:** prefer `--profile <name>` (and `--image-profile` for
   `word`/`stem`) with a name from `profiles list`. `--llm` / `--image-model`
   override just the model.
-- **Rate:** `--rpm` defaults to 8 for `word`, 10 for `stem`, 60 otherwise.
-  Keep the default unless the user's provider allows more.
+- **Rate:** `--rpm` caps items started per minute: 8 for `word`, 10 for
+  `stem`, 60 otherwise. Keep the default unless the user's provider allows
+  more; lower it if items fail with rate-limit errors.
 - **Note types:** the web app's setup already creates them. Run `init` only
   if a command reports a missing note type or deck.
+
+## Input
+
+Every kind takes one item per line; blank lines are skipped. `--file -`
+reads stdin, which avoids quoting items with spaces or apostrophes:
+
+```bash
+ankinote word batch --json --file - <<'EOF'
+serendipity
+ice cream
+EOF
+```
+
+Items can also be arguments (quote multi-word ones), and both can be mixed.
+
+## Results
+
+With `--json`, stdout holds exactly one JSON document; progress and logs go
+to stderr. `add` prints the same shape with one result.
+
+```json
+{"kind": "word", "total": 2, "succeeded": 1, "failed": 1,
+ "results": [
+   {"input": "serendipity", "ok": true, "note_ids": [1712, 1713]},
+   {"input": "xyzzy", "ok": false, "error": "…"}]}
+```
+
+`note_ids` is a list: a word can make one note per part of speech.
+
+| Exit | Meaning | stdout |
+| --- | --- | --- |
+| 0 | every item saved | the JSON document |
+| 1 | some items failed | the JSON document; read each `error` |
+| 1 | nothing ran (Anki unreachable, collection in use, bad setting) | empty; the error is on stderr |
+| 2 | usage error (no items, unknown option, missing file) | empty; the error is on stderr |
+
+To retry, rerun only the inputs whose `ok` is false. Never rerun the whole
+batch: language cards allow duplicates, so items that already succeeded
+would be saved twice. Retry once for temporary errors (rate limit, timeout,
+provider overloaded); report the rest as they are. For errors that need the
+user (no API key, Anki not running), see
+[references/troubleshooting.md](references/troubleshooting.md).
 
 ## Built-in Anki vs AnkiConnect
 
@@ -81,5 +127,4 @@ With built-in Anki, the collection can only be open in one process: if the
 CLI reports the collection is in use, the web app (or Anki desktop) has it
 open. Ask the user before stopping it. In a Docker deployment, run the CLI
 inside the container (`docker exec <container> ankinote …`).
-See [references/anki-sync.md](references/anki-sync.md) for sync commands and
-[references/troubleshooting.md](references/troubleshooting.md) for errors.
+See [references/anki-sync.md](references/anki-sync.md) for sync commands.

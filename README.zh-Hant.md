@@ -124,6 +124,14 @@ docker compose up -d      # 開啟 http://localhost:8080
 
 `ankinote` 指令不用開瀏覽器就能製卡，和網頁應用程式共用同一份設定。所以任何能執行指令的 AI Agent（Claude Code、Codex 等）都能替你呼叫它。
 
+**先讓 Agent 學會這些指令（只需一次）：**
+
+```bash
+uvx --from ankinote-ai ankinote skill install
+```
+
+它會把一個 skill 複製到 `~/.claude/skills` 和 `~/.agents/skills`，告訴 Claude Code、Codex 等 Agent 如何呼叫 `ankinote`、讀回哪些卡片已儲存，並只重試失敗的那幾張。升級 AnkiNote 後再執行一次即可更新。
+
 **從一張拍下來的書頁開始。** 把畫了生字的那一頁拍下來，告訴 Agent：*「把畫線的單字做成 Anki 卡片。」* 它會讀取圖片、挑出單字，然後執行：
 
 ```bash
@@ -178,7 +186,7 @@ make check                # 程式碼檢查與型別檢查（ruff + ty）
 - [CLI 使用指南](docs/cli-usage.md)
 - [Docker 部署指南](deploy/README.md)
 - [筆記類型說明](docs/NoteType.org)
-- [Agent Skill](.agents/skills/ankinote-cli/SKILL.md) — 搭配 AI 程式設計助手使用 AnkiNote
+- [Agent Skill](src/ankinote/skills/ankinote-cli/SKILL.md) — 搭配 AI 程式設計助手使用 AnkiNote
 
 ## 📄 開源授權
 
