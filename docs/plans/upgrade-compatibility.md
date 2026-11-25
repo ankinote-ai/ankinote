@@ -121,10 +121,12 @@ Estimates are working time including tests and checks.
 ### Session 3 (or the end of session 2): verify and release (about 1 h)
 
 7. Add a one-line pointer to the compatibility rules in `AGENTS.md`
-   (follow the `cc-agent-instructions` skill).
+   (follow the `cc-agent-instructions` skill), done 2026-11-25.
 8. Full checks: `make test`, `make lint`, `make check`, `make web-check`,
    `make web-test`, `make web-build`; run the web app against a faked
-   PyPI answer to see the chip and About for a minor and a major release.
+   PyPI answer to see the chip and About for a minor and a major release,
+   done 2026-11-25: all green; the chip, About (Docker hint for a minor,
+   notes first for a major) and the phone layout look right.
 9. Push, then `make release part=minor` (new behaviour: update check). The
    release notes say to re-run `ankinote skill install`.
 
