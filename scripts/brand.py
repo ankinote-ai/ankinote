@@ -137,6 +137,8 @@ def main() -> None:
     # Maskable and Apple icons are cropped by the OS: full bleed, smaller mark.
     _png(icon(dark, scale=0.5, radius=0), PUBLIC / "icon-maskable-512.png", 512)
     _png(icon(dark, scale=0.6, radius=0), PUBLIC / "apple-touch-icon.png", 180)
+    # GitHub and other sites round or circle-crop avatars themselves.
+    _png(icon(dark, scale=0.6, radius=0), DOCS / "avatar-1024.png", 1024)
 
     manifest = {
         "name": "AnkiNote",
