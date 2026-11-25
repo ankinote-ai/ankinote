@@ -3,7 +3,7 @@
 Product directions, grouped by status. Nothing here is a commitment to a date,
 framework, or API. Last reorganized 2026-11-25.
 
-- **Next**: nothing scheduled.
+- **Next**: [the CLI as an agent's tool](plans/cli-agent-tool.md).
 - **Small follow-ups**: [unscheduled, independent of each other](#small-follow-ups).
 - **Waiting for demand**: [built only once users ask](#waiting-for-demand).
 - **Later ideas**: [CLI as an agent's tool](#the-cli-as-an-agents-tool),
@@ -44,9 +44,11 @@ types are the product (in-app editing of them was
 
 ## Next
 
-Nothing scheduled since 2026-11-25; pick from the
-[small follow-ups](#small-follow-ups). Grammar cards and scene cards were
-next and are now [waiting for demand](#waiting-for-demand).
+[The CLI as an agent's tool](#the-cli-as-an-agents-tool), items 1–4, plus
+the CLI's inconsistencies (exit codes, `word` files split on whitespace,
+`stem batch` on its own code path); scheduled 2026-11-25 as a step-by-step
+[plan](plans/cli-agent-tool.md). Grammar cards and scene cards were next
+before that and are now [waiting for demand](#waiting-for-demand).
 
 ## Small follow-ups
 
@@ -189,7 +191,8 @@ cards. The agent reads the picture, extracts the underlined words, and calls
 CLI; batch generation for people who want to review each card is the web
 app's job (one item per line on the Generate page).
 
-What would make the CLI a better agent tool, in rough order of value:
+What would make the CLI a better agent tool, in rough order of value
+(items 1–4 are in the [plan](plans/cli-agent-tool.md)):
 
 1. **Context with each item.** Pass the sentence the word was underlined in,
    so the card explains the sense used there and can use that sentence as an
