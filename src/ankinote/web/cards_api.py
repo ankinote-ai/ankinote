@@ -478,7 +478,7 @@ class _FixedAnswer:
         *,
         model: str,
         messages: Sequence[TextMessage],
-        temperature: float,
+        temperature: float | None = None,
         reasoning_effort: str | None = None,
     ) -> str:
         return self._answer

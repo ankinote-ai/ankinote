@@ -59,7 +59,9 @@ PRESETS: dict[str, Preset] = {
             litellm_provider="gemini",
             model_prefix="gemini/",
             models={
-                "text": "gemini/gemini-3.8-flash",
+                # Thinks at "minimal" by default, as cards need; 2.5x
+                # cheaper output than gemini-3.8-flash (checked 2026-11-25).
+                "text": "gemini/gemini-3.5-flash-lite",
                 "image": "gemini/gemini-3.1-flash-lite-image",
                 "speech": "gemini/gemini-3.8-flash-lite-tts",
             },

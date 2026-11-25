@@ -25,7 +25,7 @@ class FakeTextService:
         *,
         model: str,
         messages: Sequence[TextMessage],
-        temperature: float,
+        temperature: float | None = None,
         reasoning_effort: str | None = None,
     ) -> str:
         self.calls.append(
@@ -292,6 +292,9 @@ async def test_stem_generator_uses_unified_text_service():
     assert text_service.calls[0]["model"] == "stem-model"
     # STEM keeps extended thinking: multi-step derivations benefit from it.
     assert text_service.calls[0]["reasoning_effort"] is None
+    # Thinking providers ignore or reject a sampling temperature, so STEM
+    # leaves it at the provider default instead of sending a no-op 0.3.
+    assert [call["temperature"] for call in text_service.calls] == [None, None]
 
 
 async def test_stem_generator_keeps_a_latex_escape_json_does_not_know():

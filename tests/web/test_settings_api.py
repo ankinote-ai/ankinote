@@ -314,7 +314,7 @@ def test_omitted_key_reuses_the_saved_key(client: TestClient) -> None:
 
 def test_edited_model_stops_following_the_preset(client: TestClient) -> None:
     routes = _gemini_routes()
-    routes["text"]["model"] = "gemini/gemini-3.5-flash-lite"
+    routes["text"]["model"] = "gemini/gemini-3.8-flash"
 
     body = client.put("/api/models", json=routes).json()
 
@@ -565,7 +565,7 @@ def test_custom_endpoint_without_model_list_is_unverified(
 @pytest.mark.parametrize(
     ("route", "expected"),
     [
-        ("text", ["gemini/gemini-3.8-flash", "gemini/gemini-3.5-flash-lite"]),
+        ("text", ["gemini/gemini-3.5-flash-lite", "gemini/gemini-3.8-flash"]),
         ("image", ["gemini/gemini-3.1-flash-lite-image"]),
         (
             "speech",

@@ -2,12 +2,13 @@
 
 import asyncio
 import base64
+import re
 from collections.abc import Sequence
 from dataclasses import dataclass, replace
 from typing import Protocol, cast
 
 import httpx
-from litellm import acompletion, aimage_generation
+from litellm import ModelResponse, acompletion, aimage_generation
 
 from ankinote.utils.img import resize_to_max_edge
 
@@ -28,12 +29,18 @@ class GenerationTimeoutError(RuntimeError):
 
 # Sentinel ``reasoning_effort`` value that turns a model's extended "thinking"
 # pass off.  Language card types produce short, tightly-specified JSON where
-# that pass adds little but costs tokens and latency (and DeepSeek, our default
-# provider, silently ignores ``temperature`` while it is on).  DeepSeek enables
-# thinking by default; it is disabled through the OpenAI-format ``thinking``
-# field rather than ``reasoning_effort``, which LiteLLM's DeepSeek routing drops.
+# that pass adds little but costs tokens and latency (and thinking models
+# ignore or reject ``temperature`` while it is on).  LiteLLM maps it per model:
+# OpenAI gets ``reasoning_effort="none"``, Gemini 3 its lowest thinking level
+# (it cannot switch thinking off), Anthropic no ``thinking`` block.  DeepSeek
+# takes the OpenAI-format ``thinking`` field instead.
 # https://api-docs.deepseek.com/guides/thinking_mode
 DISABLE_REASONING = "none"
+
+# Gemini 3 and later: Google advises keeping the default temperature (1.0), as
+# lower values can make the model loop or degrade, so none is sent.
+# https://ai.google.dev/gemini-api/docs/gemini-3
+_GEMINI_DEFAULT_TEMPERATURE = re.compile(r"gemini-([3-9]|\d{2,})")
 
 # Values accepted by callers that expose a "thinking" choice (the ``--thinking``
 # CLI option and the STEM generation page).  ``off`` disables the model's
@@ -99,13 +106,13 @@ class TextGenerationService(Protocol):
         *,
         model: str,
         messages: Sequence[TextMessage],
-        temperature: float,
+        temperature: float | None = None,
         reasoning_effort: str | None = None,
     ) -> str:
         """Generate a text response from chat messages.
 
-        ``reasoning_effort`` is forwarded to the provider when set; use
-        :data:`DISABLE_REASONING` to turn extended thinking off.
+        ``temperature`` and ``reasoning_effort`` are forwarded to the provider
+        when set; use :data:`DISABLE_REASONING` to turn extended thinking off.
         """
         ...
 
@@ -160,7 +167,7 @@ class LiteLLMTextService:
         *,
         model: str,
         messages: Sequence[TextMessage],
-        temperature: float,
+        temperature: float | None = None,
         reasoning_effort: str | None = None,
     ) -> str:
         """Generate text content using LiteLLM chat completion."""
@@ -168,17 +175,26 @@ class LiteLLMTextService:
             "model": self._resolve_model(model),
             "messages": list(messages),
             "stream": False,
-            "temperature": temperature,
             "drop_params": True,
             "timeout": TEXT_GENERATION_TIMEOUT_SECONDS,
             "num_retries": 0,
         }
+        if temperature is not None and not _GEMINI_DEFAULT_TEMPERATURE.search(
+            model.lower()
+        ):
+            completion_kwargs["temperature"] = temperature
         if reasoning_effort == DISABLE_REASONING:
-            # DeepSeek honours the OpenAI-format ``thinking`` field, not
-            # ``reasoning_effort`` (which its LiteLLM routing discards).  Other
-            # providers keep their default: OpenAI rejects the unknown field.
             if "deepseek" in model.lower():
+                # DeepSeek honours the OpenAI-format ``thinking`` field, not
+                # ``reasoning_effort`` (OpenAI rejects that field instead).
                 completion_kwargs["extra_body"] = {"thinking": {"type": "disabled"}}
+            elif not self._force_openai_route:
+                # A known vendor: LiteLLM maps "none" per model, e.g. OpenAI's
+                # ``reasoning_effort="none"``, Gemini 3's lowest thinking
+                # level, or no Anthropic ``thinking`` block.  A custom
+                # endpoint keeps its default, since a local server may reject
+                # an unknown ``reasoning_effort`` value.
+                completion_kwargs["reasoning_effort"] = DISABLE_REASONING
         elif reasoning_effort is not None:
             completion_kwargs["reasoning_effort"] = reasoning_effort
         if self._api_base is not None:
@@ -188,7 +204,11 @@ class LiteLLMTextService:
 
         try:
             async with asyncio.timeout(TEXT_GENERATION_TIMEOUT_SECONDS):
-                response = await acompletion(**completion_kwargs)  # type: ignore[arg-type]
+                # ``stream=False``: a full response, never a stream wrapper.
+                response = cast(
+                    ModelResponse,
+                    await acompletion(**completion_kwargs),  # type: ignore[arg-type]
+                )
         except TimeoutError as exc:
             raise GenerationTimeoutError(
                 "Card content generation", TEXT_GENERATION_TIMEOUT_SECONDS

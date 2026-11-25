@@ -25,7 +25,7 @@ dependencies = [
     "click>=8.2.0",
     "fastapi>=0.141.1",
     "google-cloud-texttospeech>=2.31.0",
-    "litellm>=1.81.9",
+    "litellm>=1.108.4",
     "loguru>=0.7.3",
     "pillow>=12.1.0",
     "pydantic>=2.12.5",
@@ -113,7 +113,11 @@ extra-paths = ["typings"]
 [tool.pytest.ini_options]
 minversion = "8.4.1"
 testpaths = ["tests"]
+# Tests import shared fakes as ``tests.<pkg>.<module>``.
+pythonpath = ["."]
 asyncio_mode = "auto"
 filterwarnings = [
     "ignore:'asyncio.iscoroutinefunction' is deprecated:DeprecationWarning:litellm\\.litellm_core_utils\\.logging_utils",
+    # LiteLLM's ReadOnly TypedDicts; only surfaces under pytest.
+    "ignore:.*using the `ReadOnly` qualifier:UserWarning",
 ]

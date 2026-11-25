@@ -163,7 +163,6 @@ async def generate_stem_data(
     topic: str,
     text_service: TextGenerationService,
     model: str,
-    temperature: float = 0.3,
     reasoning_effort: str | None = None,
     reference_image: bytes | None = None,
     reference_image_mime: str = "image/png",
@@ -188,7 +187,6 @@ async def generate_stem_data(
     if card_type is None:
         classification = await text_service.generate_text(
             model=model,
-            temperature=temperature,
             messages=[
                 {
                     "role": "system",
@@ -219,7 +217,6 @@ async def generate_stem_data(
                 {"role": "system", "content": system_prompt},
                 user_message,
             ],
-            temperature=temperature,
             reasoning_effort=reasoning_effort,
         )
         content = _strip_json_fences(content)
@@ -259,7 +256,6 @@ class StemGenerator:
     async def generate(
         self,
         topic: str,
-        temperature: float = 0.3,
         reasoning_effort: str | None = None,
         reference_image: bytes | None = None,
         reference_image_mime: str = "image/png",
@@ -279,7 +275,6 @@ class StemGenerator:
             topic=topic,
             text_service=self._text_service,
             model=self._text_model,
-            temperature=temperature,
             reasoning_effort=reasoning_effort,
             reference_image=reference_image,
             reference_image_mime=reference_image_mime,
@@ -293,7 +288,6 @@ class StemGenerator:
         instruction: str,
         *,
         card_type: CardType | None = None,
-        temperature: float = 0.3,
         reasoning_effort: str | None = None,
         reference_image: bytes | None = None,
         reference_image_mime: str = "image/png",
@@ -309,7 +303,6 @@ class StemGenerator:
             topic=topic,
             text_service=self._text_service,
             model=self._text_model,
-            temperature=temperature,
             reasoning_effort=reasoning_effort,
             reference_image=reference_image,
             reference_image_mime=reference_image_mime,
@@ -323,7 +316,6 @@ class StemGenerator:
         current: StemCard,
         problems: Sequence[LatexProblem],
         *,
-        temperature: float = 0.3,
         reasoning_effort: str | None = None,
         reference_image: bytes | None = None,
         reference_image_mime: str = "image/png",
@@ -336,7 +328,6 @@ class StemGenerator:
             topic=topic,
             text_service=self._text_service,
             model=self._text_model,
-            temperature=temperature,
             reasoning_effort=reasoning_effort,
             reference_image=reference_image,
             reference_image_mime=reference_image_mime,

@@ -109,11 +109,8 @@ Proposed 2026-11-25 (UI not yet confirmed):
 
 How it works today is under [Shipped](#thinking-control-shipped). Open items:
 
-- DeepSeek ignores `temperature` while thinking is on, so `stem`'s
-  `temperature=0.3` is currently a no-op. Decide whether `stem` should also
-  disable thinking (regaining temperature control) or drop the unused argument.
-- The `extra_body` thinking field is DeepSeek-specific. If another text
-  provider is adopted, translate `DISABLE_REASONING` per provider instead.
+- Measure what "off" saves on the presets (latency, tokens per card) with real
+  keys; the wire tests only prove the request is right.
 - Disabling thinking made the model less consistent about the output contract
   (`word` occasionally returns a bare record instead of a JSON array; now
   tolerated in `generate_word_data`). Watch for similar contract slips in the
@@ -336,6 +333,14 @@ cover:
   (commit 918cbe6).
 - **Photo input for language cards** (2026-11-25): an agent reading the
   photo and calling the CLI covers it.
+- **`gemini-nano-banana-2.1` for images** (2026-11-25): same $0.0336 per 1K
+  image as `gemini-3.1-flash-lite-image` and better quality, but it thinks at
+  `medium` by default, billed at $7.50 per 1M tokens, and LiteLLM's
+  `aimage_generation` sends no thinking setting. Neither model has a 512px
+  tier, so we take 1K and resize.
+- **Gemini Batch API** (2026-11-25): half price, but jobs are asynchronous
+  (up to 24 hours), which does not suit generating while you review. Worth
+  revisiting only for large file imports.
 - **Stronger grammar notes on sentence cards** (2026-11-25): which grammar
   is worth explaining depends on the learner's level, which AnkiNote doesn't
   know.
@@ -401,10 +406,28 @@ preview's formula errors shipped the same day.
 ### Thinking control (shipped)
 
 `TextGenerationService.generate_text` takes `reasoning_effort`. The language
-generators (`word`, `phrase`, `sentence`) pass `DISABLE_REASONING`, which the
-service turns into DeepSeek's OpenAI-format `extra_body={"thinking": {"type":
-"disabled"}}` (DeepSeek enables thinking by default and its LiteLLM routing
-discards a plain `reasoning_effort`). `stem` keeps thinking on.
+generators (`word`, `phrase`, `sentence`) pass `DISABLE_REASONING` (`"none"`).
+For a known vendor the service forwards it as `reasoning_effort` and LiteLLM
+maps it per model (fixed 2026-11-25; before, only DeepSeek was turned off and
+LiteLLM 1.81 silently dropped every level for `gpt-6-luna`):
+
+- OpenAI: `reasoning_effort="none"`.
+- Gemini 3: the lowest `thinkingLevel` the model takes (`minimal` for
+  `gemini-3.5-flash-lite`, `low` for `gemini-3.8-flash`); Gemini 3 cannot
+  switch thinking off.
+- Anthropic: no `thinking` block.
+- DeepSeek: `extra_body={"thinking": {"type": "disabled"}}`.
+- A custom OpenAI-compatible endpoint: nothing, as a local server may reject
+  the value.
+
+This depends on LiteLLM's model table knowing the model, so a new preset
+model needs a LiteLLM that lists it. `tests/services/test_ai_thinking_wire.py`
+checks the request body each preset produces. `stem` keeps thinking on and
+sends no `temperature`, which thinking models ignore or reject.
+
+Language cards ask for `temperature=0.3` (steady, dictionary-like output),
+except on Gemini 3 and later, which keep their default 1.0 as Google advises
+(lower values can make them loop or degrade).
 
 All CLI commands take `--thinking [off|low|medium|high|default]` to override
 the per-collection default for a single run. `services.ai.resolve_thinking`
