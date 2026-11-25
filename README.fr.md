@@ -36,14 +36,14 @@ Fini la mise en forme manuelle et les copier-coller entre ChatGPT et Anki. Utili
 
 ## ✨ Pourquoi AnkiNote ?
 
-- **Fonctionne avec votre Anki** — Sur l'ordinateur où vous révisez, les cartes arrivent directement dans Anki Desktop grâce au module AnkiConnect : pas de seconde collection, rien à télécharger d'abord, et Anki les synchronise comme d'habitude. Sur un serveur domestique ou un NAS toujours allumé, AnkiNote peut utiliser son Anki intégré et se synchroniser avec AnkiWeb, pour ajouter des cartes depuis le navigateur du téléphone même ordinateur éteint.
-- **Configuration en une seule clé** — Collez une clé Gemini AI Studio et l'assistant en 5 étapes configure automatiquement le texte, les images et la voix. Vous pouvez aussi combiner OpenAI, Claude, DeepSeek, fal.ai, Google Cloud TTS ou tout endpoint compatible OpenAI.
+- **Fonctionne avec votre Anki** — Envoie les cartes directement dans Anki Desktop via AnkiConnect sans collection en double, ou utilise l'Anki intégré avec synchro AnkiWeb sur serveur domestique/NAS pour créer des cartes depuis votre téléphone.
+- **Configuration en une seule clé** — Collez une clé Gemini dans l'assistant en 5 étapes pour configurer texte, images et voix, ou combinez vos fournisseurs préférés.
 - **4 modes de cartes : Mot, Expression, Phrase et STEM**
-  - **Apprentissage des langues** : Définitions, exemples authentiques, astuces mnémotechniques, illustrations générées par IA et audio TTS. Prend en charge **l'anglais, le français, l'espagnol, l'allemand, le japonais, le chinois (simplifié et traditionnel, avec annotations ruby/pinyin) et le coréen (bêta)**.
-  - **STEM & résolution de problèmes** : Saisissez un énoncé ou **importez la photo d'un exercice** pour obtenir une carte structurée avec explication étape par étape, formules MathJax et schémas optionnels.
-- **Aperçu en direct, édition directe & réécriture IA** — Retournez le recto/verso et basculez entre mode clair et sombre avant d'enregistrer. Modifiez n'importe quel champ directement, demandez à l'IA de réécrire une explication STEM ou réparez les formules LaTeX cassées en un clic (avec annulation).
-- **Thèmes de cartes soignés** — Choisissez parmi **Rosé Pine**, **Kanagawa**, **Tokyo Night** et **Gruvbox** en modes clair et sombre, adaptés au bureau comme au mobile.
-- **Fonctionne avec votre agent IA** — Grâce à la CLI `ankinote`, Claude Code, Codex ou tout agent capable d'exécuter des commandes transforme ce que vous lisez en cartes.
+  - **Apprentissage des langues** : Définitions, exemples authentiques, astuces mnémotechniques, illustrations IA et audio TTS en **anglais, français, espagnol, allemand, japonais, chinois (simplifié et traditionnel, avec ruby/pinyin) et coréen (bêta)** — dans n'importe quelle paire de langues.
+  - **STEM & résolution de problèmes** : Saisissez un énoncé ou **déposez la photo d'un exercice** pour générer une carte pas à pas avec formules MathJax et schémas optionnels.
+- **Aperçu en direct, édition directe & réécriture IA** — Retournez recto/verso et basculez clair/sombre avant d'enregistrer ; modifiez chaque champ directement, faites réécrire une explication STEM par l'IA ou réparez le LaTeX cassé en un clic (avec annulation).
+- **Thèmes de cartes soignés** — **Rosé Pine**, **Kanagawa**, **Tokyo Night** et **Gruvbox** en modes clair et sombre, adaptés au bureau comme au mobile.
+- **Prêt pour la CLI et les agents IA** — Utilisez la CLI `ankinote` depuis le terminal ou laissez Claude Code, Codex ou tout autre agent transformer vos lectures en cartes.
 
 ---
 
@@ -65,35 +65,6 @@ Fini la mise en forme manuelle et les copier-coller entre ChatGPT et Anki. Utili
 
 ---
 
-## 🧭 Comment on s'en sert
-
-### Apprendre un mot dans la phrase où on l'a rencontré
-
-Un mot inconnu dans un article ou un roman ? Collez la phrase entière dans la page Générer et mettez le mot entre crochets (ou chaque partie d'une expression) :
-
-```text
-We sat on the [bank] of the river.
-I'll [pick] you [up] at six.
-```
-
-- **Un seul sens, rien de superflu.** La carte ne couvre que le sens employé dans la phrase : « bank » comme rive, pas tous les sens du dictionnaire. Les mots polysémiques et les verbes à particule restent clairs.
-- **Votre phrase devient le premier exemple.** La ligne que vous avez lue reste sur la carte mot pour mot : vous révisez le mot là où vous l'avez rencontré, et ce contexte aide à le retenir.
-- **N'importe quelle forme, n'importe quelle langue.** Marquez la forme que vous avez vue (`ran`, `食べた`, ou les deux parties d'un allemand `Ich [rufe] dich [an]`) ; la carte donne la forme du dictionnaire.
-
-Une ligne sans crochets est simplement le mot : mots seuls et phrases peuvent aller dans le même lot.
-
-### Faire une carte d'un exercice raté
-
-Un exercice de maths ou de physique raté dans un devoir ou une annale ? Prenez-le en photo, passez la page Générer sur **STEM** et collez ou déposez l'image ; inutile de recopier l'énoncé. Choisissez **Problème** comme type de carte, ou laissez **Auto** :
-
-- **L'exercice que vous avez vraiment raté.** Le recto reprend cet exercice, rédigé pour se comprendre sans l'image, avec la réponse finale au verso. Vous révisez votre exercice, pas un autre tiré d'un manuel.
-- **La solution, et comment la trouver.** Une solution étape par étape, plus quelques lignes sur la façon dont vous auriez pu trouver la méthode vous-même : l'indice de l'énoncé qui y mène, souvent ce qui vous a échappé.
-- **Vérifiez avant d'enregistrer.** L'aperçu affiche les formules mises en forme. Corrigez une étape avec **Modifier les champs**, ou utilisez **Corriger avec l’IA** sur les formules qui ne s'affichent pas, puis enregistrez dans Anki.
-
-Pour lire l'image, le modèle principal doit accepter les images ; c'est le cas du modèle Gemini recommandé.
-
----
-
 ## 🚀 Démarrage rapide (1 minute)
 
 Le seul prérequis est [uv](https://docs.astral.sh/uv/getting-started/installation/) (il gère Python automatiquement) :
@@ -102,13 +73,11 @@ Le seul prérequis est [uv](https://docs.astral.sh/uv/getting-started/installati
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-Lancez AnkiNote directement sans installation :
+Lancez AnkiNote directement sans installation (démarre toujours la dernière version) :
 
 ```bash
 uvx --from ankinote-ai@latest ankinote-web
 ```
-
-Lancé ainsi, AnkiNote démarre toujours la dernière version. Quelle que soit l’installation, il vérifie sur PyPI s’il existe une nouvelle version au démarrage puis une fois par jour, et affiche la commande de mise à jour dans **Réglages → À propos** ; `ANKINOTE_UPDATE_CHECK=0` désactive cette vérification.
 
 Ouvrez **<http://127.0.0.1:8000>** dans votre navigateur. Au premier lancement, **l'assistant de configuration** vous guide :
 
@@ -132,7 +101,9 @@ uv tool install ankinote-ai
 ankinote-web
 ```
 
-> **Note :** Sous Linux, `ankinote-ai` requiert `glibc >= 2.35` (Ubuntu 22.04+, Debian 12+ ou équivalent). Compatible également avec macOS 12+ et Windows.
+> [!NOTE]
+> - **Prérequis :** Sous Linux, `ankinote-ai` requiert `glibc >= 2.35` (Ubuntu 22.04+, Debian 12+ ou équivalent). Compatible également avec macOS 12+ et Windows.
+> - **Vérification des mises à jour :** Quelle que soit l'installation, AnkiNote vérifie sur PyPI au démarrage puis une fois par jour et affiche la commande de mise à jour dans **Réglages → À propos**. Définissez `ANKINOTE_UPDATE_CHECK=0` pour désactiver cette vérification.
 
 ---
 
@@ -147,7 +118,11 @@ cp .env.example .env      # optionnel : ANKIWEB_USERNAME / ANKIWEB_PASSWORD, por
 docker compose up -d      # ouvrez http://localhost:8080
 ```
 
-Pour que le conteneur utilise un Anki Desktop avec AnkiConnect, utilisez `deploy/standard`. AnkiNote n'a pas de connexion : gardez-le sur votre réseau domestique ou un réseau privé comme Tailscale, et ne l'exposez à Internet que derrière un proxy inverse qui demande une connexion. Consultez [`deploy/README.md`](deploy/README.md) pour tous les détails.
+Pour que le conteneur utilise un Anki Desktop avec AnkiConnect, utilisez `deploy/standard`. Consultez [`deploy/README.md`](deploy/README.md) pour toutes les options de déploiement, les conseils de proxy inverse et les guides de migration.
+
+> [!IMPORTANT]
+> - **Pas d'authentification intégrée :** Gardez AnkiNote sur votre réseau domestique ou un réseau privé comme Tailscale ; ne l'exposez sur Internet que derrière un proxy inverse demandant une authentification.
+> - **Noms d'hôte personnalisés (`ANKINOTE_ALLOWED_HOSTS`) :** Par défaut, AnkiNote ne répond qu'à `localhost` et aux adresses IP. Pour y accéder via un nom d'hôte (proxy inverse ou nom Tailscale), indiquez-le dans `ANKINOTE_ALLOWED_HOSTS` (séparé par des virgules) — même si le proxy transfère vers une IP — sinon l'enregistrement, la synchro et les listes de modèles échoueront avec `403`.
 
 ---
 
@@ -173,6 +148,33 @@ Lancez `ankinote` seul pour ouvrir un menu dans le terminal. Le [Guide d'utilisa
 
 ---
 
+## 💡 Flux de travail pratiques
+
+Au-delà de la recherche de mots isolés, deux méthodes accélèrent beaucoup la création de cartes au quotidien :
+
+### Apprendre un mot dans la phrase où on l'a rencontré
+
+Collez une phrase d'un article ou d'un livre dans **Générer** et mettez le mot (ou chaque partie d'une expression) entre crochets. Les lignes sans crochets restent des mots simples, donc les deux peuvent être traités dans le même lot :
+
+```text
+We sat on the [bank] of the river.
+I'll [pick] you [up] at six.
+```
+
+- **Un seul sens, sans superflu** — N'explique que le sens employé dans la phrase (« bank » comme rive, pas toutes les entrées du dictionnaire).
+- **Votre phrase reste le premier exemple** — Vous révisez le mot mot pour mot dans le contexte où vous l'avez rencontré.
+- **N'importe quelle forme, n'importe quelle langue** — Marquez la forme vue (`ran`, `食べた`, ou l'allemand `Ich [rufe] dich [an]`) ; la carte donne la forme du dictionnaire.
+
+### Faire une carte d'un exercice STEM raté
+
+Prenez en photo un exercice de devoir ou d'annale, passez **Générer** sur **STEM** et collez ou déposez l'image (choisissez **Problème** ou laissez **Auto**) :
+
+- **Votre exercice exact, autonome** — Réécrit l'énoncé au recto pour qu'il se lise sans l'image, avec la réponse finale et la solution pas à pas au verso.
+- **Comment trouver la méthode** — Met en avant l'indice de l'énoncé qui mène à la stratégie de résolution, pas seulement le calcul.
+- **Vérifiez avant d'enregistrer** — L'aperçu affiche MathJax ; ajustez une étape avec **Modifier les champs** ou réparez les formules avec **Corriger avec l’IA**. *(Nécessite un modèle principal acceptant les images, comme le modèle Gemini recommandé.)*
+
+---
+
 ## 🤖 Fournisseurs pris en charge
 
 | Capacité | Préréglages et compatibilité |
@@ -181,9 +183,10 @@ Lancez `ankinote` seul pour ouvrir un menu dans le terminal. Le [Guide d'utilisa
 | **Génération d'images** | Gemini, OpenAI (`gpt-image`), fal.ai |
 | **Synthèse vocale (TTS)** | Gemini TTS, OpenAI TTS, Google Cloud TTS |
 
-Google Cloud TTS demande sa propre clé Google Cloud, restreinte à l'API Cloud Text-to-Speech, et la facturation activée sur son projet, même dans le quota mensuel gratuit ; une clé AI Studio est limitée à l'API Gemini et ne fonctionne pas. L'assistant détaille les étapes sous *Configurer chaque contenu séparément*.
-
 Toutes vos clés API et réglages restent sur votre machine, dans `~/.config/ankinote/settings.json`.
+
+> [!NOTE]
+> Google Cloud TTS requiert sa propre clé Google Cloud (restreinte à l'API Cloud Text-to-Speech) avec la facturation activée sur le projet, même dans le quota mensuel gratuit ; une clé AI Studio est limitée à l'API Gemini et ne fonctionne pas. L'assistant détaille les étapes sous *Configurer chaque contenu séparément*.
 
 ---
 
@@ -191,7 +194,7 @@ Toutes vos clés API et réglages restent sur votre machine, dans `~/.config/ank
 
 ```bash
 git clone https://github.com/ankinote-ai/ankinote.git
-cd ankinote-ai
+cd ankinote
 
 uv sync                   # installer les dépendances Python (Python 3.14+)
 make web-dev              # serveur de dev Svelte + Vite

@@ -36,14 +36,14 @@
 
 ## ✨ 核心亮点
 
-- **配合你已有的 Anki** — 在你平时学习的电脑上，卡片通过 AnkiConnect 插件直接存进 Anki 桌面版：不多一份资料库，不用先下载，Anki 照常同步。在常开的家用服务器或 NAS 上，AnkiNote 也可以用内置的 Anki 直接同步 AnkiWeb，电脑关着也能用手机浏览器加卡片。
-- **一个 Key 搞定全部配置** — 首次启动提供 5 步引导向导：只需粘贴一个 Gemini AI Studio Key，即可同时驱动文本、配图和语音合成；也支持自由混搭 OpenAI、Claude、DeepSeek、fal.ai、Google Cloud TTS 及任意 OpenAI 兼容接口。
+- **配合你已有的 Anki** — 本地通过 AnkiConnect 直接写入 Anki 桌面版，不额外创建资料库；也可在家用服务器或 NAS 上启用内置 Anki 同步 AnkiWeb，随时用手机浏览器制卡。
+- **一个 Key 搞定全部配置** — 5 步配置向导粘贴一个 Gemini API Key 即可同时驱动文本、配图与语音，也支持自由混搭其他服务商。
 - **四种制卡模式：单词、短语、句子与 STEM**
-  - **语言学习**：自动生成精准释义、地道例句、记忆技巧、AI 场景配图与真人感发音。支持 **英语、法语、西班牙语、德语、日语、中文（简/繁体，带注音/拼音）与韩语（Beta）** 任意互译学习。
-  - **STEM 理科解题**：输入题目或**直接上传题目截图/照片**，生成结构化的分步解析卡片，原生支持 MathJax 公式渲染与辅助示意图。
-- **实时预览、行内编辑与 AI 改写** — 保存前可随时翻转正反面、切换深色/浅色主题。支持直接修改任意字段，也可让 AI 按指令重写 STEM 解析或一键修复损坏的 LaTeX 公式（支持撤销）。
-- **精选卡片配色主题** — 内置 **Rosé Pine**、**Kanagawa**、**Tokyo Night**、**Gruvbox** 四套护眼配色（均含浅色与深色模式），桌面端与移动端 Anki 均自适应。
-- **可以交给 AI Agent** — 有了 `ankinote` 命令行，Claude Code、Codex 等能执行命令的 Agent 就能把你正在读的内容做成卡片。
+  - **语言学习**：精准释义、地道例句、记忆技巧、AI 配图与真人感发音。支持 **英语、法语、西班牙语、德语、日语、中文（简/繁体，带注音/拼音）与韩语（Beta）** 任意互译学习。
+  - **STEM 理科解题**：输入题目或**直接拖入题目截图/照片**，生成带 MathJax 公式与辅助示意图的分步解析卡片。
+- **实时预览、行内编辑与 AI 改写** — 保存前可翻转正反面、切换浅色/深色模式；支持直接改字段、让 AI 重写 STEM 解析或一键修复损坏的 LaTeX 公式（支持撤销）。
+- **精选卡片配色主题** — 内置 **Rosé Pine**、**Kanagawa**、**Tokyo Night**、**Gruvbox** 四套护眼配色（浅色/深色全套），桌面端与移动端 Anki 自适应。
+- **支持命令行与 AI Agent** — 通过 `ankinote` 命令行即可在终端批量制卡，或交给 Claude Code、Codex 等 Agent 自动处理。
 
 ---
 
@@ -65,35 +65,6 @@
 
 ---
 
-## 🧭 大家怎么用
-
-### 在遇到生词的句子里学它
-
-读文章或小说时碰到不认识的词？把整句贴到 「生成」页面，用方括号括住这个词（短语就括住它的每个部分）：
-
-```text
-We sat on the [bank] of the river.
-I'll [pick] you [up] at six.
-```
-
-- **只讲这一个意思，不堆释义。** 卡片只讲句子里用到的那个义项：这里的 "bank" 是河岸，而不是词典里列出的所有意思。多义词和短语动词都不会杂乱。
-- **你读到的句子就是第一个例句。** 原句一字不改地留在卡片上，复习时回到当初遇见它的地方，有语境更容易记住。
-- **任何词形、任何语言。** 括住你看到的形式即可（`ran`、`食べた`，或德语 `Ich [rufe] dich [an]` 里分开的两部分），卡片会给出词典原形。
-
-不带括号的一行就是单词本身，所以单词和句子可以放在同一批里。
-
-### 把做错的题变成卡片
-
-作业或真题里有道数学、物理题做错了？拍张照片，在 「生成」页面切到 **STEM**，把图片粘贴或拖进去，不用手动输入题目。卡片类型选 **题目**，或者保持 **自动**：
-
-- **就是你做错的那道题。** 正面是这道题，整理成不看图片也能读懂的完整题目，背面是最终答案。你复习的是自己真正错过的题，而不是课本里随便挑的一道。
-- **完整解法，以及怎么想到它。** 分步解题过程，再加几行说明你自己怎样能想到这个方法：题目里指向它的那个线索，往往正是你当时没注意到的地方。
-- **保存前先检查。** 预览会把公式排版出来。用 **编辑字段** 改某一步，或对显示不出来的公式点 **让 AI 修复**，然后保存到 Anki。
-
-读图需要主模型支持图片输入；推荐的 Gemini 模型就支持。
-
----
-
 ## 🚀 1 分钟快速上手
 
 唯一的前置依赖是 [uv](https://docs.astral.sh/uv/getting-started/installation/)（它会自动帮你管理 Python 环境）：
@@ -102,13 +73,11 @@ I'll [pick] you [up] at six.
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-无需安装，直接运行：
+无需安装，直接运行（每次自动启动最新版本）：
 
 ```bash
 uvx --from ankinote-ai@latest ankinote-web
 ```
-
-这样运行时，AnkiNote 每次启动都是最新版本。不论用哪种方式安装，它都会在启动时和之后每天向 PyPI 查询一次新版本，并在 **设置 → 关于** 里给出升级命令；设置 `ANKINOTE_UPDATE_CHECK=0` 可以关闭检查。
 
 在浏览器打开 **<http://127.0.0.1:8000>**。首次启动时，**配置向导**会带你完成：
 
@@ -132,7 +101,9 @@ uv tool install ankinote-ai
 ankinote-web
 ```
 
-> **系统要求**：Linux 需 `glibc >= 2.35`（Ubuntu 22.04+、Debian 12+ 等）；同时支持 macOS 12+ 与 Windows。
+> [!NOTE]
+> - **系统要求**：Linux 需 `glibc >= 2.35`（Ubuntu 22.04+、Debian 12+ 等）；同时支持 macOS 12+ 与 Windows。
+> - **版本检查**：不论用哪种方式安装，AnkiNote 都会在启动时和之后每天向 PyPI 查询一次新版本，并在 **设置 → 关于** 中给出升级命令；设置 `ANKINOTE_UPDATE_CHECK=0` 可关闭检查。
 
 ---
 
@@ -147,7 +118,11 @@ cp .env.example .env      # 可选：配置 ANKIWEB_USERNAME / ANKIWEB_PASSWORD�
 docker compose up -d      # 访问 http://localhost:8080
 ```
 
-如果想让容器改用带 AnkiConnect 的 Anki 桌面版，请使用 `deploy/standard`。AnkiNote 没有登录功能，请只在家庭内网或 Tailscale 这类私有网络里使用；要暴露到公网，必须放在要求登录的反向代理之后。完整部署说明与迁移指南请见 [`deploy/README.md`](deploy/README.md)。
+如果想让容器改用带 AnkiConnect 的 Anki 桌面版，请使用 `deploy/standard`。完整部署说明、反向代理配置与迁移指南请见 [`deploy/README.md`](deploy/README.md)。
+
+> [!IMPORTANT]
+> - **无内置登录**：请只在家庭内网或 Tailscale 这类私有网络中使用；如需暴露到公网，必须放在带身份认证的反向代理之后。
+> - **自定义域名（`ANKINOTE_ALLOWED_HOSTS`）**：默认仅响应 `localhost` 和 IP 地址。通过域名访问时（如反向代理域名或 Tailscale 主机名），请将该域名以逗号分隔填入 `ANKINOTE_ALLOWED_HOSTS`——即使代理转发到的是 IP 地址也需要配置，否则保存、同步与模型列表会返回 `403`。
 
 ---
 
@@ -173,6 +148,33 @@ ankinote word batch --file words.txt --rpm 30
 
 ---
 
+## 💡 实用工作流
+
+除了常规的查单个词，这两种工作流在日常学习里特别顺手：
+
+### 在遇到生词的句子里学它
+
+在「生成」页面贴入原句，用方括号括住生词（或短语的各个部分）；不带括号的行会按普通单词处理，两者可混在同一批里：
+
+```text
+We sat on the [bank] of the river.
+I'll [pick] you [up] at six.
+```
+
+- **只讲这一个义项** — 只解释当前语境下的意思（如这里的 "bank" 是河岸），多义词和短语动词不杂乱。
+- **原句保留为首个例句** — 一字不改地留在卡片上，复习时直接回到当初读到的语境。
+- **任意词形、任意语言** — 直接括住看到的形态（`ran`、`食べた`，或德语 `Ich [rufe] dich [an]`），卡片会自动还原为词典原形。
+
+### 把做错的 STEM 题变成卡片
+
+拍下作业或真题里的错题，在「生成」页面切到 **STEM** 并粘贴/拖入图片（卡片类型选 **题目** 或保持 **自动**）：
+
+- **自包含的原题卡片** — 正面整理为不看图片也能读懂的完整题目，背面给出最终答案与分步解析。
+- **点出解题思路** — 除了步骤，还会说明题目中指向该解法的线索，补上当时没想到的那一步。
+- **保存前校对公式** — 实时预览渲染 MathJax，可用 **编辑字段** 微调步骤，或点 **让 AI 修复** 修正公式。*（需主模型支持读图，推荐的 Gemini 模型均支持。）*
+
+---
+
 ## 🤖 支持的模型服务
 
 | 能力 | 内置预设与兼容范围 |
@@ -181,9 +183,10 @@ ankinote word batch --file words.txt --rpm 30
 | **图像生成** | Gemini、OpenAI（`gpt-image`）、fal.ai |
 | **语音合成（TTS）** | Gemini TTS、OpenAI TTS、Google Cloud TTS |
 
-Google Cloud TTS 需要单独的 Google Cloud 密钥（只允许 Cloud Text-to-Speech API），并且即使在每月免费额度内，所在项目也要开通结算；AI Studio 的密钥只能调用 Gemini API，在这里用不了。向导的「按内容分别设置」里列出了具体步骤。
-
 所有 API Key 与设置都只保存在你自己的电脑上（`~/.config/ankinote/settings.json`）。
+
+> [!NOTE]
+> Google Cloud TTS 需要单独的 Google Cloud 密钥（仅限 Cloud Text-to-Speech API），且即使在每月免费额度内，所在项目也需开通结算；AI Studio 密钥仅能调用 Gemini API，在这里无法使用。向导的「按内容分别设置」中列出了具体步骤。
 
 ---
 
@@ -191,7 +194,7 @@ Google Cloud TTS 需要单独的 Google Cloud 密钥（只允许 Cloud Text-to-S
 
 ```bash
 git clone https://github.com/ankinote-ai/ankinote.git
-cd ankinote-ai
+cd ankinote
 
 uv sync                   # 安装 Python 依赖（需 Python 3.14+）
 make web-dev              # 启动 Svelte + Vite 前端开发服务器

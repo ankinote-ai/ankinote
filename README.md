@@ -36,14 +36,14 @@ No manual formatting. No copy-pasting between ChatGPT and Anki. Bring your own A
 
 ## ✨ Why AnkiNote?
 
-- **Works with the Anki You Already Have** — On the computer you study on, cards go straight into Anki Desktop through the AnkiConnect add-on: no second collection, nothing to download first, and Anki syncs them as usual. On an always-on home server or NAS, AnkiNote can run its own built-in Anki and sync with AnkiWeb instead, so you can add cards from your phone's browser while your computer is off.
-- **One-Key Setup Wizard** — Paste a single Gemini AI Studio key and the 5-step onboarding wizard configures text, image, and speech routes for you. Or mix and match OpenAI, Claude, DeepSeek, fal.ai, Google Cloud TTS, and any OpenAI-compatible endpoint.
+- **Works with Your Existing Anki** — Sends cards straight into Anki Desktop via AnkiConnect with no duplicate collection, or runs built-in Anki with AnkiWeb sync on a home server/NAS for mobile card creation.
+- **One-Key Setup Wizard** — Paste a single Gemini API key to configure text, image, and speech in 5 steps, or mix and match your preferred providers.
 - **4 Card Modes: Word, Phrase, Sentence & STEM**
-  - **Language Learning**: Definitions, natural examples, memory hooks/mnemonics, AI-generated illustrations, and TTS audio. Supports **English, French, Spanish, German, Japanese, Chinese (Simplified & Traditional, with ruby/pinyin), and Korean (beta)** — learn any of them, explained in any other.
-  - **STEM & Problem Solving**: Type a question or **upload a photo of a problem** to generate a structured, step-by-step explanation card with MathJax formulas and optional diagrams.
-- **Live Preview, Inline Editing & AI Rewrite** — Flip front/back and toggle Light/Dark mode before saving. Tweak any field directly, ask AI to rewrite a STEM explanation, or fix broken LaTeX with one click (with undo).
-- **Curated Card Themes** — Choose from **Rosé Pine**, **Kanagawa**, **Tokyo Night**, and **Gruvbox** in both Light and Dark modes, with responsive layouts for desktop and mobile Anki.
-- **Works with your AI agent** — The `ankinote` CLI lets Claude Code, Codex, or any agent that can run commands turn what you're reading into cards.
+  - **Language Learning**: Definitions, natural examples, memory hooks, AI illustrations, and TTS audio across **English, French, Spanish, German, Japanese, Chinese (Simplified & Traditional, with ruby/pinyin), and Korean (beta)** — learn any of them, explained in any other.
+  - **STEM & Problem Solving**: Type a question or **drop a photo of a problem** to generate a structured, step-by-step card with MathJax formulas and optional diagrams.
+- **Live Preview, Inline Editing & AI Rewrite** — Flip front/back and Light/Dark before saving; edit any field inline, ask AI to rewrite a STEM explanation, or fix broken LaTeX in one click (with undo).
+- **Curated Card Themes** — **Rosé Pine**, **Kanagawa**, **Tokyo Night**, and **Gruvbox** in Light and Dark modes, responsive on desktop and mobile Anki.
+- **CLI & AI Agent Ready** — Use the `ankinote` CLI from your terminal or let agents like Claude Code and Codex turn what you're reading into cards.
 
 ---
 
@@ -65,35 +65,6 @@ No manual formatting. No copy-pasting between ChatGPT and Anki. Bring your own A
 
 ---
 
-## 🧭 How People Use It
-
-### Learn a word in the sentence you met it
-
-Reading an article or a novel and hit a word you don't know? Paste the whole sentence into the Generate page and put brackets around the word (or around each part of a phrase):
-
-```text
-We sat on the [bank] of the river.
-I'll [pick] you [up] at six.
-```
-
-- **One sense, no clutter.** The card covers only the meaning the sentence uses: "bank" as a riverside, not every sense the dictionary lists. Words with many meanings and phrasal verbs stay focused.
-- **Your sentence is the first example.** The line you actually read stays on the card word for word, so you review the word where you met it, and that context helps it stick.
-- **Any form, any language.** Mark the form you saw (`ran`, `食べた`, or both parts of a German `Ich [rufe] dich [an]`); the card gives the dictionary form.
-
-A line without brackets is just the word, so single words and sentences can go in the same batch.
-
-### Turn a problem you got wrong into a card
-
-Missed a math or physics problem on homework or a past paper? Take a photo of it, switch the Generate page to **STEM**, and paste or drop the picture in; there's no need to type it out. Choose **Problem** as the card type, or leave it on **Auto**:
-
-- **The problem you actually missed.** The front is that problem, written out so it makes sense without the picture, with the final answer on the back. You review that problem, not one picked from a textbook.
-- **The solution, and how to find it.** A step-by-step solution, plus a few lines on how you could have found the method yourself: the clue in the problem that points to it, which is often the part you missed.
-- **Check it before it's saved.** The preview shows the math typeset. Fix a step with **Edit fields**, or use **Fix with AI** on formulas that don't render, then save to Anki.
-
-Reading the picture needs a main model that accepts images; the recommended Gemini model does.
-
----
-
 ## 🚀 Quick Start (1 Minute)
 
 The only prerequisite is [uv](https://docs.astral.sh/uv/getting-started/installation/) (it manages Python for you):
@@ -102,13 +73,11 @@ The only prerequisite is [uv](https://docs.astral.sh/uv/getting-started/installa
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-Run AnkiNote directly without installing:
+Run AnkiNote directly without installing (always starts the latest release):
 
 ```bash
 uvx --from ankinote-ai@latest ankinote-web
 ```
-
-Run this way, AnkiNote always starts the latest release. However you installed it, it checks PyPI for a new release at startup and once a day, and shows the upgrade command under **Settings → About**; set `ANKINOTE_UPDATE_CHECK=0` to turn the check off.
 
 Then open **<http://127.0.0.1:8000>** in your browser. On first launch, the **Setup Wizard** walks you through:
 
@@ -132,7 +101,9 @@ uv tool install ankinote-ai
 ankinote-web
 ```
 
-> **Note:** On Linux, `ankinote-ai` requires `glibc >= 2.35` (Ubuntu 22.04+, Debian 12+, or similar). macOS 12+ and Windows are also supported.
+> [!NOTE]
+> - **Requirements:** On Linux, `ankinote-ai` requires `glibc >= 2.35` (Ubuntu 22.04+, Debian 12+, or similar). macOS 12+ and Windows are also supported.
+> - **Update checks:** However you installed it, AnkiNote checks PyPI for a new release at startup and once a day, showing the upgrade command under **Settings → About**. Set `ANKINOTE_UPDATE_CHECK=0` to turn the check off.
 
 ---
 
@@ -149,7 +120,9 @@ docker compose up -d      # open http://localhost:8080
 
 To have the container use an Anki Desktop with AnkiConnect instead, use `deploy/standard`. See [`deploy/README.md`](deploy/README.md) for full deployment options, reverse-proxy tips, and migration guides.
 
-AnkiNote has no login, so keep it on your home network or a private network such as Tailscale; don't expose it to the internet except behind a reverse proxy that asks for a login. It answers only to `localhost` and IP addresses. To open it by a host name (a reverse proxy, a Tailscale name), list that name in `ANKINOTE_ALLOWED_HOSTS`, comma-separated. This also applies when a proxy forwards to an IP address: without the name, saving, syncing and model lists fail with 403.
+> [!IMPORTANT]
+> - **No built-in login:** Keep AnkiNote on your home network or a private network such as Tailscale; don't expose it to the internet except behind a reverse proxy that requires login.
+> - **Custom hostnames (`ANKINOTE_ALLOWED_HOSTS`):** AnkiNote answers only to `localhost` and IP addresses by default. To open it by a host name (a reverse proxy or Tailscale name), list those host names comma-separated in `ANKINOTE_ALLOWED_HOSTS`. This also applies when a proxy forwards to an IP address: without the name, saving, syncing, and model lists fail with `403`.
 
 ---
 
@@ -175,6 +148,33 @@ Run `ankinote` on its own for a menu in the terminal. The [CLI Usage Guide](docs
 
 ---
 
+## 💡 Practical Workflows
+
+Beyond looking up single words, two workflows make day-to-day card making much faster:
+
+### Learn a word in the sentence you met it
+
+Paste a sentence from an article or book into **Generate** and bracket the word (or each part of a phrase). Lines without brackets stay single words, so both can go in the same batch:
+
+```text
+We sat on the [bank] of the river.
+I'll [pick] you [up] at six.
+```
+
+- **One sense, no clutter** — Covers only the meaning used in that sentence ("bank" as a riverside, not every dictionary sense).
+- **Your sentence stays as the first example** — Review the word word-for-word in the context where you met it.
+- **Any form, any language** — Bracket what you saw (`ran`, `食べた`, or German `Ich [rufe] dich [an]`); the card gives the dictionary form.
+
+### Turn a missed STEM problem into a card
+
+Snap a photo of a homework or exam problem, switch **Generate** to **STEM**, and paste or drop the picture (choose **Problem** as the card type, or leave it on **Auto**):
+
+- **Your exact problem, self-contained** — Rewrites the problem on the front so it reads cleanly without the image, with the final answer and step-by-step solution on the back.
+- **How to find the method** — Highlights the clue in the problem that points to the solution strategy, not just the algebra.
+- **Check before saving** — Preview renders the math; tweak steps with **Edit fields** or repair broken formulas with **Fix with AI**. *(Requires a main model that accepts images, such as the recommended Gemini model.)*
+
+---
+
 ## 🤖 Supported Providers
 
 | Capability | Built-in Presets & Compatibility |
@@ -183,9 +183,10 @@ Run `ankinote` on its own for a menu in the terminal. The [CLI Usage Guide](docs
 | **Image Generation** | Gemini, OpenAI (`gpt-image`), fal.ai |
 | **Text-to-Speech** | Gemini TTS, OpenAI TTS, Google Cloud TTS |
 
-Google Cloud TTS takes its own Google Cloud key, restricted to the Cloud Text-to-Speech API, and needs billing turned on for its project even within the free monthly allowance; an AI Studio key is limited to the Gemini API and won't work. The wizard lists the steps under *Set up each kind of content separately*.
-
 All API keys and settings stay on your machine, in `~/.config/ankinote/settings.json`.
+
+> [!NOTE]
+> Google Cloud TTS takes its own Google Cloud key, restricted to the Cloud Text-to-Speech API, and needs billing turned on for its project even within the free monthly allowance; an AI Studio key is limited to the Gemini API and won't work. The wizard lists the steps under *Set up each kind of content separately*.
 
 ---
 
@@ -193,7 +194,7 @@ All API keys and settings stay on your machine, in `~/.config/ankinote/settings.
 
 ```bash
 git clone https://github.com/ankinote-ai/ankinote.git
-cd ankinote-ai
+cd ankinote
 
 uv sync                   # install Python dependencies (Python 3.14+)
 make web-dev              # run Svelte + Vite frontend dev server
