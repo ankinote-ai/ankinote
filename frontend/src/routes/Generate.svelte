@@ -466,17 +466,6 @@
             {t(session.kind === "stem" ? "generate.diagram" : "generate.image")}
           </label>
         {/if}
-        {#if session.kind === "stem"}
-          <label title={t("generate.thinkingHint")}>
-            {t("generate.thinking")}
-            <select class="input thinking" bind:value={session.thinking}>
-              <option value="auto">{t("generate.thinking.auto")}</option>
-              {#each THINKING as level (level)}
-                <option value={level}>{t(`generate.thinking.${level}`)}</option>
-              {/each}
-            </select>
-          </label>
-        {/if}
         {#if session.kind !== "stem"}
           <label>
             <input type="checkbox" bind:checked={session.audio} />
@@ -489,6 +478,21 @@
           <span class="note off">{t("generate.diagramHint")}</span>
         {/if}
       </div>
+
+      {#if session.kind === "stem"}
+        <div class="opts">
+          <label title={t("generate.thinkingHint")}>
+            {t("generate.thinking")}
+            <select class="input thinking" bind:value={session.thinking}>
+              <option value="auto">{t("generate.thinking.auto")}</option>
+              {#each THINKING as level (level)}
+                <option value={level}>{t(`generate.thinking.${level}`)}</option>
+              {/each}
+            </select>
+          </label>
+          <span class="note off">{t("generate.thinkingNote")}</span>
+        </div>
+      {/if}
 
       {#if !compact}
         <div class="row">
