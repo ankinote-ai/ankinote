@@ -22,7 +22,6 @@ from ankinote.cli.factory import (
     anki_client_scope,
     build_stem_collection,
     model_options,
-    resolve_thinking,
 )
 from ankinote.collections.stem import CardType, StemCollection
 
@@ -36,7 +35,10 @@ def collection_options(cmd):
         show_default=True,
         help="Card type; auto lets the AI choose per topic.",
     )(cmd)
-    return model_options(thinking_default="high for STEM cards", images=True)(cmd)
+    return model_options(
+        thinking_default="medium for STEM cards; a custom endpoint's own default",
+        images=True,
+    )(cmd)
 
 
 def build_options(
@@ -53,7 +55,7 @@ def build_options(
         llm_model=llm,
         image_model=image_model,
         image_size=image_size,
-        reasoning_effort=resolve_thinking(thinking, unset="high"),
+        thinking=thinking,
         card_type=None if card_type == "auto" else CardType(card_type),
         profile=profile,
         image_profile=image_profile,

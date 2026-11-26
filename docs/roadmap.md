@@ -62,29 +62,6 @@ were next before that and are now [waiting for demand](#waiting-for-demand).
 
 Unscheduled; each can ship on its own.
 
-### Fix with AI inside the live editor
-
-Today "Fix with AI" sits under the preview's formula errors and works on the
-applied card. In the STEM live editor the same error list only says "fix them
-in the form, or apply the edit and use Fix with AI", which is two steps.
-
-Proposed 2026-11-25 (UI not yet confirmed):
-
-- Show the same button in the live editor's error list, with the same label.
-  It is a targeted, no-input action triggered by detected errors, so the
-  label names what changes (the formulas), not a generic "edit further";
-  open-ended requests stay in the "Rewrite with AI" box.
-- It sends the current, unapplied form plus the errors, and writes the fixed
-  fields back into the form rather than applying them, marking the fields
-  that changed. The editor's contract stays "nothing changes until Apply";
-  Cancel still discards everything.
-- Backend: the fix-latex route needs to accept form contents, not only a
-  draft id.
-
-### STEM in the web app
-
-- Thinking level on the Generate page: in 0.x, not yet in the web app.
-
 ### Rendering polish
 
 - Let detailed explanations/derivations expand on demand. Verify `<details>`
@@ -99,7 +76,11 @@ Proposed 2026-11-25 (UI not yet confirmed):
 How it works today is under [Shipped](#thinking-control-shipped). Open items:
 
 - Measure what "off" saves on the presets (latency, tokens per card) with real
-  keys; the wire tests only prove the request is right.
+  keys; the wire tests only prove the request is right. Same for STEM's
+  medium against high.
+- DeepSeek is set up as a custom endpoint, so STEM keeps its default there.
+  Check with a real key whether it honours `reasoning_effort` levels; if so,
+  give it the medium default like the known vendors.
 - Disabling thinking made the model less consistent about the output contract
   (`word` occasionally returns a bare record instead of a JSON array; now
   tolerated in `generate_word_data`). Watch for similar contract slips in the
@@ -153,6 +134,13 @@ Designed or discussed; built only once users ask.
 - **A built-in password** for the web app. Until then, a reverse proxy that
   asks for a login (see the principles above). Accounts belong to the
   [deployable web service](#future-major-version-deployable-web-service).
+- **Fix with AI inside the live editor** (deferred 2026-11-26): the button
+  under the preview's formula errors, also in the STEM live editor's error
+  list, writing the fixed formulas back into the unapplied form. Deferred
+  because nobody knows how often generated formulas break, errors in the
+  editor are mostly the user's own half-typed ones, and the preview's Fix and
+  Rewrite with AI already cover a model's mistakes. The fix-latex route
+  would need to accept form contents, not only a draft id.
 - **Per-field rewrite / simplify buttons** on STEM cards: only if users keep
   wanting to change one field rather than the whole card.
 - **Extra instructions per card type** (2026-11-25): one text box per type
@@ -507,6 +495,16 @@ This depends on LiteLLM's model table knowing the model, so a new preset
 model needs a LiteLLM that lists it. `tests/services/test_ai_thinking_wire.py`
 checks the request body each preset produces. `stem` keeps thinking on and
 sends no `temperature`, which thinking models ignore or reject.
+
+STEM thinks at `medium` unless the user picks a level (2026-11-26; the CLI
+used `high` before, the web app the provider default). Leaving it to the
+provider differed widely: Gemini 3 thinks hard by default, Anthropic and
+recent OpenAI models not at all. A custom endpoint (DeepSeek's preset is
+one) keeps its own default, as a local server may reject the parameter.
+`services.provider_factory.stem_reasoning_effort` decides this for the CLI
+and the web app. The Generate page offers Auto (medium), Off, Low, Medium,
+High and Model default for STEM, remembered in the browser; a rewrite or
+formula fix uses the level the card was made with.
 
 Language cards ask for `temperature=0.3` (steady, dictionary-like output),
 except on Gemini 3 and later, which keep their default 1.0 as Google advises

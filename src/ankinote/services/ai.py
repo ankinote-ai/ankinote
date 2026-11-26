@@ -5,7 +5,7 @@ import base64
 import re
 from collections.abc import Sequence
 from dataclasses import dataclass, replace
-from typing import Protocol, cast
+from typing import Literal, Protocol, cast, get_args
 
 import httpx
 from litellm import ModelResponse, acompletion, aimage_generation
@@ -46,7 +46,8 @@ _GEMINI_DEFAULT_TEMPERATURE = re.compile(r"gemini-([3-9]|\d{2,})")
 # CLI option and the STEM generation page).  ``off`` disables the model's
 # extended-thinking pass, ``default`` uses the provider default, and the named
 # levels are forwarded as ``reasoning_effort``.
-THINKING_CHOICES = ("off", "low", "medium", "high", "default")
+Thinking = Literal["off", "low", "medium", "high", "default"]
+THINKING_CHOICES: tuple[str, ...] = get_args(Thinking)
 
 
 def resolve_thinking(choice: str | None, *, unset: str | None) -> str | None:

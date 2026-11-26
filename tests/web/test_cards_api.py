@@ -90,10 +90,16 @@ class FakeImages:
 @pytest.fixture
 def models(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
     """Fake text answers; speech and images on unless a test turns them off."""
-    state: dict[str, Any] = {"answer": json.dumps([MOON]), "prompts": [], "calls": []}
+    state: dict[str, Any] = {
+        "answer": json.dumps([MOON]),
+        "prompts": [],
+        "calls": [],
+        "efforts": [],
+    }
 
     async def acompletion(**kwargs: Any) -> Any:
         state["calls"].append(kwargs["messages"])
+        state["efforts"].append(kwargs.get("reasoning_effort"))
         state["prompts"].append(kwargs["messages"][-1]["content"])
         answer = state["answer"]
         if isinstance(answer, Exception):
@@ -732,6 +738,50 @@ async def test_a_chosen_stem_type_skips_classifying(
 
     assert len(models["prompts"]) == 1
     assert note["variant"] == "formula"
+
+
+async def test_stem_thinks_at_medium_unless_another_level_is_chosen(
+    api: httpx.AsyncClient, models: dict[str, Any]
+) -> None:
+    await _gemini(api)
+
+    medium = await _stem(api, models, card_type="formula")
+    high = await _stem(api, models, card_type="formula", thinking="high")
+    off = await _stem(api, models, card_type="formula", thinking="off")
+
+    assert models["efforts"] == ["medium", "high", "none"]
+    # A rewrite thinks as hard as the card it rewrites.
+    rewritten = await api.post(
+        f"/api/cards/drafts/{high['id']}/rewrite", json={"instruction": "simpler"}
+    )
+    assert rewritten.status_code == 200, rewritten.text
+    assert models["efforts"][-1] == "high"
+    assert medium["id"] != off["id"]
+
+
+async def test_stem_on_a_custom_endpoint_keeps_the_model_default(
+    api: httpx.AsyncClient, models: dict[str, Any]
+) -> None:
+    route = {"provider": "custom", "model": "m", "base_url": "http://local.test/v1"}
+    response = await api.put("/api/models", json={"text": route})
+    assert response.status_code == 200, response.text
+
+    await _stem(api, models, card_type="formula", image=False)
+    await _stem(api, models, card_type="formula", image=False, thinking="low")
+
+    assert models["efforts"] == [None, "low"]
+
+
+async def test_thinking_is_one_of_the_known_levels(
+    api: httpx.AsyncClient, models: dict[str, Any]
+) -> None:
+    await _gemini(api)
+
+    response = await api.post(
+        "/api/cards/stem", json={"text": "F=ma", "thinking": "max"}
+    )
+
+    assert response.status_code == 422
 
 
 async def test_a_stem_diagram_says_when_it_cannot_be_drawn_unless_turned_off(

@@ -24,6 +24,7 @@ from ankinote.services.provider_factory import (
     build_image_service,
     build_text_service,
     optional_speech_service,
+    stem_reasoning_effort,
 )
 from ankinote.settings import ProviderProfile, Settings, load_settings
 
@@ -182,7 +183,8 @@ class StemCollectionOptions:
     llm_model: str | None = None
     image_model: str | None = None
     image_size: int | None = None
-    reasoning_effort: str | None = None
+    # The --thinking choice; None picks the STEM default for the provider.
+    thinking: str | None = None
     card_type: CardType | None = None
     profile: str | None = None
     image_profile: str | None = None
@@ -296,7 +298,7 @@ def build_stem_collection(
         text_model=_resolve_text_model(options.llm_model, text_profile),
         text_service=build_text_service(text_profile),
         image_service=image_service,
-        reasoning_effort=options.reasoning_effort,
+        reasoning_effort=stem_reasoning_effort(options.thinking, text_profile),
     )
 
 

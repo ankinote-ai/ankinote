@@ -255,11 +255,39 @@ class TestReasoningEffortPlumbing:
         )
         assert collection._reasoning_effort == "high"
 
-    def test_stem_collection_defaults_to_provider_default(self):
+    def test_stem_collection_thinks_at_medium_by_default(self):
+        save_settings(
+            Settings(
+                text_providers={"OpenAI": ProviderProfile(vendor="OpenAI", model="m")},
+                active_text_provider="OpenAI",
+            )
+        )
+        collection = build_stem_collection(
+            FakeCollectionClient(), StemCollectionOptions()
+        )
+        assert collection._reasoning_effort == "medium"
+
+    def test_stem_collection_on_a_custom_endpoint_keeps_the_model_default(self):
+        save_settings(
+            Settings(
+                text_providers={
+                    "local": ProviderProfile(
+                        vendor="Custom / Other", model="m", base_url="http://x/v1"
+                    )
+                },
+                active_text_provider="local",
+            )
+        )
         collection = build_stem_collection(
             FakeCollectionClient(), StemCollectionOptions()
         )
         assert collection._reasoning_effort is None
+
+    def test_stem_collection_honours_a_chosen_level(self):
+        collection = build_stem_collection(
+            FakeCollectionClient(), StemCollectionOptions(thinking="high")
+        )
+        assert collection._reasoning_effort == "high"
 
 
 class TestResolveProfile:

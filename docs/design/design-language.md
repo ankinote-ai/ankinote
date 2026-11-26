@@ -179,7 +179,9 @@ edit (or rewrite, below); the server keeps the last 20 versions of a draft.
 STEM, built 2026-11-13: the fourth kind. Under the input, type chips (Auto,
 Concept, Formula, Problem; Auto lets the model choose, and picks Procedure
 too, which has no chip of its own) and a Diagrams switch ("Drawn only when a
-diagram helps"); there is no audio. Unlike the other kinds the input is one
+diagram helps") next to a Thinking select (Auto (medium), Off, Low, Medium,
+High, Model default; its tooltip says harder is slower and costs more); there
+is no audio. Unlike the other kinds the input is one
 large box and one request makes one card, not one per line; a question may
 be up to 4000 characters (words, phrases and sentences 300). A picture of the
 question can go with it or replace the text: paste with Ctrl+V, drop it on

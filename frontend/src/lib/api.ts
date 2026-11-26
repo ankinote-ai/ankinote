@@ -180,6 +180,9 @@ export const KINDS: Kind[] = ["word", "phrase", "sentence", "stem"];
 /** The four STEM note types; generating can also let the model choose. */
 export type StemType = "concept" | "formula" | "procedure" | "example";
 export const STEM_TYPES: StemType[] = ["concept", "formula", "procedure", "example"];
+/** How hard the model thinks on a STEM card; "default" is the provider's own. */
+export type Thinking = "off" | "low" | "medium" | "high" | "default";
+export const THINKING: Thinking[] = ["off", "low", "medium", "high", "default"];
 
 /** A formula MathJax couldn't typeset: its TeX and MathJax's message. */
 export type MathError = { tex: string; message: string };
@@ -331,6 +334,8 @@ export const api = {
       context?: string;
       /** Words and phrases: the spelling is meant; don't correct it. */
       as_typed?: boolean;
+      /** STEM: omit for medium (a custom endpoint: its own default). */
+      thinking?: Thinking;
     } = {},
   ) =>
     request<{ notes: DraftNote[]; issues?: InputIssue[] }>("POST", `/api/cards/${kind}`, {

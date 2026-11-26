@@ -7,6 +7,7 @@ from ankinote.services.ai import (
     ImageGenerationService,
     LiteLLMImageService,
     LiteLLMTextService,
+    resolve_thinking,
 )
 from ankinote.services.fal import FalImageService
 from ankinote.services.speech import GeminiSpeechService, OpenAISpeechService
@@ -33,6 +34,22 @@ def build_text_service(profile: ProviderProfile) -> LiteLLMTextService:
         api_key=profile.api_key or None,
         force_openai_route=profile.vendor == CUSTOM_VENDOR,
     )
+
+
+# STEM cards think at this level unless the user picks another. Leaving it to
+# the provider would differ widely: Gemini 3 thinks hard by default, while
+# Anthropic (and recent OpenAI models) don't think at all unless asked.
+STEM_THINKING = "medium"
+
+
+def stem_reasoning_effort(choice: str | None, profile: ProviderProfile) -> str | None:
+    """The ``reasoning_effort`` for STEM cards from a thinking ``choice``.
+
+    No choice means :data:`STEM_THINKING`, except on a custom endpoint, which
+    keeps the model's default: a local server may reject the parameter.
+    """
+    unset = None if profile.vendor == CUSTOM_VENDOR else STEM_THINKING
+    return resolve_thinking(choice, unset=unset)
 
 
 def build_image_service(

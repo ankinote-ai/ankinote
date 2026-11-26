@@ -10,7 +10,8 @@
 - `--image <file>` (`add` only): a photographed problem for the AI to solve
   from. Needs a vision-capable text model; with `--type example` it's the
   usual way to turn a homework or textbook problem into a card.
-- `--thinking` defaults to `high` for STEM (off for language cards).
+- `--thinking` defaults to `medium` for STEM (a custom endpoint keeps its
+  model's default; off for language cards). Use `high` for hard problems.
 - Diagrams use the image profile; `--image-size` sets the square size.
 
 ```bash

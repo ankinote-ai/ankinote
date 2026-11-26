@@ -5,6 +5,7 @@
   import {
     KINDS,
     STEM_TYPES,
+    THINKING,
     type InputIssue,
     type MathError,
     type MediaGap,
@@ -463,6 +464,17 @@
               onchange={(e) => (session.image = e.currentTarget.checked)}
             />
             {t(session.kind === "stem" ? "generate.diagram" : "generate.image")}
+          </label>
+        {/if}
+        {#if session.kind === "stem"}
+          <label title={t("generate.thinkingHint")}>
+            {t("generate.thinking")}
+            <select class="input thinking" bind:value={session.thinking}>
+              <option value="auto">{t("generate.thinking.auto")}</option>
+              {#each THINKING as level (level)}
+                <option value={level}>{t(`generate.thinking.${level}`)}</option>
+              {/each}
+            </select>
           </label>
         {/if}
         {#if session.kind !== "stem"}
@@ -930,6 +942,13 @@
     min-height: 36px;
     color: var(--muted);
     cursor: pointer;
+  }
+
+  .opts .thinking {
+    width: auto;
+    min-height: 36px;
+    padding: 5px 10px;
+    color: var(--fg);
   }
 
   .opts label:has(input:disabled) {

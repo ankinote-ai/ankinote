@@ -36,6 +36,8 @@ import {
   type MathError,
   type SavedNote,
   type StemType,
+  THINKING,
+  type Thinking,
 } from "./api";
 
 /** Providers rate-limit; two at a time keeps a batch moving without 429s. */
@@ -160,6 +162,8 @@ export class Row {
 
   /** STEM: the type asked for; undefined lets the model choose. */
   readonly cardType?: StemType;
+  /** STEM: how hard the model thinks; undefined is the server's default. */
+  readonly thinking?: Thinking;
   /** STEM: a picture of the question, read by the model. */
   readonly picture?: Picture;
   /** Words and phrases: the sentence the item was met in; regenerating keeps it. */
@@ -170,9 +174,16 @@ export class Row {
   constructor(
     readonly kind: Kind,
     readonly text: string,
-    extra: { cardType?: StemType; picture?: Picture; context?: string; asTyped?: boolean } = {},
+    extra: {
+      cardType?: StemType;
+      thinking?: Thinking;
+      picture?: Picture;
+      context?: string;
+      asTyped?: boolean;
+    } = {},
   ) {
     this.cardType = extra.cardType;
+    this.thinking = extra.thinking;
     this.picture = extra.picture;
     this.context = extra.context;
     this.asTyped = extra.asTyped ?? false;
@@ -209,7 +220,13 @@ export class Row {
   }
 }
 
-type Stored = { kind: Kind; image: boolean; audio: boolean; stemType: StemType | "auto" };
+type Stored = {
+  kind: Kind;
+  image: boolean;
+  audio: boolean;
+  stemType: StemType | "auto";
+  thinking: Thinking | "auto";
+};
 
 function stored(): Partial<Stored> {
   try {
@@ -229,6 +246,10 @@ class Session {
   // Procedure isn't offered as a chip; a choice saved before that falls back to Auto.
   stemType = $state<StemType | "auto">(
     stored().stemType === "procedure" ? "auto" : (stored().stemType ?? "auto"),
+  );
+  /** STEM: how hard the model thinks; "auto" leaves it to the server (medium). */
+  thinking = $state<Thinking | "auto">(
+    THINKING.includes(stored().thinking as Thinking) ? (stored().thinking as Thinking) : "auto",
   );
   /** False when no image model is set up: the switch is off and disabled. */
   imageAvailable = $state(true);
@@ -253,6 +274,7 @@ class Session {
           image: this.image,
           audio: this.audio,
           stemType: this.stemType,
+          thinking: this.thinking,
         };
         try {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
@@ -316,7 +338,8 @@ class Session {
     const text = input.trim();
     if (!text && !picture) return false;
     const type = this.stemType !== "auto" ? this.stemType : undefined;
-    const row = new Row("stem", text, { cardType: type, picture });
+    const thinking = this.thinking !== "auto" ? this.thinking : undefined;
+    const row = new Row("stem", text, { cardType: type, thinking, picture });
     this.rows.push(row);
     // Follow the new input unless the user is looking at a finished card.
     if (!this.selected || !this.selected.saveable) this.selectedId = row.id;
@@ -522,6 +545,7 @@ class Session {
       image: pictures && this.image && this.imageAvailable,
       audio: this.audio,
       card_type: row.cardType,
+      thinking: row.thinking,
       reference_image: row.picture && { data: row.picture.data, mime: row.picture.mime },
       context: row.context,
       as_typed: row.asTyped || undefined,

@@ -61,6 +61,7 @@ from ankinote.services.ai import (
     LiteLLMTextService,
     TextGenerationService,
     TextMessage,
+    Thinking,
 )
 from ankinote.services.anki import AnkiCollectionClient
 from ankinote.services.anki_factory import create_anki_client, get_shared_runtime
@@ -68,6 +69,7 @@ from ankinote.services.provider_factory import (
     build_image_service,
     build_text_service,
     optional_speech_service,
+    stem_reasoning_effort,
 )
 from ankinote.services.tts import SpeechService
 from ankinote.settings import active_profile, apply_env, load_settings
@@ -166,6 +168,7 @@ def _build(
     image_service: ImageGenerationService | None = None,
     tts: SpeechService | None = None,
     card_type: CardType | None = None,
+    reasoning_effort: str | None = None,
 ) -> CardCollection:
     """The collection for ``kind``; without services it can only save.
 
@@ -180,6 +183,7 @@ def _build(
             text_model=text_model,
             text_service=text_service,
             image_service=image_service,
+            reasoning_effort=reasoning_effort,
         )
     if kind == "word":
         return WordCollection(
@@ -239,6 +243,8 @@ class Draft:
     # The picture a STEM card was made from, read again by a rewrite.
     picture: bytes | None = None
     picture_mime: str = "image/png"
+    # The thinking choice it was made with, which rewrites and fixes keep.
+    thinking: Thinking | None = None
     # The card last written to Anki: saving again updates that note.
     saved: Any = None
     # Bumped by each edit: a re-made clip keeps its name, so its URL changes.
@@ -285,6 +291,13 @@ class GenerateIn(BaseModel):
     )
     card_type: CardType | None = Field(
         default=None, description="STEM only. Omit to let the model choose."
+    )
+    thinking: Thinking | None = Field(
+        default=None,
+        description=(
+            "STEM only: how hard the model thinks, also for rewrites and fixes "
+            "of the card. Omit for medium (a custom endpoint: its own default)."
+        ),
     )
     context: str | None = Field(
         default=None,
@@ -463,6 +476,9 @@ async def generate(kind: Kind, body: GenerateIn) -> dict:
         if body.audio and kind != "stem"
         else None,
         card_type=body.card_type if kind == "stem" else None,
+        reasoning_effort=stem_reasoning_effort(body.thinking, text)
+        if kind == "stem"
+        else None,
     )
     try:
         async with asyncio.timeout(_timeout(kind)):
@@ -511,6 +527,7 @@ async def generate(kind: Kind, body: GenerateIn) -> dict:
             picture_mime=body.reference_image.mime
             if body.reference_image
             else "image/png",
+            thinking=body.thinking,
         )
         _keep(draft)
         notes.append(_draft_out(draft, _for_draft(draft)))
@@ -756,6 +773,7 @@ async def _remake(
         image_service=build_image_service(image, image_size=settings.image_size)
         if image
         else None,
+        reasoning_effort=stem_reasoning_effort(draft.thinking, text),
     )
     assert isinstance(collection, StemCollection)
     picture = None if vision_support(text) == "no" else draft.picture
