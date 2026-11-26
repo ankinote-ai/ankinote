@@ -9,6 +9,7 @@ from ankinote.cli.batch import (
     InputFormat,
     add_many,
     add_one,
+    as_typed_option,
     batch_options,
     context_option,
     json_option,
@@ -92,9 +93,10 @@ def init(native, target, llm, profile, thinking):
 @phrase.command("add")
 @click.argument("phrase")
 @context_option
+@as_typed_option
 @json_option
 @collection_options
-def add(phrase, context, as_json, native, target, llm, profile, thinking):
+def add(phrase, context, as_typed, as_json, native, target, llm, profile, thinking):
     """Generate and push a single phrase card.
 
     \b
@@ -107,6 +109,7 @@ def add(phrase, context, as_json, native, target, llm, profile, thinking):
         kind="phrase",
         as_json=as_json,
         context=context,
+        as_typed=as_typed,
     )
 
 

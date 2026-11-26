@@ -11,7 +11,9 @@ from loguru import logger
 
 from ankinote.card_labels import card_language, template_name
 from ankinote.collections.common import (
+    SavedNotes,
     convert_to_html_ruby,
+    input_issues,
     respeak,
     store_card_fonts,
     strip_phonetic_annotations,
@@ -180,25 +182,27 @@ class WordCollection:
         tags: list[str] | None = None,
         *,
         context: str | None = None,
-    ) -> list[int]:
-        cards = await self.generate_cards(word, context=context)
+        as_typed: bool = False,
+    ) -> SavedNotes:
+        cards = await self.generate_cards(word, context=context, as_typed=as_typed)
         note_ids = [await self.save_card(card, tags) for card in cards]
         logger.success(
             f"Completed generation for '{word}': {len(note_ids)} note(s) created/updated"
         )
-        return note_ids
+        return SavedNotes(note_ids, input_issues(word, cards))
 
     async def generate_cards(
-        self, word: str, *, context: str | None = None
+        self, word: str, *, context: str | None = None, as_typed: bool = False
     ) -> list[WordCardData]:
         """Generate the notes for ``word`` (one per part of speech), unsaved.
 
         :param context: the sentence the learner met the word in; then one
             note, for the sense used there.
+        :param as_typed: never make the card for a corrected spelling.
         """
         logger.info(f"Starting generation for word: {word}")
         cards: list[WordCardData] = []
-        for word_model in await self._generate_word_models(word, context):
+        for word_model in await self._generate_word_models(word, context, as_typed):
             media = await self._generator.generate_media(
                 word_model=word_model,
                 target_lang=self._target_language,
@@ -271,7 +275,7 @@ class WordCollection:
         )
 
     async def _generate_word_models(
-        self, word: str, context: str | None = None
+        self, word: str, context: str | None = None, as_typed: bool = False
     ) -> list[WordModel]:
         return await self._generator.generate_word_data(
             word=word,
@@ -279,6 +283,7 @@ class WordCollection:
             native_lang=self._native_language,
             reasoning_effort=self._reasoning_effort,
             context=context,
+            as_typed=as_typed,
         )
 
     async def _add_or_update_note(

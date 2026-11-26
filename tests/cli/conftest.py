@@ -5,6 +5,18 @@ from contextlib import asynccontextmanager
 
 import pytest
 
+from ankinote.collections.common import InputIssue, SavedNotes
+
+
+def _saved(
+    text: str, note_ids: list[int] | None, issues: dict[str, list[InputIssue]]
+) -> int | list[int] | SavedNotes:
+    """What a fake collection's ``generate_and_add_note`` returns for ``text``."""
+    saved = 1 if note_ids is None else note_ids
+    if text not in issues:
+        return saved
+    return SavedNotes(saved if isinstance(saved, list) else [saved], issues[text])
+
 
 @pytest.fixture
 def capture_options(monkeypatch):
@@ -19,7 +31,8 @@ def capture_options(monkeypatch):
     Inputs listed in ``fail`` raise ``RuntimeError("boom: <input>")``; the
     others are saved as note ``1``, or ``note_ids`` when a list is given.
     With ``chatter``, each call also prints to stdout, as litellm does on
-    some errors.
+    some errors. Inputs in ``issues`` come back with those problems, as a
+    language collection reports them.
     """
 
     def capture(
@@ -28,6 +41,7 @@ def capture_options(monkeypatch):
         fail: Iterable[str] = (),
         note_ids: list[int] | None = None,
         chatter: bool = False,
+        issues: dict[str, list[InputIssue]] | None = None,
     ) -> dict[str, object]:
         failing = set(fail)
         items: list[str] = []
@@ -58,7 +72,7 @@ def capture_options(monkeypatch):
                     print(f"chatter: {text}")
                 if text in failing:
                     raise RuntimeError(f"boom: {text}")
-                return 1 if note_ids is None else note_ids
+                return _saved(text, note_ids, issues or {})
 
         def fake_builder(client, options):
             captured["options"] = options

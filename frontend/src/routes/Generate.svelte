@@ -5,6 +5,7 @@
   import {
     KINDS,
     STEM_TYPES,
+    type InputIssue,
     type MathError,
     type MediaGap,
     type SavedNote,
@@ -207,6 +208,8 @@
     if (r.state === "generating") return t("generate.state.generating", { s: seconds(r) });
     if (r.rewriting) return t("generate.state.generating", { s: rewriteSeconds(r) });
     if (r.state === "ready" && r.failure?.during === "save") return t("generate.state.unsaved");
+    if (r.flagged) return t("generate.state.flagged");
+    if (r.noticed) return t("generate.state.corrected");
     return t(`generate.state.${r.state}` as MessageKey);
   }
 
@@ -216,6 +219,12 @@
     return [...kinds]
       .map((kind) => t(r.kind === "stem" && kind === "image" ? "generate.short.stemImage" : `generate.short.${kind}`))
       .join(" · ");
+  }
+
+  /** What the model saw wrong with the line, in the UI language. */
+  function issueTitle(r: Row, issue: InputIssue): string {
+    if (issue.kind === "several" && r.kind === "sentence") return t("generate.issue.severalSentences");
+    return t(`generate.issue.${issue.kind}` as MessageKey);
   }
 
   function gapText(gap: MediaGap): string {
@@ -499,6 +508,7 @@
               class="qi {r.state}"
               class:on={r.id === session.selectedId}
               class:unsaved={r.state === "ready" && r.failure?.during === "save"}
+              class:flagged={r.noticed}
               data-id={r.id}
               aria-current={r.id === session.selectedId ? "true" : undefined}
               onclick={() => session.select(r)}
@@ -588,6 +598,43 @@
                 {n.variant}
               </button>
             {/each}
+          </div>
+        {/if}
+        {#if row.noticed}
+          <div class="issues" role="status">
+            <ul>
+              {#each row.issues as issue, i (i)}
+                <li>
+                  <strong>{issueTitle(row, issue)}</strong>
+                  {#if issue.note}<span class="why">{issue.note}</span>{/if}
+                  {#if issue.parts.length}
+                    <ol class="parts">
+                      {#each issue.parts as part, j (j)}<li>{part}</li>{/each}
+                    </ol>
+                  {/if}
+                  {#if issue.kind === "corrected"}
+                    <span class="made">{t("generate.issue.madeAs", { text: issue.correction ?? "", typed: row.text })}</span>
+                    <button class="secondary small" onclick={() => session.replaceLine(row, [row.text], true)}>
+                      {t("generate.issue.useTyped", { text: row.text })}
+                    </button>
+                  {:else if issue.correction}
+                    <button class="secondary small" onclick={() => session.replaceLine(row, [issue.correction!])}>
+                      {t("generate.issue.use", { text: issue.correction })}
+                    </button>
+                  {:else if issue.parts.length}
+                    <button class="secondary small" onclick={() => session.replaceLine(row, issue.parts)}>
+                      {t("generate.issue.split", { n: issue.parts.length })}
+                    </button>
+                  {/if}
+                </li>
+              {/each}
+            </ul>
+            <p class="keep">
+              <span class="note">
+                {#if row.flagged}{t("generate.issue.asTyped")}{/if}
+              </span>
+              <button class="secondary small" onclick={() => session.keepAsIs(row)}>{t("generate.issue.keep")}</button>
+            </p>
           </div>
         {/if}
         {#if note.gaps.length}
@@ -1118,6 +1165,62 @@
 
   .gaps li + li {
     margin-top: 4px;
+  }
+
+  /* Problems with the line: same frame as missing media, with actions. */
+  .issues {
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--warn);
+    border-radius: 6px;
+    background: var(--outer);
+    font-size: 14px;
+  }
+
+  .issues > ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .issues > ul > li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 8px;
+  }
+
+  .issues > ul > li + li {
+    margin-top: 8px;
+  }
+
+  .issues .why {
+    color: var(--muted);
+  }
+
+  .issues .made {
+    flex-basis: 100%;
+  }
+
+  .issues .parts {
+    flex-basis: 100%;
+    margin: 2px 0;
+    padding-left: 22px;
+    font-family: var(--mono);
+    font-size: 13px;
+  }
+
+  .issues .keep {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px 12px;
+    margin: 10px 0 0;
+  }
+
+  .qi.flagged .qs {
+    color: var(--warn);
   }
 
   .actions {

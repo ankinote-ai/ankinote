@@ -10,7 +10,9 @@ from loguru import logger
 
 from ankinote.card_labels import card_language, template_name
 from ankinote.collections.common import (
+    SavedNotes,
     convert_to_html_ruby,
+    input_issues,
     respeak,
     store_card_fonts,
     strip_phonetic_annotations,
@@ -170,20 +172,22 @@ class PhraseCollection:
         tags: list[str] | None = None,
         *,
         context: str | None = None,
-    ) -> int:
+        as_typed: bool = False,
+    ) -> SavedNotes:
         """Generate complete phrase data and add/update note in Anki."""
-        [card] = await self.generate_cards(phrase, context=context)
+        [card] = await self.generate_cards(phrase, context=context, as_typed=as_typed)
         note_id = await self.save_card(card, tags)
         logger.success(f"Completed generation for phrase '{phrase}', note {note_id}")
-        return note_id
+        return SavedNotes([note_id], input_issues(phrase, [card]))
 
     async def generate_cards(
-        self, phrase: str, *, context: str | None = None
+        self, phrase: str, *, context: str | None = None, as_typed: bool = False
     ) -> list[PhraseCardData]:
         """Generate the note for ``phrase``, unsaved (always one).
 
         :param context: the sentence the learner met the phrase in; the card
             then covers the sense used there.
+        :param as_typed: never make the card for a corrected phrase.
         """
         logger.info(f"Starting generation for phrase: {phrase}")
         phrase_model = await self._generator.generate_phrase_data(
@@ -192,6 +196,7 @@ class PhraseCollection:
             native_lang=self._native_language,
             reasoning_effort=self._reasoning_effort,
             context=context,
+            as_typed=as_typed,
         )
         media = await self._generator.generate_media(
             phrase_model=phrase_model,

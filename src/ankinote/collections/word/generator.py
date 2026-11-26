@@ -13,7 +13,9 @@ from ankinote.collections.common import (
     MediaGap,
     create_prompt_loader,
     synthesize_all,
+    with_as_typed,
     with_context,
+    with_input_issues,
 )
 from ankinote.consts import Language
 from ankinote.services.ai import (
@@ -102,6 +104,7 @@ async def generate_word_data(
     temperature: float = 0.3,
     reasoning_effort: str | None = DISABLE_REASONING,
     context: str | None = None,
+    as_typed: bool = False,
 ) -> list[WordModel]:
     """Generate vocabulary card data for a word using AI.
 
@@ -111,14 +114,19 @@ async def generate_word_data(
     :param context: the sentence the learner met the word in; the model then
         returns one record for the sense used there, with that sentence as
         the first example. ``None`` sends the usual prompt unchanged.
+    :param as_typed: the learner confirmed the spelling; the model makes the
+        card for it rather than for a correction.
     """
-    system_prompt = _load_prompt_template(target_language)
+    system_prompt = with_input_issues(
+        "ankinote.collections.word", _load_prompt_template(target_language)
+    )
     user_message = (
         f"Word: {word}\n"
         f"Target language: {target_language.value}\n"
         f"Native language: {native_language.value}\n"
         "Goal: Create concise Anki cards optimized for recognition, recall, and spelling."
     )
+    user_message = with_as_typed(user_message, as_typed)
     system_prompt, user_message = with_context(
         "ankinote.collections.word", system_prompt, user_message, context
     )
@@ -190,6 +198,7 @@ class WordGenerator:
         temperature: float = 0.3,
         reasoning_effort: str | None = DISABLE_REASONING,
         context: str | None = None,
+        as_typed: bool = False,
     ) -> list[WordModel]:
         """Generate structured word data via LLM."""
         return await generate_word_data(
@@ -201,6 +210,7 @@ class WordGenerator:
             temperature=temperature,
             reasoning_effort=reasoning_effort,
             context=context,
+            as_typed=as_typed,
         )
 
     async def generate_media(

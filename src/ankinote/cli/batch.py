@@ -7,7 +7,9 @@ errors. stdout carries only the result (the summary, or with ``--json`` one
 JSON document); progress and anything printed while generating go to stderr.
 
 ``word`` and ``phrase`` also take the sentence each item came from (its
-context): ``add --context`` and ``batch --format jsonl``.
+context): ``add --context`` and ``batch --format jsonl``. Language cards
+report the problems the model saw in an item's input (``issues``) next to
+its saved notes; they don't change the exit code.
 """
 
 import asyncio
@@ -21,21 +23,26 @@ from typing import Literal, Protocol, TextIO, cast
 import click
 from asynciolimiter import StrictLimiter
 
+from ankinote.collections.common import InputIssue, SavedNotes
+
 MAX_CONCURRENCY = 10
 
 
 class NoteMaker(Protocol):
     """A card collection: generates one item's card(s) and saves them."""
 
-    def generate_and_add_note(self, text: str, /) -> Awaitable[int | list[int]]: ...
+    def generate_and_add_note(
+        self, text: str, /
+    ) -> Awaitable[int | list[int] | SavedNotes]: ...
 
 
 class ContextNoteMaker(Protocol):
-    """A collection that can also focus a card on the sentence it came from."""
+    """A collection that can also focus a card on the sentence it came from,
+    and keep a spelling the model would otherwise correct."""
 
     def generate_and_add_note(
-        self, text: str, /, *, context: str | None = None
-    ) -> Awaitable[int | list[int]]: ...
+        self, text: str, /, *, context: str | None = None, as_typed: bool = False
+    ) -> Awaitable[int | list[int] | SavedNotes]: ...
 
 
 type InputFormat = Literal["lines", "jsonl"]
@@ -46,19 +53,28 @@ type CollectionScope = Callable[[], AbstractAsyncContextManager[NoteMaker]]
 
 @dataclass(frozen=True, slots=True)
 class Item:
-    """One input to make cards from, with the sentence it came from if given."""
+    """One input to make cards from, with the sentence it came from if given.
+
+    ``as_typed``: the spelling is meant; the model doesn't correct it.
+    """
 
     text: str
     context: str | None = None
+    as_typed: bool = False
 
 
 @dataclass(frozen=True, slots=True)
 class ItemResult:
-    """What happened to one item: the saved note ids, or why it failed."""
+    """What happened to one item: the saved note ids, or why it failed.
+
+    ``issues``: what the model saw wrong with the input (a likely typo,
+    several sentences on one line); the notes were saved as asked anyway.
+    """
 
     item: Item
     note_ids: tuple[int, ...] = ()
     error: str | None = None
+    issues: tuple[InputIssue, ...] = ()
 
     @property
     def ok(self) -> bool:
@@ -85,6 +101,18 @@ def context_option(cmd):
         help=(
             "The sentence the item came from. The card then covers only the "
             "sense used there, with this sentence as its first example."
+        ),
+    )(cmd)
+
+
+def as_typed_option(cmd):
+    """Add ``--as-typed`` to a word or phrase ``add`` command."""
+    return click.option(
+        "--as-typed",
+        is_flag=True,
+        help=(
+            "Make the card for the spelling given, even if the model takes it "
+            'for a misspelling (reported as a "corrected" issue).'
         ),
     )(cmd)
 
@@ -174,21 +202,24 @@ def add_one(
     kind: str,
     as_json: bool,
     context: str | None = None,
+    as_typed: bool = False,
 ) -> None:
     """Make one item's card(s) and print the saved note ids.
 
     :param kind: the command group ("word"), named in the JSON document.
     :param context: the sentence the item came from, if given.
+    :param as_typed: make the card for the spelling given, uncorrected.
     :raises click.ClickException: Anki is unreachable, or (without
         ``as_json``) the item failed.
     """
     [result] = _make_all_quietly(
-        scope, [Item(text, (context or "").strip() or None)], rpm=0
+        scope, [Item(text, (context or "").strip() or None, as_typed)], rpm=0
     )
     if as_json:
         _print_json(kind, [result])
     elif result.ok:
         click.echo(f"✓ Added: {text} ({_notes(result.note_ids)})")
+        _print_issues(result, indent="  ")
     else:
         raise click.ClickException(f"{text}: {result.error}")
     if not result.ok:
@@ -264,20 +295,34 @@ async def _make_all(
                     saved = await _make(collection, item)
                 except Exception as e:  # one item's failure is reported, not fatal
                     return ItemResult(item, error=_describe(e))
-                ids = saved if isinstance(saved, list) else [saved]
-                return ItemResult(item, note_ids=tuple(ids))
+                return _saved(item, saved)
 
         async with asyncio.TaskGroup() as group:
             tasks = [group.create_task(make(item)) for item in items]
     return [task.result() for task in tasks]
 
 
-async def _make(collection: NoteMaker, item: Item) -> int | list[int]:
-    if item.context is None:
+def _saved(item: Item, saved: int | list[int] | SavedNotes) -> ItemResult:
+    if isinstance(saved, SavedNotes):
+        return ItemResult(
+            item, note_ids=tuple(saved.note_ids), issues=tuple(saved.issues)
+        )
+    ids = saved if isinstance(saved, list) else [saved]
+    return ItemResult(item, note_ids=tuple(ids))
+
+
+async def _make(collection: NoteMaker, item: Item) -> int | list[int] | SavedNotes:
+    if item.context is None and not item.as_typed:
         return await collection.generate_and_add_note(item.text)
-    # Only the commands whose collections take a context offer a way to give one.
+    # Only the commands whose collections take these offer a way to give them.
     maker = cast(ContextNoteMaker, collection)
-    return await maker.generate_and_add_note(item.text, context=item.context)
+    if item.context is None:
+        return await maker.generate_and_add_note(item.text, as_typed=True)
+    if not item.as_typed:
+        return await maker.generate_and_add_note(item.text, context=item.context)
+    return await maker.generate_and_add_note(
+        item.text, context=item.context, as_typed=True
+    )
 
 
 def _parse_jsonl(number: int, line: str) -> Item:
@@ -325,7 +370,12 @@ def _result_json(result: ItemResult) -> dict[str, object]:
     if result.item.context is not None:
         echo["context"] = result.item.context
     if result.ok:
-        return {**echo, "ok": True, "note_ids": [*result.note_ids]}
+        return {
+            **echo,
+            "ok": True,
+            "note_ids": [*result.note_ids],
+            "issues": [issue.model_dump() for issue in result.issues],
+        }
     return {**echo, "ok": False, "error": result.error}
 
 
@@ -335,10 +385,22 @@ def _print_summary(results: list[ItemResult]) -> None:
     click.echo(f"\n✅ {len(saved)}/{len(results)} saved")
     for result in saved:
         click.echo(f"   • {result.item.text} ({_notes(result.note_ids)})")
+        _print_issues(result, indent="       ")
     if failed:
         click.echo(f"\n❌ {len(failed)} failed")
         for result in failed:
             click.echo(f"   • {result.item.text}: {result.error}")
+
+
+def _print_issues(result: ItemResult, *, indent: str) -> None:
+    """One line per problem with the input: kind, note, and the suggestion."""
+    for issue in result.issues:
+        line = f"{indent}⚠ {issue.kind}: {issue.note}".rstrip()
+        if issue.correction:
+            line += f" → {issue.correction}"
+        if issue.parts:
+            line += " → " + " | ".join(issue.parts)
+        click.echo(line)
 
 
 def _notes(note_ids: Sequence[int]) -> str:

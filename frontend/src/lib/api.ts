@@ -187,6 +187,23 @@ export type MathError = { tex: string; message: string };
 /** Media a card goes without: no model for it, or the model failed. */
 export type MediaGap = { kind: "audio" | "image"; reason: "not_set_up" | "failed"; detail: string };
 
+/**
+ * A problem the model saw in a word, phrase or sentence line. The notes were
+ * made from the line as typed, except `corrected`: a misspelled word or
+ * phrase, made as `correction`. `note` is in the card's native language.
+ */
+export type InputIssue = {
+  kind: "several" | "typo" | "corrected" | "wrong_language" | "fragment" | "context_mismatch";
+  note: string;
+  /**
+   * typo: the whole line fixed; corrected: what the notes were made from;
+   * wrong_language: the line in the target language.
+   */
+  correction: string | null;
+  /** several: each item as its own line. */
+  parts: string[];
+};
+
 /** One card of a note, both sides rendered from the real Anki templates. */
 export type CardSide = { name: string; front: string; back: string };
 
@@ -312,8 +329,14 @@ export const api = {
       reference_image?: { data: string; mime: string };
       /** Words and phrases: the sentence the item was met in. */
       context?: string;
+      /** Words and phrases: the spelling is meant; don't correct it. */
+      as_typed?: boolean;
     } = {},
-  ) => request<{ notes: DraftNote[] }>("POST", `/api/cards/${kind}`, { text, ...options }),
+  ) =>
+    request<{ notes: DraftNote[]; issues?: InputIssue[] }>("POST", `/api/cards/${kind}`, {
+      text,
+      ...options,
+    }),
   editDraft: (id: string, values: FormValues) =>
     request<DraftNote>("PUT", `/api/cards/drafts/${id}/fields`, { values }),
   /** STEM: the cards with these edits, without applying them. */

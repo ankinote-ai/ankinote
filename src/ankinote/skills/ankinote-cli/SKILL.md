@@ -23,8 +23,8 @@ no configuration.
 3. Run one `batch` per card kind with `--json`, items on stdin (see
    [Input](#input)).
 4. Read the result (see [Results](#results)), retry the failed items once if
-   the error looks temporary, then tell the user what was saved and what
-   failed and why.
+   the error looks temporary, then tell the user what was saved, what
+   failed and why, and any `issues` the model saw in the input.
 
 CLI cards are saved without a preview. If the user wants to check or edit
 each card first, suggest pasting the list into the web app's Generate page
@@ -52,6 +52,7 @@ keys or edit `settings.json` by hand.
 ankinote <word|phrase|sentence|stem> add <item> [--json]
 ankinote <word|phrase|sentence|stem> batch [items...] [--file path|-] [--rpm N] [--json]
 ankinote <word|phrase> add <item> --context "<sentence>"
+ankinote <word|phrase> add <item> --as-typed      # keep a spelling the model corrected
 ankinote <word|phrase> batch --format jsonl --file path|-
 ankinote <word|phrase|sentence|stem> init        # create or update note type + deck
 ankinote anki <login|logout|status|sync>         # built-in Anki only
@@ -128,12 +129,34 @@ to stderr. `add` prints the same shape with one result.
 ```json
 {"kind": "word", "total": 2, "succeeded": 1, "failed": 1,
  "results": [
-   {"input": "serendipity", "ok": true, "note_ids": [1712, 1713]},
+   {"input": "serendipity", "ok": true, "note_ids": [1712, 1713], "issues": []},
+   {"input": "recieve", "ok": true, "note_ids": [1714], "issues": [
+     {"kind": "corrected", "note": "…", "correction": "receive", "parts": []}]},
    {"input": "xyzzy", "ok": false, "error": "…"}]}
 ```
 
 `note_ids` is a list: a word can make one note per part of speech. Results
 of items given with context also echo `"context"`.
+
+`issues` lists what the model saw wrong with a saved item's input; `note`
+explains it in the user's native language. `kind`:
+
+- `corrected` (words, phrases): a misspelling; the card was made for
+  `correction` instead. Mention it. If the user meant the spelling, rerun
+  that one with `add <item> --as-typed`.
+- `typo` (sentences): the card keeps the mistake; `correction` is the fixed
+  sentence.
+- `wrong_language`: `correction`, if any, is the input in the target
+  language.
+- `several`: `parts` are separate items that were on one line.
+- `fragment`: a cut-off sentence.
+- `context_mismatch`: the context doesn't contain the item.
+
+Except for `corrected`, the card was made from the input as given. If you
+caused the problem (misread the photo, merged two lines), make the right
+item yourself; otherwise tell the user and ask before making the corrected
+or split items. A card they don't want stays in Anki until they delete it
+there.
 
 | Exit | Meaning | stdout |
 | --- | --- | --- |

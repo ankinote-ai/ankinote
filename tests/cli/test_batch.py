@@ -6,6 +6,8 @@ import json
 import pytest
 from click.testing import CliRunner
 
+from ankinote.collections.common import InputIssue
+
 KINDS = ["word", "phrase", "sentence", "stem"]
 
 
@@ -126,10 +128,48 @@ def test_batch_json_reports_every_item(kind, capture_options):
         "succeeded": 1,
         "failed": 1,
         "results": [
-            {"input": "apple", "ok": True, "note_ids": [1712, 1713]},
+            {"input": "apple", "ok": True, "note_ids": [1712, 1713], "issues": []},
             {"input": "xyzzy", "ok": False, "error": "boom: xyzzy"},
         ],
     }
+
+
+TYPO = InputIssue(kind="typo", note="Likely a misspelling.", correction="receive")
+LANGUAGE_KINDS = ["word", "phrase", "sentence"]
+
+
+@pytest.mark.parametrize("kind", LANGUAGE_KINDS)
+def test_batch_json_reports_problems_with_the_input(kind, capture_options):
+    """The card is saved as asked; the agent learns what looked wrong."""
+    module, group = _group(kind)
+    capture_options(module, issues={"recieve": [TYPO]})
+
+    result = CliRunner().invoke(group, ["batch", "recieve", "pear", "--json"])
+
+    assert result.exit_code == 0, result.output
+    [typo, fine] = json.loads(result.stdout)["results"]
+    assert typo["note_ids"] == [1]
+    assert typo["issues"] == [
+        {
+            "kind": "typo",
+            "note": "Likely a misspelling.",
+            "correction": "receive",
+            "parts": [],
+        }
+    ]
+    assert fine["issues"] == []
+
+
+@pytest.mark.parametrize("kind", LANGUAGE_KINDS)
+@pytest.mark.parametrize("command", ["add", "batch"])
+def test_summary_shows_problems_with_the_input(kind, command, capture_options):
+    module, group = _group(kind)
+    capture_options(module, issues={"recieve": [TYPO]})
+
+    result = CliRunner().invoke(group, [command, "recieve"])
+
+    assert result.exit_code == 0, result.output
+    assert "typo: Likely a misspelling. → receive" in result.stdout
 
 
 @pytest.mark.parametrize("kind", KINDS)

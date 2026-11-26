@@ -9,6 +9,7 @@ from ankinote.cli.batch import (
     InputFormat,
     add_many,
     add_one,
+    as_typed_option,
     batch_options,
     context_option,
     json_option,
@@ -102,11 +103,13 @@ def init(
 @word.command("add")
 @click.argument("word")
 @context_option
+@as_typed_option
 @json_option
 @collection_options
 def add(
     word,
     context,
+    as_typed,
     as_json,
     native,
     target,
@@ -126,7 +129,14 @@ def add(
     options = build_options(
         native, target, llm, image_model, image_size, profile, image_profile, thinking
     )
-    add_one(_scope(options), word, kind="word", as_json=as_json, context=context)
+    add_one(
+        _scope(options),
+        word,
+        kind="word",
+        as_json=as_json,
+        context=context,
+        as_typed=as_typed,
+    )
 
 
 @word.command("batch")

@@ -9,7 +9,9 @@ from loguru import logger
 
 from ankinote.card_labels import card_language, template_name
 from ankinote.collections.common import (
+    SavedNotes,
     convert_to_html_ruby,
+    input_issues,
     store_card_fonts,
     template_upserts,
 )
@@ -159,7 +161,7 @@ class SentenceCollection:
         self,
         target_sentence: str,
         tags: list[str] | None = None,
-    ) -> int:
+    ) -> SavedNotes:
         """Generate complete sentence data and add/update note in Anki.
 
         The *target_sentence* is the sentence in the language being learned.
@@ -170,7 +172,7 @@ class SentenceCollection:
         logger.success(
             f"Completed generation for sentence '{target_sentence}', note {note_id}"
         )
-        return note_id
+        return SavedNotes([note_id], input_issues(target_sentence, [card]))
 
     async def generate_cards(self, target_sentence: str) -> list[SentenceCardData]:
         """Generate the note for ``target_sentence``, unsaved (always one)."""

@@ -11,6 +11,12 @@
  * live, and a STEM note can be rewritten by the model from an instruction.
  * Edits and rewrites can be undone.
  *
+ * The model may report problems with a line (a likely typo, several
+ * sentences on one line): the row is flagged and offers to correct or split
+ * the line, or to keep the notes as made. "Save all" leaves flagged rows.
+ * A misspelled word or phrase is made as the correction instead; the row
+ * says so and can be made again as typed, but isn't held back.
+ *
  * The session lives at module level, so switching workspaces keeps it; a
  * reload starts a new one (drafts are in the server's memory anyway).
  */
@@ -25,6 +31,7 @@ import {
   type FormField,
   type FormRow,
   type FormValues,
+  type InputIssue,
   type Kind,
   type MathError,
   type SavedNote,
@@ -146,6 +153,10 @@ export class Row {
   undoing = $state(false);
   /** A rewrite or undo that didn't happen; the note is as it was. */
   changeFailure = $state<Failure | null>(null);
+  /** What the model saw wrong with the line; the notes follow it as typed. */
+  issues = $state<InputIssue[]>([]);
+  /** The user chose to keep the notes despite `issues` (or saved them). */
+  issuesKept = $state(false);
 
   /** STEM: the type asked for; undefined lets the model choose. */
   readonly cardType?: StemType;
@@ -153,15 +164,18 @@ export class Row {
   readonly picture?: Picture;
   /** Words and phrases: the sentence the item was met in; regenerating keeps it. */
   readonly context?: string;
+  /** Words and phrases: made from the spelling given, never a correction. */
+  readonly asTyped: boolean;
 
   constructor(
     readonly kind: Kind,
     readonly text: string,
-    extra: { cardType?: StemType; picture?: Picture; context?: string } = {},
+    extra: { cardType?: StemType; picture?: Picture; context?: string; asTyped?: boolean } = {},
   ) {
     this.cardType = extra.cardType;
     this.picture = extra.picture;
     this.context = extra.context;
+    this.asTyped = extra.asTyped ?? false;
   }
 
   get note(): DraftNote | null {
@@ -171,6 +185,16 @@ export class Row {
   /** Has a preview that can be saved (again). */
   get saveable(): boolean {
     return this.notes.length > 0 && (this.state === "ready" || this.state === "saved");
+  }
+
+  /** Ready, with problems the user hasn't seen off yet (a correction included). */
+  get noticed(): boolean {
+    return this.state === "ready" && this.issues.length > 0 && !this.issuesKept;
+  }
+
+  /** Noticed for problems the notes still have: "Save all" waits for a decision. */
+  get flagged(): boolean {
+    return this.noticed && this.issues.some((issue) => issue.kind !== "corrected");
   }
 
   get busy(): boolean {
@@ -218,7 +242,8 @@ class Session {
   #settingsLoaded = false;
 
   readonly selected = $derived(this.rows.find((r) => r.id === this.selectedId) ?? null);
-  readonly readyCount = $derived(this.rows.filter((r) => r.state === "ready").length);
+  /** Ready rows "Save all" would save: not those flagged for a look first. */
+  readonly readyCount = $derived(this.rows.filter((r) => r.state === "ready" && !r.flagged).length);
 
   constructor() {
     $effect.root(() => {
@@ -318,6 +343,26 @@ class Session {
     row.state = "queued";
     row.failure = null;
     row.changeFailure = null;
+    this.#pump();
+  }
+
+  /** Keep the notes as made, despite the problems the model saw in the line. */
+  keepAsIs(row: Row) {
+    row.issuesKept = true;
+  }
+
+  /**
+   * Make `row`'s line again as `texts` (a corrected line, or one row per part
+   * of a split line), in its place. The unsaved notes are dropped. `asTyped`
+   * keeps a spelling the model corrected.
+   */
+  replaceLine(row: Row, texts: string[], asTyped = false) {
+    const lines = texts.map((text) => text.trim()).filter(Boolean);
+    if (row.busy || row.state === "saved" || !lines.length) return;
+    row.editing?.stop();
+    const rows = lines.map((text) => new Row(row.kind, text, { context: row.context, asTyped }));
+    this.rows.splice(this.rows.indexOf(row), 1, ...rows);
+    if (this.selectedId === row.id) this.selectedId = rows[0]!.id;
     this.#pump();
   }
 
@@ -432,6 +477,7 @@ class Session {
     if (row.rewriting || row.undoing) return;
     if (row.editing && !(await this.applyEdit(row))) return;
     if (!row.saveable) return;
+    row.issuesKept = true;
     row.state = "saving";
     row.failure = null;
     const run = this.#saving.then(async () => {
@@ -453,7 +499,7 @@ class Session {
   }
 
   saveAllReady() {
-    for (const row of this.rows) if (row.state === "ready") void this.save(row);
+    for (const row of this.rows) if (row.state === "ready" && !row.flagged) void this.save(row);
   }
 
   #pump() {
@@ -478,10 +524,14 @@ class Session {
       card_type: row.cardType,
       reference_image: row.picture && { data: row.picture.data, mime: row.picture.mime },
       context: row.context,
+      as_typed: row.asTyped || undefined,
     };
     row.asked = { image: options.image, audio: options.audio };
     try {
-      row.notes = (await api.generate(row.kind, row.text, options)).notes;
+      const made = await api.generate(row.kind, row.text, options);
+      row.notes = made.notes;
+      row.issues = made.issues ?? [];
+      row.issuesKept = false;
       row.pick = 0;
       row.state = "ready";
     } catch (error) {

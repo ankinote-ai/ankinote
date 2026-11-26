@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 from pydantic import BaseModel, Field, model_validator
 
+from ankinote.collections.common import InputIssues
 from ankinote.collections.editing import Form, Lines, Rows, Text
 
 
@@ -40,6 +41,8 @@ class PhraseModel(BaseModel):
     confusions: list[str] = Field(default_factory=list, max_length=2)
     etymology_or_memory: str | None = None
     associations: list[str] = Field(default_factory=list, max_length=5)
+    # Problems with the input the model reported; never stored on the note.
+    input_issues: InputIssues = Field(default_factory=list)
 
     @model_validator(mode="after")
     def validate_content(self) -> PhraseModel:

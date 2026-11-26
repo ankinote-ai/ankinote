@@ -331,6 +331,78 @@ async def test_sentence_without_speech_says_so_and_never_asks_for_images(
     assert "replay-button" not in note["cards"][0]["back"]
 
 
+async def test_problems_with_the_input_come_with_the_notes(
+    api: httpx.AsyncClient, models: dict[str, Any]
+) -> None:
+    """One line, one card: the problems the model saw are shown, not fixed."""
+    await _gemini(api, image=False)
+    text = "I overslept. The bus was late."
+    models["answer"] = json.dumps(
+        {
+            **OVERSLEPT,
+            "target_sentence": text,
+            "input_issues": [
+                {
+                    "kind": "several",
+                    "note": "这一行有两个句子。",
+                    "parts": ["I overslept.", "The bus was late."],
+                }
+            ],
+        }
+    )
+
+    response = await api.post("/api/cards/sentence", json={"text": text})
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert len(body["notes"]) == 1
+    assert body["issues"] == [
+        {
+            "kind": "several",
+            "note": "这一行有两个句子。",
+            "correction": None,
+            "parts": ["I overslept.", "The bus was late."],
+        }
+    ]
+
+
+async def test_an_input_without_problems_has_none(
+    api: httpx.AsyncClient, models: dict[str, Any]
+) -> None:
+    await _gemini(api, image=False)
+
+    response = await api.post("/api/cards/word", json={"text": "moon"})
+
+    assert response.json()["issues"] == []
+
+
+async def test_as_typed_keeps_a_word_the_model_would_correct(
+    api: httpx.AsyncClient, models: dict[str, Any]
+) -> None:
+    await _gemini(api, image=False)
+
+    plain = await api.post("/api/cards/word", json={"text": "moon"})
+    typed = await api.post("/api/cards/word", json={"text": "moon", "as_typed": True})
+
+    assert (plain.status_code, typed.status_code) == (200, 200), typed.text
+    first, second = models["prompts"]
+    assert "Spelling: as typed" not in first
+    assert second.startswith(first + "\nSpelling: as typed")
+
+
+async def test_as_typed_is_only_for_words_and_phrases(
+    api: httpx.AsyncClient, models: dict[str, Any]
+) -> None:
+    await _gemini(api, image=False)
+
+    response = await api.post(
+        "/api/cards/sentence", json={"text": "I overslept.", "as_typed": True}
+    )
+
+    assert response.status_code == 422
+    assert response.json()["detail"]["code"] == "as_typed_not_supported"
+
+
 def _form(note: dict, key: str) -> dict:
     return next(f for f in note["form"] if f["key"] == key)
 

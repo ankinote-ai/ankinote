@@ -2,13 +2,13 @@
 
 import asyncio
 import re
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from importlib.resources import files
-from typing import Literal, TypeVar, cast
+from typing import Annotated, Any, Literal, TypeVar, cast
 
 from loguru import logger
-from pydantic import BaseModel
+from pydantic import BaseModel, BeforeValidator, Field, ValidationError
 
 from ankinote import card_labels, card_theme
 from ankinote.card_theme import CardTheme
@@ -28,6 +28,88 @@ class MediaGap:
     kind: Literal["audio", "image"]
     reason: Literal["not_set_up", "failed"]
     detail: str = ""
+
+
+type IssueKind = Literal[
+    "several", "typo", "corrected", "wrong_language", "fragment", "context_mismatch"
+]
+
+
+class InputIssue(BaseModel):
+    """A problem the model sees in the input of a language card.
+
+    The card still follows the input, except for ``corrected``; the user (or
+    the agent) decides. ``kind``: ``several`` (separate items on one line;
+    ``parts`` lists them), ``typo`` (sentences: the card keeps the mistake;
+    ``correction`` is the whole input fixed), ``corrected`` (words and
+    phrases: a misspelling the card was made without; ``correction`` is what
+    it was made from),
+    ``wrong_language`` (``correction`` is the input in the target language,
+    if the model could give it), ``fragment`` (a cut-off sentence),
+    ``context_mismatch`` (the context sentence doesn't contain the item).
+    ``note`` says what's wrong in the learner's native language.
+    """
+
+    kind: IssueKind
+    note: str = ""
+    correction: str | None = None
+    parts: list[str] = Field(default_factory=list)
+
+
+def _valid_issues(value: object) -> list[InputIssue]:
+    """The issues that parse; a malformed one never fails the card."""
+    if not isinstance(value, list):
+        return []
+    issues: list[InputIssue] = []
+    for item in cast(list[Any], value):
+        try:
+            issues.append(InputIssue.model_validate(item))
+        except ValidationError as exc:
+            logger.warning(f"Ignoring a malformed input issue {item!r}: {exc}")
+    return issues
+
+
+InputIssues = Annotated[list[InputIssue], BeforeValidator(_valid_issues)]
+"""A language model's ``input_issues``: lenient, never stored on the note."""
+
+
+def input_issues(source: str, cards: Iterable[Any]) -> list[InputIssue]:
+    """The problems reported for ``source``, across its cards, each once.
+
+    Suggestions are cleaned up; a ``typo`` or ``corrected`` whose correction
+    is the input, or a
+    ``several`` with fewer than two parts says nothing, and is dropped.
+    """
+    issues: list[InputIssue] = []
+    for card in cards:
+        for issue in getattr(card.model, "input_issues", []):
+            correction = (issue.correction or "").strip() or None
+            if correction == source.strip():
+                correction = None
+            parts = [part.strip() for part in issue.parts if part.strip()]
+            if len(parts) < 2:
+                parts = []
+            if (issue.kind in ("typo", "corrected") and correction is None) or (
+                issue.kind == "several" and not parts
+            ):
+                continue
+            cleaned = InputIssue(
+                kind=issue.kind,
+                note=issue.note.strip(),
+                correction=correction,
+                parts=parts,
+            )
+            if cleaned not in issues:
+                issues.append(cleaned)
+    return issues
+
+
+@dataclass(frozen=True)
+class SavedNotes:
+    """What a language card command saved, and what looked wrong with its input."""
+
+    note_ids: list[int]
+    issues: list[InputIssue]
 
 
 def load_card_style(package: str, theme: CardTheme | None = None) -> str:
@@ -179,6 +261,34 @@ def create_prompt_loader[KT](
         )
 
     return _load_prompt
+
+
+def with_input_issues(package: str, system_prompt: str) -> str:
+    """Ask the model to report problems with the input (``input_issues``).
+
+    The rules are ``<package>.prompts/input_issues.md``, appended to the
+    system prompt (before any context rules).
+    """
+    rules = (
+        files(f"{package}.prompts")
+        .joinpath("input_issues.md")
+        .read_text(encoding="utf-8")
+    )
+    return f"{system_prompt}\n\n{rules}"
+
+
+def with_as_typed(user_message: str, as_typed: bool) -> str:
+    """Tell the model the input is spelled as meant: no ``corrected`` card.
+
+    For a word or phrase the user keeps after the model corrected it.
+    """
+    if not as_typed:
+        return user_message
+    return (
+        f"{user_message}\n"
+        "Spelling: as typed. The learner confirmed this spelling; make the "
+        "card for it exactly, without correcting it."
+    )
 
 
 def with_context(

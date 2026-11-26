@@ -35,6 +35,7 @@ from ankinote.card_theme import CardTheme, preview_css
 from ankinote.collections.common import (
     AudioUnavailable,
     MediaGap,
+    input_issues,
     strip_phonetic_annotations,
 )
 from ankinote.collections.editing import EditError, Form, describe, revise
@@ -90,7 +91,8 @@ _PICTURE_LIMIT = 5 * 1024 * 1024
 _PICTURE_TYPES = Literal["image/png", "image/jpeg", "image/webp"]
 
 Kind = Literal["word", "phrase", "sentence", "stem"]
-# The kinds whose card can follow the sentence the item was met in.
+# The kinds whose card can follow the sentence the item was met in, and
+# whose misspelled input the model corrects unless told it's as typed.
 _CONTEXT_KINDS = ("word", "phrase")
 
 
@@ -118,10 +120,11 @@ class CardCollection(Protocol):
 
 
 class ContextCollection(Protocol):
-    """Words and phrases: a card can follow the sentence the item was met in."""
+    """Words and phrases: a card can follow the sentence the item was met in,
+    and keep a spelling the model would correct."""
 
     async def generate_cards(
-        self, text: str, /, *, context: str | None = None
+        self, text: str, /, *, context: str | None = None, as_typed: bool = False
     ) -> Sequence[Any]: ...
 
 
@@ -291,6 +294,13 @@ class GenerateIn(BaseModel):
             f"covers the sense used there. Up to {_CONTEXT_LIMIT} characters."
         ),
     )
+    as_typed: bool = Field(
+        default=False,
+        description=(
+            "Words and phrases: the spelling is meant; the model doesn't make "
+            "the card for a correction of it."
+        ),
+    )
 
 
 def _fail(status: int, code: str, detail: str = "") -> HTTPException:
@@ -321,6 +331,8 @@ def _request_input(kind: Kind, body: GenerateIn) -> tuple[str, bytes | None]:
     context = _context(body)
     if context is not None and kind not in _CONTEXT_KINDS:
         raise _fail(422, "context_not_supported")
+    if body.as_typed and kind not in _CONTEXT_KINDS:
+        raise _fail(422, "as_typed_not_supported")
     if context is not None and len(context) > _CONTEXT_LIMIT:
         raise _fail(422, "context_too_long", str(_CONTEXT_LIMIT))
     if body.reference_image is not None and kind != "stem":
@@ -413,7 +425,10 @@ router = APIRouter(prefix="/api/cards")
 
 @router.post("/{kind}")
 async def generate(kind: Kind, body: GenerateIn) -> dict:
-    """Generate the notes for ``text`` (a word: one per part of speech), unsaved."""
+    """Generate the notes for ``text`` (a word: one per part of speech), unsaved.
+
+    ``issues`` lists the problems the model saw in the input; empty for STEM.
+    """
     settings = load_settings()
     apply_env(settings)
     native = Language(settings.defaults.native_language)
@@ -457,9 +472,11 @@ async def generate(kind: Kind, body: GenerateIn) -> dict:
                     picture,
                     _mime(body),
                 )
-            elif context := _context(body):
+            elif kind in _CONTEXT_KINDS:
                 maker = cast(ContextCollection, collection)
-                cards = await maker.generate_cards(source, context=context)
+                cards = await maker.generate_cards(
+                    source, context=_context(body), as_typed=body.as_typed
+                )
             else:
                 cards = await collection.generate_cards(source)
     except TimeoutError as exc:
@@ -497,7 +514,10 @@ async def generate(kind: Kind, body: GenerateIn) -> dict:
         )
         _keep(draft)
         notes.append(_draft_out(draft, _for_draft(draft)))
-    return {"notes": notes}
+    # Problems with the input line (several sentences, a likely typo…): the
+    # page offers to split or correct the line; the notes are made as asked.
+    issues = [issue.model_dump() for issue in input_issues(source, cards)]
+    return {"notes": notes, "issues": issues}
 
 
 class _FixedAnswer:

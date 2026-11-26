@@ -9,7 +9,9 @@ from ankinote.collections.common import (
     MediaGap,
     create_prompt_loader,
     synthesize_all,
+    with_as_typed,
     with_context,
+    with_input_issues,
 )
 from ankinote.consts import Language
 from ankinote.services.ai import DISABLE_REASONING, TextGenerationService
@@ -73,6 +75,7 @@ async def generate_phrase_data(
     temperature: float = 0.3,
     reasoning_effort: str | None = DISABLE_REASONING,
     context: str | None = None,
+    as_typed: bool = False,
 ) -> PhraseModel:
     """Generate phrase card data via LLM.
 
@@ -87,6 +90,8 @@ async def generate_phrase_data(
         context: The sentence the learner met the phrase in; the card then
             covers the sense used there, with that sentence as the first
             example. None sends the usual prompt unchanged.
+        as_typed: The learner confirmed the spelling; the model makes the
+            card for it rather than for a correction.
 
     Returns:
         A PhraseModel object describing the phrase.
@@ -96,12 +101,15 @@ async def generate_phrase_data(
         RuntimeError: If AI generation or JSON parsing fails.
     """
 
-    system_prompt = _load_prompt_template(target_language)
+    system_prompt = with_input_issues(
+        "ankinote.collections.phrase", _load_prompt_template(target_language)
+    )
     user_message = (
         f"Phrase: {phrase}\n"
         f"Target language: {target_language.value}\n"
         f"Native language: {native_language.value}"
     )
+    user_message = with_as_typed(user_message, as_typed)
     system_prompt, user_message = with_context(
         "ankinote.collections.phrase", system_prompt, user_message, context
     )
@@ -163,6 +171,7 @@ class PhraseGenerator:
         temperature: float = 0.3,
         reasoning_effort: str | None = DISABLE_REASONING,
         context: str | None = None,
+        as_typed: bool = False,
     ) -> PhraseModel:
         """Generate structured phrase data via LLM."""
         return await generate_phrase_data(
@@ -174,6 +183,7 @@ class PhraseGenerator:
             temperature=temperature,
             reasoning_effort=reasoning_effort,
             context=context,
+            as_typed=as_typed,
         )
 
     async def generate_media(

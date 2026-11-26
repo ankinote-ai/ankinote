@@ -1,6 +1,7 @@
 """The sentence an item came from (context) reaches the word and phrase prompts.
 
-Without context, what is sent to the model must stay exactly what it was.
+Without context, what is sent to the model is the language prompt and the
+rules for reporting problems with the input, nothing more.
 """
 
 from collections.abc import Sequence
@@ -92,7 +93,9 @@ async def _phrase(
 async def test_word_prompt_without_context_is_unchanged(target, prompt_file):
     system, user = await _word(target=target)
 
-    assert system == _prompt("word", prompt_file)
+    assert system == _prompt("word", prompt_file) + "\n\n" + _prompt(
+        "word", "input_issues.md"
+    )
     assert user == (
         "Word: bank\n"
         f"Target language: {target.value}\n"
@@ -108,7 +111,9 @@ async def test_word_prompt_without_context_is_unchanged(target, prompt_file):
 async def test_phrase_prompt_without_context_is_unchanged(target, prompt_file):
     system, user = await _phrase(target=target)
 
-    assert system == _prompt("phrase", prompt_file)
+    assert system == _prompt("phrase", prompt_file) + "\n\n" + _prompt(
+        "phrase", "input_issues.md"
+    )
     assert user == (
         "Phrase: pick up\n"
         f"Target language: {target.value}\n"

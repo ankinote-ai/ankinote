@@ -62,28 +62,6 @@ were next before that and are now [waiting for demand](#waiting-for-demand).
 
 Unscheduled; each can ship on its own.
 
-### Flag problem input on language cards
-
-Agreed 2026-11-25. Today the prompts mirror the input exactly: a line with
-several sentences becomes one long card, a cut-off sentence is translated as
-it stands, and a typo stays on the card (on a production card the learner
-then memorizes it). Nothing tells the user.
-
-- Keep "one line, one card". The model also returns the problems it sees
-  (several sentences, a fragment, a likely typo with its correction, the
-  wrong language); they are not stored, so the note types don't change.
-- Neither fix silently nor mirror silently. The web app shows them on the
-  row with actions (split into lines, use the correction, keep as is); the
-  CLI reports them, ideally in the `--json` results of
-  [the agent's tool](#the-cli-as-an-agents-tool).
-- Never split automatically: a short exchange ("How are you? — Fine.") is
-  one item on purpose.
-- Start with tests that reproduce the kept typo and the unflagged
-  several-sentence line.
-- Also flag a context sentence that doesn't contain the item (CLI
-  `--context`; the web app's brackets rule it out). Checked 2026-11-25: told
-  to ignore such a context, the model still used it as the first example.
-
 ### Fix with AI inside the live editor
 
 Today "Fix with AI" sits under the preview's formula errors and works on the
@@ -373,6 +351,35 @@ cover:
   template editor.
 
 ## Shipped
+
+### Problem input flagged on language cards (2026-11-26)
+
+"One line, one card" stays; the card is still made from the line as typed.
+The model also returns the problems it sees (`input_issues` in its JSON,
+never stored on the note, so the note types don't change):
+
+- `several` (separate items or sentences on one line, with the parts),
+  `typo` (sentences: the card keeps the mistake, the issue carries the
+  corrected line), `corrected` (words and phrases: a clear misspelling is
+  not worth a card, so the card is made for the correction and says so;
+  only for non-words, never for variants or confusable real words),
+  `wrong_language` (with the
+  target-language equivalent if it can give one), `fragment` (sentences
+  only), `context_mismatch` (the context doesn't contain the item; CLI only,
+  since the web app's brackets rule it out). A short exchange ("How are
+  you? — Fine.") is one item on purpose; the prompts say so.
+- Web app: a flagged row says "check the line"; the preview offers "Use
+  …" (the correction) or "Split into N lines", which replace the row, or
+  "Keep as is". "Save all" leaves flagged rows; saving one keeps it. A
+  corrected row says "corrected", offers "Use … as typed" (generates again
+  with `as_typed`), and isn't held back from "Save all".
+- CLI: `--json` results carry `issues` (an added key); the summary prints
+  them; the exit code doesn't change. `word|phrase add --as-typed` keeps a
+  spelling the model corrected. The agent skill says to tell the user and
+  ask before making the corrected or split items.
+- Not measured yet: how often real models over- or under-report. Watch for
+  false alarms (valid variants or colloquial sentences flagged) and tighten
+  the per-kind `prompts/input_issues.md` as needed.
 
 ### Upgrades: notice a new version, upgrade easily
 

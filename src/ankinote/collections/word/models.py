@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 from pydantic import BaseModel, Field
 
+from ankinote.collections.common import InputIssues
 from ankinote.collections.editing import Form, Lines, Rows, Text
 
 
@@ -37,6 +38,8 @@ class WordModel(BaseModel):
     collocations: list[str] = Field(default_factory=list, max_length=4)
     confusions: list[str] = Field(default_factory=list, max_length=2)
     etymology_or_memory: str | None = None
+    # Problems with the input the model reported; never stored on the note.
+    input_issues: InputIssues = Field(default_factory=list)
 
 
 # What a user may change before saving, in the order the card shows it.

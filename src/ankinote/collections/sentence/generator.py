@@ -5,7 +5,12 @@ from dataclasses import dataclass, field
 
 from loguru import logger
 
-from ankinote.collections.common import MediaGap, create_prompt_loader, synthesize_all
+from ankinote.collections.common import (
+    MediaGap,
+    create_prompt_loader,
+    synthesize_all,
+    with_input_issues,
+)
 from ankinote.consts import Language
 from ankinote.services.ai import DISABLE_REASONING, TextGenerationService
 from ankinote.services.tts import SpeechSynthesizer
@@ -74,7 +79,9 @@ async def generate_sentence_data(
     is tightly specified and the output is short.
     """
 
-    system_prompt = _load_prompt_template(target_language)
+    system_prompt = with_input_issues(
+        "ankinote.collections.sentence", _load_prompt_template(target_language)
+    )
     user_message = (
         f"Target sentence: {target_sentence}\n"
         f"Target language: {target_language.value}\n"

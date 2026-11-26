@@ -50,7 +50,13 @@ def test_add_json_echoes_the_context(kind, capture_options):
 
     assert result.exit_code == 0, result.stderr
     [item] = json.loads(result.stdout)["results"]
-    assert item == {"input": "bank", "context": BANK, "ok": True, "note_ids": [7]}
+    assert item == {
+        "input": "bank",
+        "context": BANK,
+        "ok": True,
+        "note_ids": [7],
+        "issues": [],
+    }
 
 
 @pytest.mark.parametrize("kind", CONTEXT_KINDS)
@@ -126,3 +132,24 @@ def test_sentence_and_stem_take_no_context(kind, args, capture_options):
 
     assert result.exit_code == 2
     assert "No such option" in result.output
+
+
+@pytest.mark.parametrize("kind", CONTEXT_KINDS)
+def test_add_as_typed_reaches_the_collection(kind, capture_options):
+    """The way back when the model corrected a spelling that was meant."""
+    module, group = _group(kind)
+    captured = capture_options(module)
+
+    result = CliRunner().invoke(group, ["add", "recieve", "--as-typed"])
+
+    assert result.exit_code == 0, result.output
+    assert captured["note_kwargs"] == {"as_typed": True}
+
+
+@pytest.mark.parametrize("kind", ["sentence", "stem"])
+def test_as_typed_is_only_for_words_and_phrases(kind):
+    _, group = _group(kind)
+
+    result = CliRunner().invoke(group, ["add", "recieve", "--as-typed"])
+
+    assert result.exit_code == 2

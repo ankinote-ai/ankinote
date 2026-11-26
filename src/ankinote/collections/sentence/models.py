@@ -2,8 +2,9 @@
 
 from dataclasses import dataclass
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
+from ankinote.collections.common import InputIssues
 from ankinote.collections.editing import Form, Lines, Rows, Text
 
 
@@ -31,6 +32,8 @@ class SentenceModel(BaseModel):
     native_sentence: str
     notes: list[str] = []
     phrases: list[PhraseModel] = []
+    # Problems with the input the model reported; never stored on the note.
+    input_issues: InputIssues = Field(default_factory=list)
 
 
 # What a user may change before saving, in the order the card shows it.
